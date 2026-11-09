@@ -8,7 +8,9 @@ automated checks and a human merge/deployment gate. Start with
 [`AGENTS.md`](AGENTS.md), then see the [agent roles](docs/AGENT_ROLES.md),
 [architecture](docs/ARCHITECTURE.md), [task-management
 workflow](docs/TASK_MANAGEMENT.md), and [workforce foundation
-checklist](docs/AI_WORKFORCE_FOUNDATION.md).
+checklist](docs/AI_WORKFORCE_FOUNDATION.md). The [workday reporting
+guide](docs/WORKDAY_REPORTING.md) defines the 9 AM intake and 5 PM evidence
+report.
 
 ## Projects
 
