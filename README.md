@@ -11,6 +11,8 @@ workflow](docs/TASK_MANAGEMENT.md), and [workforce foundation
 checklist](docs/AI_WORKFORCE_FOUNDATION.md). The [workday reporting
 guide](docs/WORKDAY_REPORTING.md) defines the 9 AM intake and 5 PM evidence
 report.
+The [supervised scheduling guide](docs/WORKDAY_SCHEDULING.md) defines the
+default-off weekday intake/report schedule and emergency stop.
 
 ## Projects
 

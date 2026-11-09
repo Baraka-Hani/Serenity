@@ -1,0 +1,62 @@
+name: Supervised AI workday
+
+on:
+  workflow_dispatch:
+    inputs:
+      event:
+        description: Read-only dry-run event
+        required: true
+        default: intake
+        type: choice
+        options:
+          - intake
+          - report
+  schedule:
+    # Covers 9 AM and 5 PM Atlantic in both standard and daylight time.
+    # The Python gate accepts only the correct local event.
+    - cron: "0 12 * * 1-5"
+    - cron: "0 13 * * 1-5"
+    - cron: "0 20 * * 1-5"
+    - cron: "0 21 * * 1-5"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supervised-ai-workday
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: github.event_name == 'workflow_dispatch' || vars.SERENITY_WORKFORCE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Evaluate supervised schedule
+        id: gate
+        env:
+          WORKFORCE_ENABLED: ${{ vars.SERENITY_WORKFORCE_ENABLED }}
+          MANUAL_EVENT: ${{ github.event.inputs.event }}
+          SCHEDULED_CRON: ${{ github.event.schedule }}
+        run: |
+          arguments=(--github-output "$GITHUB_OUTPUT")
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            arguments+=(--manual-event "$MANUAL_EVENT")
+          elif [[ "$WORKFORCE_ENABLED" == "true" ]]; then
+            arguments+=(--enabled --scheduled-cron "$SCHEDULED_CRON")
+          fi
+          python3 tools/workday_schedule.py "${arguments[@]}"
+      - name: Generate read-only workday report
+        if: steps.gate.outputs.should_run == 'true'
+        run: python3 tools/workday_report.py .github/workday-queue.json --date "${{ steps.gate.outputs.local_date }}" > workday-report.md
+      - name: Upload report artifact
+        if: steps.gate.outputs.should_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-${{ steps.gate.outputs.event }}-report
+          path: workday-report.md
+          retention-days: 14

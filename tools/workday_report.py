@@ -75,9 +75,13 @@ def render(data):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path, help="JSON task report input")
+    parser.add_argument("--date", help="override the report date using YYYY-MM-DD")
     args = parser.parse_args(argv)
     try:
-        data = validate(json.loads(args.input.read_text(encoding="utf-8")))
+        data = json.loads(args.input.read_text(encoding="utf-8"))
+        if args.date:
+            data["date"] = args.date
+        data = validate(data)
     except (OSError, json.JSONDecodeError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
