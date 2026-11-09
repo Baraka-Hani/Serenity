@@ -33,6 +33,24 @@ Create these labels when the Stage 2 branch is published:
 | `risk:stop` | Production, secret, billing, purchase or public action |
 | `needs:owner` | Requires a human decision or access action |
 
+### AI attribution labels
+
+Use three independent label families so version history records the model, the
+responsibility it performed, and the kind of contribution it made:
+
+| Label family | Initial labels | Meaning |
+| --- | --- | --- |
+| Model | `model:codex`, `model:claude`, `model:gemini`, `model:open-source`, `model:other` | The model that materially produced or reviewed the change |
+| Agent role | `agent:builder`, `agent:reviewer`, `agent:architect`, `agent:qa`, `agent:research` | The responsibility performed on this task |
+| Contribution | `contribution:code`, `contribution:review`, `contribution:tests`, `contribution:docs`, `contribution:architecture`, `contribution:ci`, `contribution:security` | The output contributed |
+
+Apply every label that materially describes the work. For example, a Codex
+implementation with tests uses `model:codex`, `agent:builder`,
+`contribution:code`, and `contribution:tests`. If Claude later reviews it, add
+`model:claude`, `agent:reviewer`, and `contribution:review`; do not remove the
+Builder labels. This produces additive attribution across an issue and PR's
+history without treating a model name as an approval authority.
+
 Labels describe state; they do not authorize an action.
 
 ## Task sizing

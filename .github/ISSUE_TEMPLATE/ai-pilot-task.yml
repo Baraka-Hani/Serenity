@@ -30,6 +30,25 @@ body:
         - STOP — production data, secrets, billing, purchase, or public deploy
     validations:
       required: true
+  - type: input
+    id: models
+    attributes:
+      label: AI model attribution
+      description: List each model expected to contribute, or "unassigned" until selected.
+      placeholder: Codex — Builder; Claude — Reviewer
+    validations:
+      required: true
+  - type: textarea
+    id: agent_roles
+    attributes:
+      label: Agent responsibilities
+      description: State who builds, reviews, tests, researches, or designs architecture.
+      placeholder: |
+        - Builder:
+        - Reviewer:
+        - QA:
+    validations:
+      required: true
   - type: checkboxes
     id: boundaries
     attributes:

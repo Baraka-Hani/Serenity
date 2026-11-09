@@ -4,6 +4,9 @@ Link the pilot issue and summarize the user-visible result.
 
 ## Builder evidence
 
+- Model(s):
+- Agent role(s):
+- Contribution label(s):
 - Changed files:
 - Checks run and exact results:
 - Known limitations:
