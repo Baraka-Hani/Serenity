@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security-sensitive report
+    url: https://github.com/Baraka-Hani/Serenity/security
+    about: Do not place credentials, private data, or exploitable details in a public issue.

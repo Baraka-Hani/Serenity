@@ -1,0 +1,73 @@
+name: AI pilot task
+description: A small, supervised Builder → Reviewer task
+title: "[Pilot] "
+labels: ["ai-pilot"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User-visible outcome
+      description: Describe the result, not the implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Observable criterion one
+        - [ ] Observable criterion two
+        - [ ] Relevant tests pass
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk level
+      options:
+        - Low — isolated code, tests, or documentation
+        - Medium — auth, privacy, persistence, or deployment config
+        - STOP — production data, secrets, billing, purchase, or public deploy
+    validations:
+      required: true
+  - type: input
+    id: models
+    attributes:
+      label: AI model attribution
+      description: List each model expected to contribute, or "unassigned" until selected.
+      placeholder: Codex — Builder; Claude — Reviewer
+    validations:
+      required: true
+  - type: textarea
+    id: agent_roles
+    attributes:
+      label: Agent responsibilities
+      description: State who builds, reviews, tests, researches, or designs architecture.
+      placeholder: |
+        - Builder:
+        - Reviewer:
+        - QA:
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Owner-approved boundaries
+      options:
+        - label: Work must remain on an isolated branch/worktree.
+          required: true
+        - label: No production data, public deployment, purchases, or billing changes.
+          required: true
+        - label: A human must approve before merge.
+          required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Required evidence
+      value: |
+        - Changed files:
+        - Checks to run:
+        - Privacy/security checks:
+        - Rollback:
+    validations:
+      required: true

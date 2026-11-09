@@ -1,6 +1,15 @@
 # Serenity
 Foundational repository for the scalable AI infrastructure that Serenity is going to pilot. It also contains the Serenity travel app and a separate React/Firebase prototype.
 
+## AI development workflow
+
+Serenity uses a supervised Builder → Reviewer workflow with isolated branches,
+automated checks and a human merge/deployment gate. Start with
+[`AGENTS.md`](AGENTS.md), then see the [agent roles](docs/AGENT_ROLES.md),
+[architecture](docs/ARCHITECTURE.md), [task-management
+workflow](docs/TASK_MANAGEMENT.md), and [workforce foundation
+checklist](docs/AI_WORKFORCE_FOUNDATION.md).
+
 ## Projects
 
 - **Main app and local backend** — a responsive travel-sharing app with public trip posts, accounts, Clip Studio, messaging, and map-based discovery. The Python backend uses SQLite and stores local account data, databases, and uploads under `backend/data/`.

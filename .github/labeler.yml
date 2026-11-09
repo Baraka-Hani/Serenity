@@ -1,0 +1,20 @@
+contribution:docs:
+  - "**/*.md"
+
+contribution:architecture:
+  - "docs/ARCHITECTURE.md"
+  - "docs/AGENT_ROLES.md"
+  - "docs/AI_WORKFORCE_FOUNDATION.md"
+
+contribution:ci:
+  - ".github/workflows/**"
+  - ".github/labeler.yml"
+
+contribution:tests:
+  - "backend/test_*.py"
+  - "backend/test_*.js"
+
+contribution:security:
+  - "AGENTS.md"
+  - "nomad-canvas/firestore.rules"
+  - "nomad-canvas/storage.rules"
