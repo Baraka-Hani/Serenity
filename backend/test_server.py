@@ -69,6 +69,15 @@ class BackendFlow(unittest.TestCase):
             data = response.read()
             return response.status, json.loads(data) if response.headers.get_content_type() == "application/json" else data
 
+    def test_health_endpoint_is_public_minimal_and_not_cached(self):
+        request = urllib.request.Request(self.base + "/api/health")
+        with urllib.request.urlopen(request) as response:
+            payload = json.loads(response.read())
+            self.assertEqual(response.status, 200)
+            self.assertEqual(response.headers.get_content_type(), "application/json")
+            self.assertEqual(response.headers.get("Cache-Control"), "no-store")
+        self.assertEqual(payload, {"status": "ok", "service": "serenity"})
+
     def test_account_clip_and_theme_are_private(self):
         email = "traveller@example.test"
         status, data = self.call("/api/register", "POST", {"name": "Traveller", "email": email, "password": "tripPass123"})
