@@ -246,6 +246,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.valid_host(): return
         path = urlparse(self.path).path
+        if path == "/api/health":
+            return self.respond(200, {"status": "ok", "service": "serenity"})
         if path == '/api/accounts':
             return account_discovery.get(self, db)
         if path.startswith('/api/messages/'):
