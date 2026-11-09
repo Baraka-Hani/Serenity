@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f2eee4"><meta name="description" content="Published Serenity travel stories and private trip details.">
+  <title>Trip — Serenity</title><link rel="stylesheet" href="feed-view.css"><link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="trip-sidebar.css">
+</head>
+<body>
+  <header class="topbar shell"><a class="brand" href="test.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt=""><span>serenity</span></a><nav class="toplinks" aria-label="Feed navigation"><a href="app.html#feeds">All trips</a><a href="account.html#published-trips">Published trips</a><a href="account.html" id="accountLink">Account ↗</a></nav></header>
+  <main class="shell">
+    <div class="heading"><div><span class="eyebrow">Published journey</span><h1 id="tripName">Trip</h1></div><p>Watch the travel videos published to this trip. Trip details and notes remain private to their owner.</p></div>
+    <div class="mode-tabs" aria-label="Trip panels"><button type="button" data-open-panel="work" class="active">Published trip</button><button type="button" data-open-panel="chat">Private notes</button></div>
+    <p class="swipe-hint">Swipe to switch between the published trip and private notes →</p>
+    <div class="layout" id="feedLayout" data-panel="work">
+      <section class="panel work" aria-labelledby="workTitle"><div class="panel-head"><h2 id="workTitle">Published trip videos</h2><small>PUBLIC STORIES</small></div><div class="work-body"><div class="video-grid" id="feedVideos"></div><div class="empty" id="emptyVideos"><strong>No published videos for this trip yet.</strong><p>Publish a story to this trip from the Home feed.</p></div><p class="work-note">Only videos published to this trip appear here.</p><form class="details-form" id="tripDetailsForm"><h3 class="clips-title">Your private trip details</h3><div class="details-row"><label>Destination<input id="trip-destination" name="destination" maxlength="120" placeholder="Where are you going?"></label></div><label>The story<textarea id="trip-summary" name="summary" maxlength="1000" placeholder="What is this trip about?"></textarea></label><button class="upload" type="submit">Save private trip details</button></form><a class="work-note" href="app.html#feeds">Manage this trip in Clip Studio ↗</a></div></section>
+      <section class="panel chat" aria-labelledby="chatTitle"><div class="panel-head"><h2 id="chatTitle">Private notes</h2><small>ONLY YOU CAN SEE THESE</small></div><div class="notes" id="feedNotes"><div class="bubble prompt">What made this trip yours? Save places, ideas, and details here as you go.</div></div><form class="note-form" id="noteForm"><label for="noteInput" class="eyebrow" style="position:absolute;clip:rect(0,0,0,0)">Trip note</label><textarea id="noteInput" maxlength="1000" placeholder="Add a note about this trip…" required></textarea><button type="submit">Send</button></form></section>
+    </div>
+    <p class="status" id="feedStatus" role="status" aria-live="polite"></p>
+  </main>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="map-core.js"></script><script src="feed-view.js"></script><script src="trip-sidebar.js"></script><script src="liquid-toolbar.js"></script>
+</body>
+</html>

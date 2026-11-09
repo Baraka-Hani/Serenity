@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f2eee4"><meta name="description" content="Find published travel videos on the map. Watch a trip, find its destination, and go experience it.">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Map — Serenity</title>
+  <link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="travel-map.css">
+</head>
+<body>
+  <header class="map-topbar"><a href="app.html#home-feed" class="map-brand" aria-label="Serenity Home feed"><img src="serenity-logo.svg" alt="">serenity</a><span>Watch it. Find it. Go there.</span><a href="app.html#feeds">Pin your trip ↗</a></header>
+  <main class="map-experience">
+    <div id="travelMap" class="travel-map" aria-label="Map of published travel trips"></div>
+    <section class="map-explore" aria-label="Find trips on the map"><span class="map-eyebrow">The world, through their lens</span><h1>Find your<br>next somewhere.</h1><form id="mapSearch" role="search"><label class="map-sr-only" for="mapQuery">Search published trips and destinations</label><input id="mapQuery" maxlength="120" type="search" placeholder="Search trips or destinations"><button type="submit" aria-label="Find published trips">↗</button></form><div class="map-filter-actions"><button id="mapWorld" type="button">Explore worldwide</button><button id="mapRefresh" type="button">Search this area</button></div><p id="mapStatus" role="status" aria-live="polite">Loading published journeys…</p><div id="mapTrips" class="map-trip-list"></div><p class="map-privacy">Published destinations, not live locations. Pins are chosen by creators, not verified GPS tracks.</p></section>
+    <section id="mapDetail" class="map-detail" aria-label="Selected trip" hidden></section>
+  </main>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="map-core.js"></script><script src="travel-map.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
+</body>
+</html>

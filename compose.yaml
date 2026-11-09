@@ -1,0 +1,27 @@
+services:
+  serenity:
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      ROAM_HOST: 0.0.0.0
+      ROAM_PORT: 8765
+      ROAM_DATA_DIR: /data
+      ROAM_PUBLIC_ORIGIN: ${ROAM_PUBLIC_ORIGIN:?Set ROAM_PUBLIC_ORIGIN to the public HTTPS origin}
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - serenity_data:/data
+    healthcheck:
+      test:
+        - CMD
+        - python3
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/me', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  serenity_data:

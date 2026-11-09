@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#161713">
+  <meta name="description" content="Join Serenity to discover real travel videos, find the destination, and experience the place yourself.">
+  <title>Sign in — Serenity</title><link rel="stylesheet" href="liquid-toolbar.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400&display=swap');
+    :root{--ink:#161713;--paper:#f3efe5;--accent:#ff6b45;--muted:#6f706a;font-family:Manrope,system-ui,sans-serif;color:var(--ink);background:var(--paper)}*{box-sizing:border-box}body{margin:0;min-width:320px;min-height:100vh;background:radial-gradient(circle at 80% 10%,#ff6b4530,transparent 28%),var(--paper)}button,input{font:inherit}.shell{width:min(1160px,calc(100% - 40px));margin:auto}.nav{height:82px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #16171322}.brand{font-weight:700;letter-spacing:-.05em;text-decoration:none;color:inherit}.brand i{font:25px Newsreader;color:var(--accent)}.back{color:inherit;text-decoration:none;font-size:13px;opacity:.65}.layout{min-height:calc(100vh - 82px);display:grid;grid-template-columns:1fr 480px;gap:9vw;align-items:center;padding-block:60px}.story{max-width:580px}.eyebrow{font:500 11px 'DM Mono';letter-spacing:.13em;text-transform:uppercase;color:var(--accent)}h1{font-size:clamp(56px,7vw,102px);line-height:.85;letter-spacing:-.07em;margin:28px 0}h1 em{font-family:Newsreader;font-weight:400;color:var(--accent)}.story>p{font-size:18px;line-height:1.6;max-width:480px;color:var(--muted)}.trust{display:flex;gap:22px;margin-top:42px;font:10px 'DM Mono';letter-spacing:.06em;text-transform:uppercase}.trust span{display:flex;align-items:center;gap:7px}.trust i{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+    .card{background:#fff;border:1px solid #16171314;border-radius:24px;padding:34px;box-shadow:0 35px 90px #231b1217}.mode{display:grid;grid-template-columns:1fr 1fr;background:#f1eee7;border-radius:99px;padding:4px}.mode button{border:0;background:transparent;border-radius:99px;padding:10px;font-size:13px;color:#16171399}.mode button.active{background:var(--ink);color:white}.card h2{font-size:27px;letter-spacing:-.04em;margin:30px 0 7px}.sub{color:var(--muted);font-size:13px;margin:0 0 23px}.providers{display:grid;grid-template-columns:1fr 1fr;gap:9px}.provider{min-height:47px;border:1px solid #16171322;border-radius:12px;background:white;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:600;font-size:13px}.provider:hover{border-color:var(--ink)}.provider svg{width:18px;height:18px}.provider.chatgpt{grid-column:1/-1;background:var(--ink);color:white}.provider[disabled]{opacity:.5;cursor:not-allowed}.divider{display:flex;align-items:center;gap:12px;color:#16171366;font:10px 'DM Mono';margin:22px 0}.divider:before,.divider:after{content:"";height:1px;background:#16171317;flex:1}.field{display:grid;gap:7px;margin-bottom:13px}.field label{font:10px 'DM Mono';letter-spacing:.08em;text-transform:uppercase}.field input{width:100%;border:1px solid #16171322;border-radius:11px;padding:13px 14px;background:#fbfaf7;outline:none}.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #ff6b451a}.password-row{display:flex;justify-content:space-between}.password-row button{border:0;background:none;font-size:11px;text-decoration:underline}.submit{width:100%;border:0;border-radius:11px;padding:14px;background:var(--accent);color:var(--ink);font-weight:700;margin-top:5px}.submit:disabled{opacity:.55}.legal{font-size:10px;line-height:1.5;color:#16171372;text-align:center;margin:17px 12px 0}.status{display:none;border-radius:10px;padding:11px 13px;margin:15px 0 0;font-size:12px;line-height:1.45}.status.show{display:block}.status.error{background:#a41e1e12;color:#8b1717}.status.success{background:#1a7b4712;color:#12663a}.status.info{background:#135d8f12;color:#124f78}.demo{display:none;margin-bottom:15px;padding:9px 12px;border-radius:9px;background:#fff5d7;color:#6d5200;font:10px 'DM Mono';line-height:1.5}.demo.show{display:block}.account{display:none;text-align:center;padding:28px 0 8px}.account.show{display:block}.avatar{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;margin:0 auto 15px;background:var(--accent);font-size:24px;font-weight:700}.account h3{margin:0 0 4px}.account p{margin:0 0 22px;color:var(--muted);font-size:13px}.signout{border:1px solid #16171333;border-radius:10px;background:white;padding:11px 18px}.hidden{display:none!important}
+    body{background:radial-gradient(circle at 80% 10%,color-mix(in srgb,var(--accent),transparent 72%),transparent 28%),var(--paper);color:var(--ink)}
+    .card{border-color:color-mix(in srgb,var(--accent),transparent 82%)}
+    .field input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent),transparent 84%)}
+    .password-control{position:relative}
+    .password-control input{padding-right:76px}
+    .password-toggle{position:absolute;top:50%;right:8px;transform:translateY(-50%);border:0;border-radius:7px;background:transparent;padding:7px 9px;color:var(--ink);font-size:12px;font-weight:700}
+    .password-toggle:hover,.password-toggle:focus-visible{background:color-mix(in srgb,var(--accent),transparent 85%);outline:2px solid transparent}
+    .brand{display:inline-flex;align-items:center;gap:10px;font-size:18px}.brand img{width:36px;height:36px;border-radius:10px}
+    @media(max-width:850px){.layout{grid-template-columns:1fr;gap:45px}.story{padding-top:20px}.story h1{font-size:clamp(54px,15vw,82px)}.trust{flex-wrap:wrap}.card{margin-bottom:40px}}@media(max-width:500px){.shell{width:min(100% - 24px,480px)}.layout{padding-block:35px}.story>p{font-size:16px}.card{padding:24px 18px}.providers{grid-template-columns:1fr}.provider.chatgpt{grid-column:auto}.trust{display:none}}
+  </style>
+</head>
+<body>
+  <nav class="nav shell"><a class="brand" href="test.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt=""><span>serenity</span></a><a class="back" href="test.html">← Back to the canvas</a></nav>
+  <main class="layout shell">
+    <section class="story"><span class="eyebrow">From watching to travelling</span><h1>See it.<br><em>Go there.</em></h1><p>Discover published trips on the map, save the places you want to experience, and share the destinations behind your own travel videos.</p><div class="trust"><span><i></i>Your clips, your story</span><span><i></i>A profile to share</span><span><i></i>More than a camera roll</span></div></section>
+    <section class="card" aria-labelledby="authTitle">
+      <div id="authPanel">
+        <div class="mode" role="tablist"><button class="active" id="signinTab" type="button" role="tab">Sign in</button><button id="signupTab" type="button" role="tab">Create account</button></div>
+        <h2 id="authTitle">Welcome back.</h2><p class="sub" id="authSubtitle">Your next trip starts with a story.</p>
+        <div class="providers">
+          <button class="provider" data-provider="google" type="button"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2H12v3.9h5.4a4.6 4.6 0 0 1-2 3v2.5h3.3c1.9-1.8 2.9-4.4 2.9-7.4Z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.5c-.9.6-2.1 1-3.4 1a5.9 5.9 0 0 1-5.5-4.1H3.1v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.5 14a6 6 0 0 1 0-3.9V7.4H3.1a10 10 0 0 0 0 9.2L6.5 14Z"/><path fill="#EA4335" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.8A9.7 9.7 0 0 0 3.1 7.4l3.4 2.7A5.9 5.9 0 0 1 12 5.9Z"/></svg>Google</button>
+          <button class="provider" data-provider="apple" type="button"><span>●</span> Apple</button><button class="provider" data-provider="microsoft" type="button"><span>⊞</span> Microsoft</button><button class="provider" data-provider="github" type="button"><span>◉</span> GitHub</button>
+          <button class="provider chatgpt" id="chatgptButton" type="button" title="Requires approval from the Sign in with ChatGPT partner program">✦ Continue with ChatGPT <small>Partner access</small></button>
+        </div>
+        <div class="divider">OR USE EMAIL</div>
+        <form id="emailForm" novalidate><div class="field hidden" id="nameField"><label for="name">Your name</label><input id="name" name="name" autocomplete="name" maxlength="80"></div><div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" required></div><div class="field"><label for="password">Password</label><div class="password-control"><input id="password" name="password" type="password" autocomplete="current-password" required><button class="password-toggle" id="passwordToggle" type="button" aria-controls="password" aria-pressed="false" aria-label="Show password">Show</button></div></div><button class="submit" id="submitButton" type="submit">Sign in with email</button></form>
+        <div class="status" id="status" role="status" aria-live="polite"></div><p class="legal">Accounts are stored on your local Serenity server. New passwords must be 8–16 characters.</p>
+      </div>
+      <div class="account" id="accountPanel"><div class="avatar" id="avatar">R</div><h3 id="accountName">Signed in</h3><p id="accountEmail"></p><p><a class="submit" style="display:block;text-decoration:none" href="app.html">Open my studio ↗</a></p><button class="signout" id="signoutButton" type="button">Sign out</button></div>
+    </section>
+  </main>
+
+  <script src="shared-theme.js"></script>
+  <script src="auth-client.js"></script>
+  <script src="liquid-toolbar.js"></script>
+</body>
+</html>

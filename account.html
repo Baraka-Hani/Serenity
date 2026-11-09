@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
+  <meta name="description" content="Your Serenity profile and published travel videos."><title>Account — Serenity</title>
+  <link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="account.css">
+</head>
+<body>
+  <main class="account-shell" id="accountMain">
+    <header class="account-heading">
+      <a class="brand" href="app.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt=""><span>serenity</span></a>
+      <button class="settings-trigger" id="openSettings" type="button" aria-haspopup="dialog" aria-controls="settingsDrawer" aria-expanded="false">Settings <span aria-hidden="true">☷</span></button>
+    </header>
+    <section class="profile-overview" aria-labelledby="profileName">
+      <div class="profile-avatar" id="profileAvatar" aria-hidden="true">S</div>
+      <div class="profile-overview__identity">
+        <span class="eyebrow">YOUR SERENITY PROFILE</span>
+        <h1 id="profileName">Your account</h1>
+        <p id="profileUsername">@traveller</p>
+        <p id="profileBio" class="profile-bio">Your published trips, together in one place.</p>
+        <div class="profile-stat-list" aria-label="Profile statistics">
+          <span><strong id="tripCount">0</strong> trips</span><span><strong id="videoCount">0</strong> videos</span><span><strong id="savedVideoCount">0</strong> saved</span>
+        </div>
+        <div class="profile-actions">
+          <a class="action-link" id="publicProfileLink" href="auth.html?next=account" hidden>View public profile ↗</a>
+          <a class="save-theme" href="app.html#feeds">Open Clip Studio ↗</a>
+          <a class="action-link" id="identityAuthLink" href="auth.html?next=account">Sign in or create an account ↗</a>
+          <button class="action-link" id="signoutButton" type="button" hidden>Sign out</button>
+        </div>
+      </div>
+    </section>
+    <p id="accountStatus" class="account-status" role="status" aria-live="polite">Checking your account…</p>
+    <section class="published-section" id="published-trips" aria-labelledby="publishedTitle">
+      <div class="section-heading"><div><span class="eyebrow">YOUR PUBLISHED VIDEOS</span><h2 id="publishedTitle">Your trips</h2></div><span class="gallery-note">Published stories, grouped by trip</span></div>
+      <div class="account-trip-grid" id="accountTrips" aria-live="polite"></div>
+    </section>
+    <section class="published-section saved-section" id="saved-videos" aria-labelledby="savedTitle">
+      <div class="section-heading"><div><span class="eyebrow">BOOKMARKED FOR LATER</span><h2 id="savedTitle">Saved videos</h2></div><span class="gallery-note">Videos you saved from the Home feed</span></div>
+      <p class="account-status" id="savedStatus" role="status" aria-live="polite"></p>
+      <div class="account-trip-grid" id="savedTrips" aria-live="polite"></div>
+      <button class="saved-more" id="savedMore" type="button" hidden>Load more saved videos</button>
+    </section>
+  </main>
+
+  <button class="drawer-backdrop" id="settingsBackdrop" type="button" aria-label="Close settings" hidden></button>
+  <aside class="settings-drawer" id="settingsDrawer" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
+    <div class="drawer-header"><div><span class="eyebrow">MAKE IT YOURS</span><h2 id="settingsTitle">Account settings</h2></div><button id="closeSettings" class="drawer-close" type="button" aria-label="Close settings">×</button></div>
+    <section class="drawer-section profile-settings" id="profileSettings" aria-labelledby="profileSettingsTitle" hidden>
+      <h3 id="profileSettingsTitle">Profile details</h3>
+      <p class="section-copy">Your username, display name, bio, and published trips are public. Email and unpublished trips stay private.</p>
+      <form id="profileForm" class="profile-form">
+        <label>Display name<input name="name" maxlength="80" required></label>
+        <label>Username<input name="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]{3,24}" autocomplete="username" required><small>Use 3–24 letters, numbers, or underscores.</small></label>
+        <label>Profile bio<textarea name="bio" maxlength="240" rows="3" placeholder="A little about the places you love"></textarea><small>Up to 240 characters.</small></label>
+        <div class="profile-share-row"><span>Shareable account ID</span><code id="accountPublicId"></code><a id="publicProfileSettingsLink" href="profile.html">View profile ↗</a></div>
+        <div class="profile-form-actions"><p id="profileStatus" class="account-status" role="status" aria-live="polite"></p><button class="save-theme" type="submit">Save profile</button></div>
+      </form>
+    </section>
+    <section class="drawer-section" aria-labelledby="appearanceTitle">
+      <h3 id="appearanceTitle">Appearance</h3>
+      <p class="section-copy">Choose the colours used across Serenity.</p>
+      <form id="themeForm" class="theme-panel">
+        <div class="theme-presets" role="group" aria-label="Colour presets">
+          <button type="button" class="theme-preset" data-theme-preset="serenity"><i aria-hidden="true"></i><span>Serenity</span></button>
+          <button type="button" class="theme-preset" data-theme-preset="coast"><i aria-hidden="true"></i><span>Coast</span></button>
+          <button type="button" class="theme-preset" data-theme-preset="night"><i aria-hidden="true"></i><span>Night</span></button>
+        </div>
+        <div class="theme-colours">
+          <label>Accent<input name="accent" type="color" aria-label="Accent colour"></label>
+          <label>Soft<input name="soft" type="color" aria-label="Soft colour"></label>
+          <label>Background<input name="paper" type="color" aria-label="Background colour"></label>
+          <label>Text<input name="ink" type="color" aria-label="Text colour"></label>
+        </div>
+        <div class="theme-actions"><p id="themeStatus" class="theme-status" role="status" aria-live="polite">Theme is ready to customize.</p><button class="save-theme" type="submit">Save colour scheme</button></div>
+      </form>
+    </section>
+    <section class="drawer-section" aria-labelledby="usabilityTitle">
+      <h3 id="usabilityTitle">Playback & usability</h3>
+      <label class="preference-toggle"><span><strong>Autoplay videos</strong><small>Play published videos when they are in view.</small></span><input id="autoplayPreference" type="checkbox" checked></label>
+      <p class="section-copy" id="preferenceStatus" role="status" aria-live="polite">Autoplay is on for this device.</p>
+    </section>
+  </aside>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="account.js"></script><script src="liquid-toolbar.js"></script>
+</body>
+</html>

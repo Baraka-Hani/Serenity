@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
+  <meta name="theme-color" content="#f2eee4"><meta name="description" content="Private travel conversations with the people behind the videos on Serenity.">
+  <title>Chat — Serenity</title>
+  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="messages.css"><link rel="stylesheet" href="account-discovery.css">
+</head>
+<body>
+  <header class="topbar messages-shell"><a class="brand" href="app.html#home-feed" aria-label="Serenity Home feed"><img src="serenity-logo.svg" alt=""><span>serenity</span></a><a href="account.html" id="messagesAccount">Your account ↗</a></header>
+  <main class="messages-shell">
+    <div class="messages-heading"><div><span class="eyebrow">From “where is this?” to being there</span><h1>Chat<span>.</span></h1></div><p>Ask the person behind the video.<br>Make that place your next stop.</p></div>
+    <p id="messagesStatus" class="messages-status" role="status" aria-live="polite">Opening your inbox…</p>
+    <section id="messagesGate" class="messages-gate" hidden><span class="eyebrow">Your conversations, in one place</span><h2>A question is the start of a journey.</h2><p>Sign in to message a creator, ask about a trip, and pick up your conversations on any device connected to this server.</p><a id="messagesSignin" class="primary" href="auth.html?next=messages">Sign in or create an account ↗</a></section>
+    <section id="messenger" class="messenger" hidden aria-label="Private messaging">
+      <aside class="inbox" aria-label="Conversations">
+        <div class="inbox-heading"><h2>Your inbox</h2><button id="newMessage" type="button" aria-label="Start a new message" title="New message">＋</button></div>
+        <div class="messages-section-switch"><button id="discoverPeople" type="button">Find people ↗</button><button id="refreshMessages" class="messages-refresh" type="button" aria-label="Refresh messages">↻ Refresh</button></div>
+        <form id="peopleSearch" role="search"><label for="peopleQuery">Quick account lookup</label><div class="people-search"><input id="peopleQuery" type="search" maxlength="80" autocomplete="off" placeholder="Name, @username, or place"><button type="submit" aria-label="Find accounts">↗</button></div></form>
+        <p id="peopleStatus" class="muted" role="status"></p><div id="peopleResults" aria-label="Matching accounts"></div>
+        <label class="sr-only" for="inboxSearch">Filter your conversations</label><input id="inboxSearch" type="search" placeholder="Search your conversations" maxlength="100"><div id="threadList" class="thread-list"></div><button id="inboxMore" class="text-button" type="button" hidden>Load more conversations</button>
+        <p class="inbox-foot">Private messages, not public comments. Only you and the other account can access this conversation through the app.</p>
+      </aside>
+      <section class="conversation" aria-label="Selected conversation">
+        <div id="conversationEmpty" class="account-directory"><button id="directoryBack" class="text-button" type="button">‹ Back to inbox</button><section id="accountDirectory"><span class="eyebrow">Meet the people behind the places</span><h2>Find your next<br>travel perspective.</h2><p>Search a name, @username, or destination. Explore their public trips or start a private conversation.</p><form id="directoryForm" class="directory-search" role="search"><label class="sr-only" for="directoryQuery">Find accounts by name, username, or destination</label><input id="directoryQuery" type="search" maxlength="80" autocomplete="off" placeholder="Who or where inspires you?"><button type="submit">Find people ↗</button></form><p id="directoryStatus" role="status" aria-live="polite"></p><div id="directoryResults" class="account-results"></div><button id="directoryMore" class="text-button" type="button" hidden>Show more accounts ↓</button></section></div>
+        <div id="conversationContent" class="conversation-content" hidden>
+          <header class="conversation-head"><button id="backToInbox" type="button" aria-label="Back to inbox">‹</button><a id="conversationProfile" class="conversation-person"><span id="conversationAvatar" class="avatar" aria-hidden="true"></span><span><strong id="conversationName"></strong><small id="conversationUsername"></small></span></a><button id="blockAccount" class="text-button" type="button" hidden>Block</button></header>
+          <div id="messageHistory" class="message-history" tabindex="0" aria-label="Message history"><button id="olderMessages" class="text-button" type="button" hidden>Load earlier messages</button><div id="messageList"></div><p id="conversationHint" class="muted"></p></div>
+          <p id="newMessagesNotice" class="new-messages-notice" role="status" hidden>New messages below <button id="showNewMessages" type="button">Show ↓</button></p>
+          <div id="composeContext" class="compose-context" hidden><span id="composeContextLabel"></span><button id="removeContext" type="button" aria-label="Remove video reference">×</button></div>
+          <form id="messageForm" class="message-form"><label class="sr-only" for="messageBody">Your private message</label><textarea id="messageBody" rows="2" maxlength="2000" placeholder="Ask about the place, the route, the details…" required></textarea><div class="compose-actions"><small id="composeHelp">Private message · Enter to send · Shift + Enter for a new line</small><button id="sendMessage" class="primary" type="submit">Send ↗</button></div></form>
+          <p id="sendStatus" class="send-status" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+    </section>
+    <noscript>Messaging requires JavaScript and the Serenity server.</noscript>
+  </main>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="messages-client.js"></script><script src="account-discovery.js"></script><script src="messages.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
+</body>
+</html>

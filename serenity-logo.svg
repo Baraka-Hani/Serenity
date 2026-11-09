@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Serenity</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#20383b"/><stop offset="1" stop-color="#142321"/></linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffd2a0"/><stop offset="1" stop-color="#ff765b"/></linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#sky)"/>
+  <circle cx="39" cy="24" r="11" fill="url(#sun)"/>
+  <path d="M7 41c10-8 18-8 27-2 8 5 15 5 23-1" fill="none" stroke="#e9e5d9" stroke-width="4" stroke-linecap="round"/>
+  <path d="M9 50c8-5 17-5 25 0 8 5 15 4 22-1" fill="none" stroke="#a8c9be" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+</svg>

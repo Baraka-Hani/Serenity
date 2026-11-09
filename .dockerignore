@@ -1,0 +1,12 @@
+.git
+.gitignore
+.DS_Store
+.env
+.env.*
+**/__pycache__/
+*.py[cod]
+backend/data/
+backend/test-data/
+backend/tools/
+nomad-canvas/
+node_modules/

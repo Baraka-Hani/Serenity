@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
+  <meta name="description" content="Explore a traveller's public profile and published trips on Serenity."><title>Traveller profile — Serenity</title>
+  <link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="profile.css">
+</head>
+<body>
+  <main class="profile-shell">
+    <header class="profile-top">
+      <a class="brand" href="app.html#home-feed" aria-label="Serenity Home feed"><img src="serenity-logo.svg" alt=""><span>serenity</span></a>
+      <a class="profile-home-link" href="app.html#home-feed">Explore the Home feed ↗</a>
+    </header>
+    <p class="profile-status" id="profileStatus" role="status" aria-live="polite">Loading traveller profile…</p>
+    <section class="profile-card" id="profileCard" hidden aria-labelledby="profileName">
+      <div class="profile-avatar" id="profileAvatar" aria-hidden="true"></div>
+      <div class="profile-identity">
+        <span class="eyebrow">SERENITY TRAVELLER</span>
+        <h1 id="profileName"></h1>
+        <p id="profileUsername"></p>
+        <p class="profile-bio" id="profileBio"></p>
+        <span id="profileDemoBadge" class="profile-demo-badge" hidden>TEST ACCOUNT · SAMPLE CONTENT</span>
+        <a id="messageProfile" class="profile-message-link" hidden>Message traveller ↗</a>
+      </div>
+      <div class="profile-stats"><div><strong id="tripCount">0</strong><span>published trips</span></div><div><strong id="videoCount">0</strong><span>shared videos</span></div></div>
+      <div class="profile-share"><span>Shareable account ID</span><code id="publicId"></code><button id="copyProfile" type="button">Copy profile link</button></div>
+    </section>
+    <section class="profile-trips" id="profileTrips" hidden aria-labelledby="tripHeading">
+      <div class="profile-section-heading"><span class="eyebrow">PUBLIC JOURNEYS</span><h2 id="tripHeading">Trips shared with everyone.</h2></div>
+      <div class="profile-trip-grid" id="tripGrid"></div>
+    </section>
+  </main>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="profile.js"></script><script src="liquid-toolbar.js"></script>
+</body>
+</html>

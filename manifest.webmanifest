@@ -1,0 +1,32 @@
+{
+  "id": "/app.html",
+  "name": "Serenity — Travel stories",
+  "short_name": "Serenity",
+  "description": "Share travel clips, stories, and trip ideas with the Serenity community.",
+  "start_url": "/app.html#home-feed",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#f2eee4",
+  "theme_color": "#f2eee4",
+  "icons": [
+    {
+      "src": "/serenity-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/serenity-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/serenity-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
