@@ -1,0 +1,57 @@
+name: Serenity checks
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: serenity-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-and-browser-logic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Python integration checks
+        run: |
+          python3 backend/test_server.py
+          python3 backend/test_messaging.py
+          python3 backend/test_account_discovery.py
+      - name: Dependency-free JavaScript checks
+        run: |
+          node backend/test_chat_ui.js
+          node backend/test_destination_picker.js
+          node backend/test_feed_hub.js
+          node backend/test_studio_grouping.js
+          node backend/test_studio_publication.js
+
+  react-prototype:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: nomad-canvas
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        # The prototype does not yet commit a lockfile. Add one before changing
+        # this to npm ci so dependency installation becomes reproducible.
+        run: npm install --no-audit --no-fund
+      - name: Type-check and build
+        run: npm run build
