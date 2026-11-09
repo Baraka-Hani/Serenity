@@ -30,6 +30,7 @@ jobs:
           python3 backend/test_server.py
           python3 backend/test_messaging.py
           python3 backend/test_account_discovery.py
+          python3 backend/test_workday_report.py
       - name: Dependency-free JavaScript checks
         run: |
           node backend/test_chat_ui.js
