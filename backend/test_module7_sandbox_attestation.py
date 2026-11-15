@@ -1,6 +1,7 @@
 """Regression tests for bound but never automatically authoritative sandbox evidence."""
 import copy
 import hashlib
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -8,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from company.github_quality import GithubQualityReader, EvidenceBlocked
 from company.sandbox_attestation import (
     AttestationBlocked, WORKFLOW, JOB, create_claim,
     validate_claim, check_github_job,
@@ -172,6 +174,47 @@ class RunnerAttestationTests(unittest.TestCase):
         self.assertFalse(result["manager_commit_execution_authorized"])
         self.assertFalse(result["actual_runner_provenance_verified"])
         self.assertEqual(result["status"], "BLOCKED")
+
+    def test_readonly_client_fetches_real_job_and_run_endpoints(self):
+        job, run = api_records()
+        from company.github_quality import BASE_URL
+
+        class Response:
+            def __init__(self, url, payload):
+                self.url = url
+                self.payload = json.dumps(payload).encode("utf-8")
+            def __enter__(self): return self
+            def __exit__(self, *args): return False
+            def geturl(self): return self.url
+            def read(self, count): return self.payload[:count]
+
+        class Transport:
+            def __init__(self):
+                self.visited = []
+            def open(self, request, timeout):
+                self.visited.append(request.full_url)
+                data = {BASE_URL + "/actions/jobs/456": job,
+                        BASE_URL + "/actions/runs/123": run}
+                if request.full_url not in data:
+                    raise AssertionError("unexpected API URL")
+                self_holder = data[request.full_url]
+                return Response(request.full_url, self_holder)
+
+        transport = Transport()
+        reader = GithubQualityReader(transport=transport)
+        checked = reader.inspect_sandbox_job(evidence(), expected_head_sha=HEAD)
+        self.assertTrue(checked["gitHub_job_correspondence_verified"])
+        self.assertFalse(checked["manager_commit_execution_authorized"])
+        self.assertEqual(transport.visited, [
+            BASE_URL + "/actions/jobs/456", BASE_URL + "/actions/runs/123"])
+
+        transport = Transport()
+        forged = evidence()
+        forged["candidate_sha256"] = "f"*64
+        with self.assertRaises(EvidenceBlocked):
+            GithubQualityReader(transport=transport).inspect_sandbox_job(
+                forged, expected_head_sha=HEAD)
+        self.assertEqual(transport.visited, [])
 
     def test_fake_json_claim_without_github_records_rejected(self):
         with self.assertRaises(AttestationBlocked):
