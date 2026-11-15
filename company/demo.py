@@ -35,8 +35,8 @@ def simulate(db_path, vault):
                             "Sample QA note: require real passing tests before verification")
         office.shift_checkpoint("shift_2_end",
                                 "Simulated 19:00 final report: unverified task pending actual tests")
-        office.request_approval(task_id, "merge",
-                                "Illustrative only: no merge until real code and independent tests exist")
+        office.request_approval(task_id, "spending",
+                                "Illustrative new hosting budget request: owner approval required; no spending authorized")
         exported = export_vault(office, vault)
         return {"simulation": True, "task_id": task_id, "pending_approvals": 1,
                 "status": "AWAITING_REAL_TESTS", "hq": exported, "summary": office.snapshot()}
