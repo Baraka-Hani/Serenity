@@ -6,6 +6,8 @@ import json
 from pathlib import Path
 from company.office import CompanyOffice
 from company.obsidian import export_vault
+from company.manager import propose_work
+from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB = ROOT / "backend" / "data" / "serenity_company.sqlite3"
@@ -80,6 +82,10 @@ def build_parser():
     a = s.add_parser("quota-import", help="store an offline advisory quota assessment")
     a.add_argument("file", type=Path)
 
+    a = s.add_parser("plan", help="dry-run Chief of Staff task selection; no model calls")
+    a.add_argument("--quota-snapshot", type=Path, help="offline JSON quota snapshot to assess")
+    a.add_argument("--now", help="time-aware ISO-8601 timestamp for dry-run testing")
+
     a = s.add_parser("export", help="render safe generated Markdown/Canvas inside an Obsidian vault")
     a.add_argument("--vault", type=Path, required=True)
     return p
@@ -125,6 +131,15 @@ def main(argv=None):
             office.record_quota_state(result, snapshot.get("source", "unverified"),
                                       snapshot.get("observed_at", "unknown"))
             answer = result
+        elif c == "plan":
+            now = (datetime.fromisoformat(args.now.replace("Z", "+00:00"))
+                   if args.now else datetime.now(timezone.utc))
+            quotas = {}
+            if args.quota_snapshot:
+                result, _ = quota_assessment(args.quota_snapshot)
+                if result["model"]:
+                    quotas[result["model"]] = result
+            answer = propose_work(office, quotas, now=now)
         elif c == "export":
             answer = export_vault(office, args.vault)
         else:
