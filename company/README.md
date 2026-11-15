@@ -4,6 +4,23 @@ This directory contains the **persistent organizational foundation**, not a
 running swarm of AI models. It is designed to grow into a company that operates
 short cloud jobs during two five-hour shifts with a human owner.
 
+## Engineering department pilot (integrated)
+
+An [offline end-to-end engineering pipeline](ENGINEERING_DEPARTMENT.md)
+now demonstrates a synthetic issue → bounded isolated code patch → QA static
+review → department handoff → owner decision queue → Obsidian evidence.
+It does **not** execute generated source, call actual models, create a GitHub
+PR or alter product code.
+
+```bash
+python3 backend/test_engineering_pipeline.py
+python3 -m company.engineering_pipeline \
+  --task config/engineering_demo_task.json \
+  --source-root . \
+  --artifact-root /tmp/serenity-eng-evidence-new \
+  --db /tmp/serenity-eng-company.sqlite3
+```
+
 ## Commands
 
 Run from the Serenity repository root. Python 3.11+ and standard library are
