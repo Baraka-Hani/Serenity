@@ -120,6 +120,37 @@ def assess(snapshot, *, now=None):
     return base
 
 
+def plan_bounded_finish(snapshot, estimated_units, *, now=None):
+    """Advise whether an in-progress model operation fits a 25% safety margin.
+
+    Estimated usage must cover *every* active quota bucket in native units.
+    For opaque subscription allowances with no defensible unit forecast, do not
+    invent estimates: return NO or checkpoint with deterministic tools instead.
+    This never authorizes a model call.
+    """
+    now = now or datetime.now(timezone.utc)
+    status = assess(snapshot, now=now)
+    result = {"bounded_finish_recommended": False, "model_calls_authorized": False,
+              "reason": "not eligible for bounded completion"}
+    if status["state"] != "WIND_DOWN":
+        result["reason"] = "only an observed WIND_DOWN task can request finish capacity"
+        return result
+    buckets = {bucket["name"]: bucket for bucket in snapshot["limits"]}
+    if not isinstance(estimated_units, dict) or estimated_units.keys() != buckets.keys():
+        result["reason"] = "required cost estimates missing for one or more quota windows"
+        return result
+    for name, cost in estimated_units.items():
+        if isinstance(cost, bool) or not isinstance(cost, (float, int)) or not (0 <= cost < float("inf")):
+            result["reason"] = f"invalid estimated cost for {name}"
+            return result
+        if 1.25 * cost > buckets[name]["remaining"]:
+            result["reason"] = f"{name}: estimated completion exceeds 80% of remaining allowance"
+            return result
+    result["bounded_finish_recommended"] = True
+    result["reason"] = "conservative estimate fits all observed remaining quotas; owner/provider authorization is separate"
+    return result
+
+
 def can_resume(previous, refreshed, *, now=None):
     """Require an actual refreshed quota window, not simply 5 elapsed hours.
 
