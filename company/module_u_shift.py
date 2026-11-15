@@ -107,8 +107,10 @@ def shift_markdown(report):
             f"- {md(role)} ({md(row['model'])}): "
             f"{md(row['quota_state'])}, source {md(row['source'])} — "
             f"{md(row['reason'])}")
-    if not report.get("roles"):
-        lines.append("_No account quota observations provided._")
+    if not report.get("roles") or not any(
+            row.get("source") == "account_usage_manual"
+            for row in report.get("roles", {}).values()):
+        lines.append("_No account quota observations verified; all new tasks remain blocked._")
     lines.extend([
         "", "The 09:00–14:00 and 14:00–19:00 Atlantic shifts are organizational, "
         "not provider quota-reset periods. No new task at or above 90% "
