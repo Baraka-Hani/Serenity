@@ -82,6 +82,16 @@ def fixed_command(workspace, *, image_digest):
     space = Path(workspace)
     if space.is_symlink() or not space.is_dir():
         raise SandboxBlocked("invalid sandbox work directory")
+    # Docker's --mount uses comma-separated options. A comma/colon/newline
+    # inside a caller-provided workspace could add an unintended host mount.
+    # The workspace is newly created with a narrow syntax and no symlink
+    # parents before Docker ever receives this option.
+    resolved = space.resolve(strict=True)
+    if (not resolved.is_absolute()
+            or not re.fullmatch(r"/[A-Za-z0-9_./-]+", str(resolved))
+            or any(part in (".", "..") for part in resolved.parts)
+            or any(parent.is_symlink() for parent in (resolved, *resolved.parents))):
+        raise SandboxBlocked("unsafe Docker mount source path")
     # No user-selected program or arguments. Read-only root and workspace.
     return [
         "docker", "run", "--rm", "--pull=never",
@@ -91,7 +101,7 @@ def fixed_command(workspace, *, image_digest):
         "--memory=256m", "--memory-swap=256m", "--cpus=1",
         "--tmpfs=/tmp:rw,noexec,nosuid,size=12m,mode=1777",
         "--workdir=/workspace",
-        "--mount", "type=bind,src=" + str(space.resolve()) +
+        "--mount", "type=bind,src=" + str(resolved) +
                    ",dst=/workspace,readonly",
         image_digest, "node", TEST_TARGET,
     ]
@@ -109,6 +119,13 @@ def run_manual_sandbox(repo_root, candidate_path, workspace, *,
     if (owner_approved_sandbox is not True or
             os.environ.get("SERENITY_SANDBOX_MANUAL") != "true"):
         raise SandboxBlocked("sandbox execution is disabled pending authorization")
+    # Matching a syntactically valid digest is not approval of its content.
+    # The owner/admin must separately review and pin the exact image digest
+    # in a tightly scoped runner configuration. No default/auto pull.
+    if (not isinstance(approved_image_digest, str)
+            or not IMAGE_PATTERN.fullmatch(approved_image_digest)
+            or os.environ.get("SERENITY_APPROVED_NODE_IMAGE") != approved_image_digest):
+        raise SandboxBlocked("reviewed exact Node image digest not authorized")
     prepared = prepare_workspace(repo_root, candidate_path, workspace,
                                  expected_candidate_sha256=candidate_sha256)
     command = fixed_command(prepared["workspace"], image_digest=approved_image_digest)
