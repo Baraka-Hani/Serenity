@@ -14,6 +14,7 @@ from company.checkpoint_store import load_local
 
 SOURCE = "backend/test_destination_picker.js"
 MANIFEST = "config/module4_destination_task.json"
+PREFLIGHT_INPUTS = ("destination-picker.js", ".github/workflows/serenity-candidate-sandbox.yml")
 
 
 class TechnicalBriefTests(unittest.TestCase):
@@ -22,7 +23,7 @@ class TechnicalBriefTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.src = self.root / "checkout"
-        for name in (SOURCE, MANIFEST):
+        for name in (SOURCE, MANIFEST, *PREFLIGHT_INPUTS):
             dest = self.src / name
             dest.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / name, dest)
@@ -46,6 +47,11 @@ class TechnicalBriefTests(unittest.TestCase):
         self.assertTrue((vault/"Operations/Shift Board.md").exists())
         self.assertTrue((vault/"Tasks/task-1.md").exists())
         self.assertTrue((self.out/"READINESS.md").exists())
+        self.assertEqual(result["sandbox_preflight"]["status"],
+                         "BLOCKED_OWNER_IMAGE_AND_RUN_AUTHORIZATION")
+        self.assertTrue((self.out/"sandbox-preflight.json").exists())
+        self.assertIn("Module T", (vault/"Command Centre.md").read_text())
+        self.assertTrue((vault/"Operations/Sandbox Preflight.md").exists())
         self.assertIn("MOCK", (self.out/"READINESS.md").read_text().upper())
         expected = json.loads((self.out/"technical-readiness.json").read_text())
         self.assertEqual(expected["readiness"], result["readiness"])
