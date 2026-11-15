@@ -234,9 +234,21 @@ to weaken any of these constraints.
 8. Complete an actual Serenity candidate through real model review, sandbox
    functional tests, CI, manager PR, and end-to-end user journey regression.
 
+## Travel-app architecture contracts
+
+`company/architecture_contracts.py` adds read-only tests for Serenity's real
+first-party destination-picker API, zero-coordinate handling, local Python
+backend binding, and the separate React/Firebase prototype boundary. They
+protect the intended product architecture against accidental replacement,
+but are **static smoke checks**, not end-to-end privacy or deployment
+assurance. GitHub CI runs a dedicated `module5-privacy-and-architecture`
+job so review evidence can identify this narrow category separately.
+
 ## Next module
 
 **Module 6 — Trusted Integration and Serenity MVP Delivery.**
 Goal: owner-approved isolated *real* low-risk test candidate and verified
 manager PR pilot, plus product-level video → destination save → private map
 → planning integration checks. Protect privacy and deployment boundaries.
+
+Tracked in [Module 6 issue #26](https://github.com/Baraka-Hani/Serenity/issues/26).
