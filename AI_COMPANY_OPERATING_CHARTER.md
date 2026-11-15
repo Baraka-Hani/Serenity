@@ -13,6 +13,10 @@ A planning guideline is 80% product development and 20% internal systems improve
 
 Target operating hours are **two consecutive five-hour shifts every calendar day, including weekends**, in **America/Moncton**: Shift 1 **9:00 AM–2:00 PM** and Shift 2 **2:00 PM–7:00 PM** (10 total operating hours per day). At 9 AM the manager restores checkpoints and the approved backlog. At 2 PM it logs a handoff, checkpoints unfinished work, and prepares the second shift to resume without duplication. At 7 PM it checkpoints progress and produces an evidence-backed executive report. Shift windows are coordination targets, not guarantees of continuous model inference, subscription usage resets, or free hosted capacity. Work may pause for quota or policy limits. The workforce should be able to continue within preapproved boundaries when the owner is unavailable.
 
+### Model-capacity shift policy (90% wind-down)
+
+The five-hour shifts are **organizational windows, not quota reset triggers**. Every model has its own applicable five-hour, weekly, daily or minute limits. As soon as any verified quota window reaches **90% consumed**, the manager stops allocating new work to that model and uses any safe remaining allowance only to complete bounded in-flight work, run checks, and document a checkpoint. At exhaustion or insufficient reliable quota telemetry, suspend new model calls. Restart paused model work **only after verified refreshed allowance in a new quota window and sufficient remaining capacity in every other applicable window**; elapsed clock time alone is not evidence. Preserve unfinished tasks first and never buy credits, change accounts, or bypass provider limits. The policy and its dry-run evaluator are specified in [docs/QUOTA_AWARE_SHIFTS.md](docs/QUOTA_AWARE_SHIFTS.md). The schedule is read-only and default-off until owner activation.
+
 **Important:** This document does not activate agents. The existing supervised scheduling workflow is default-off and currently generates read-only reports, not autonomous coding.
 
 ## Finish-first policy
