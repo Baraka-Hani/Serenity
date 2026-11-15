@@ -78,7 +78,12 @@ acceptance criteria, and evidence format when comparing models later.
 - No automatic merge, production deployment, credential changes or spending.
 
 These are scheduled coordination windows, not guaranteed continuous model work
-or guaranteed resetting of subscription five-hour usage limits.
+or guaranteed resetting of subscription five-hour usage limits. At **90% used**
+on any applicable verified model quota, wind down new work and preserve a
+bounded completion reserve. If telemetry is missing or stale, pause model
+calls. Resume only after a new verified quota window with sufficient remaining
+capacity in *all* applicable quotas. The rules and simulation tests are in
+[QUOTA_AWARE_SHIFTS.md](QUOTA_AWARE_SHIFTS.md).
 
 ## Daily report template
 
