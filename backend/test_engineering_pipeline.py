@@ -42,7 +42,10 @@ class EngineeringPipelineTests(unittest.TestCase):
             report = run_offline(
                 self.manifest, source_root=self.root, artifact_root=self.artifact,
                 db_path=self.db)
-        self.assertEqual(report["status"], "SIMULATED_REVIEW_PENDING_OWNER")
+        self.assertEqual(report["status"], "SIMULATED_PENDING_FULL_QA")
+        self.assertFalse(report["manager_commit_authorized"])
+        self.assertFalse(report["owner_decision_required"])
+        self.assertEqual(report["manager_quality_gate"]["status"], "BLOCKED")
         self.assertEqual(report["model_requests"], 0)
         self.assertFalse(report["model_execution_authorized"])
         self.assertFalse(report["github_repository_writes"])
@@ -59,8 +62,8 @@ class EngineeringPipelineTests(unittest.TestCase):
         try:
             self.assertEqual(len(office.rows("engineering_runs")), 1)
             self.assertEqual(len(office.rows("messages")), 2)
-            self.assertEqual(len(office.rows("approvals")), 1)
-            self.assertEqual(office.rows("tasks")[0]["state"], "AWAITING_OWNER_ACTION")
+            self.assertEqual(len(office.rows("approvals")), 0)
+            self.assertEqual(office.rows("tasks")[0]["state"], "IN_REVIEW")
             self.assertTrue(office.rows("messages")[0]["acknowledged"])
             self.assertFalse(office.snapshot()["execution_enabled"])
         finally:
@@ -76,7 +79,7 @@ class EngineeringPipelineTests(unittest.TestCase):
         try:
             self.assertEqual(len(office.rows("engineering_runs")), 1)
             self.assertEqual(len(office.rows("tasks")), 1)
-            self.assertEqual(len(office.rows("approvals")), 1)
+            self.assertEqual(len(office.rows("approvals")), 0)
             self.assertEqual(len(office.rows("messages")), 2)
         finally:
             office.close()
@@ -185,7 +188,7 @@ class EngineeringPipelineTests(unittest.TestCase):
         self.assertEqual(done.returncode, 0, done.stderr)
         data = json.loads(done.stdout)
         self.assertEqual(data["model_requests"], 0)
-        self.assertEqual(data["status"], "SIMULATED_REVIEW_PENDING_OWNER")
+        self.assertEqual(data["status"], "SIMULATED_PENDING_FULL_QA")
         self.assertEqual(data["provider_cost_usd"], 0)
 
 
