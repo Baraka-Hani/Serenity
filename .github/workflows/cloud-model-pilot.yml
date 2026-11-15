@@ -1,0 +1,66 @@
+name: Serenity manual cloud-model pilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Offline simulation, or owner-approved single live synthetic request
+        required: true
+        default: mock
+        type: choice
+        options:
+          - mock
+          - live
+      role:
+        description: Select one model; each invocation makes at most one provider call
+        required: true
+        default: builder
+        type: choice
+        options:
+          - builder
+          - reviewer
+
+permissions:
+  contents: read
+
+concurrency:
+  group: serenity-manual-cloud-pilot
+  cancel-in-progress: false
+
+jobs:
+  pilot:
+    # Only the trusted default branch may access live test secrets.
+    if: github.ref == 'refs/heads/main' && (inputs.mode == 'mock' || vars.SERENITY_CLOUD_PILOT_ENABLED == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify offline safety tests
+        run: |
+          python3 backend/test_free_model_plan.py
+          python3 backend/test_cloud_model_pilot.py
+      - name: Simulate model proposal (no network)
+        if: inputs.mode == 'mock'
+        env:
+          ROLE: ${{ inputs.role }}
+        run: python3 tools/cloud_model_pilot.py --mode mock --role "$ROLE" --output cloud-model-report.json
+      - name: One owner-approved synthetic live request
+        if: inputs.mode == 'live' && vars.SERENITY_CLOUD_PILOT_ENABLED == 'true' && vars.SERENITY_GROQ_FREE_VERIFIED == 'true'
+        env:
+          ROLE: ${{ inputs.role }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          SERENITY_PILOT_APPROVED: ${{ vars.SERENITY_CLOUD_PILOT_ENABLED }}
+          SERENITY_GROQ_FREE_VERIFIED: ${{ vars.SERENITY_GROQ_FREE_VERIFIED }}
+        run: python3 tools/cloud_model_pilot.py --mode live --role "$ROLE" --output cloud-model-report.json
+      - name: Verify report exists
+        run: test -s cloud-model-report.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: serenity-synthetic-${{ inputs.role }}-${{ inputs.mode }}
+          path: cloud-model-report.json
+          retention-days: 7
