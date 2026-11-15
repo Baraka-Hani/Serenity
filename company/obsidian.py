@@ -37,7 +37,7 @@ def export_vault(office, base_directory):
     if out.is_symlink():
         raise ValueError("refusing symbolic-link HQ output")
     out.mkdir(exist_ok=True)
-    for folder in ("Departments", "Agents", "Tasks", "Messages"):
+    for folder in ("Departments", "Agents", "Tasks", "Messages", "Engineering"):
         sub = out / folder
         if sub.is_symlink():
             raise ValueError("refusing symbolic-link department directory")
@@ -47,6 +47,8 @@ def export_vault(office, base_directory):
     approvals = office.rows("approvals")
     events = office.rows("events")
     quota = office.rows("quota_snapshots")
+    engineering_runs = office.rows("engineering_runs")
+    manager_checks = office.rows("manager_quality_checks")
     snapshot = office.snapshot()
     summary = [
         "# Serenity HQ — Command Centre",
@@ -96,6 +98,49 @@ def export_vault(office, base_directory):
         _safe_write(out / "Tasks", f"task-{task['id']}.md", "\n".join(lines) + "\n")
     if not tasks:
         summary.append("_No tasks have been created. This is not an active workforce._")
+    summary.extend(["", "## Engineering Evidence", ""])
+    if not engineering_runs:
+        summary.append("_No engineering runs recorded._")
+    for run in engineering_runs:
+        evidence = json.loads(run["report_json"])
+        summary.append(
+            f"- [[Engineering/run-{run['id']}|Run #{run['id']}]] — "
+            f"{md(run['status'])}; task #{run['task_id']}; "
+            f"model requests: {evidence['model_requests']} (offline simulation)"
+        )
+        details = [
+            f"# Engineering Run #{run['id']}",
+            "",
+            "> Offline demonstration. NOT a live model run, functional test, or GitHub PR.",
+            "",
+            f"- Task: [[../Tasks/task-{run['task_id']}]]",
+            f"- Status: **{md(run['status'])}**",
+            f"- Build source: {md(evidence['builder_actual'])}",
+            f"- QA source: {md(evidence['reviewer_actual'])}",
+            f"- Future intended Builder: {md(evidence['future_models']['builder'])}",
+            f"- Future intended Reviewer: {md(evidence['future_models']['reviewer'])}",
+            f"- Source SHA-256: {md(evidence['original_sha256'])}",
+            f"- Proposal SHA-256: {md(evidence['proposed_sha256'])}",
+            "- Functional tests executed: **NO**",
+            "- GitHub repository writes: **NO**",
+            "- Provider model requests: **0**",
+            "- Owner review: **REQUIRED**",
+            "",
+            "## Evidence checkpoints",
+            "",
+        ]
+        for check in evidence.get("checks", []):
+            details.append("- " + md(check))
+        _safe_write(out / "Engineering", "run-" + str(run["id"]) + ".md",
+                    "\n".join(details) + "\n")
+    summary.extend(["", "## Engineering Manager Quality Decisions", ""])
+    if not manager_checks:
+        summary.append("_No verified manager quality decisions._")
+    for check in manager_checks[-15:]:
+        summary.append(
+            f"- #{check['id']} task [[Tasks/task-{check['task_id']}]]: "
+            f"{md(check['action'])} — **{md(check['decision'])}** "
+            "(advisory; does not execute a GitHub commit)")
     summary.extend(["", "## Owner Approval Queue", ""])
     for approval in approvals:
         if approval["state"] == "PENDING":
@@ -113,6 +158,13 @@ def export_vault(office, base_directory):
     if not quota:
         summary.append("_No verified provider usage has been connected._")
     _safe_write(out, "Command Centre.md", "\n".join(summary) + "\n")
+    _safe_write(out, "Manager Quality Gates.md",
+                "# Manager Quality Gates\n\n"
+                "> These checks are advisory; real CI and reviewer evidence are not trusted merely because JSON says pass.\n\n"
+                + "\n".join(
+                    f"- #{g['id']} Task [[Tasks/task-{g['task_id']}]] "
+                    f"{md(g['action'])}: **{md(g['decision'])}**"
+                    for g in manager_checks) + "\n")
     _safe_write(out, "Owner Approvals.md",
                 "# Owner Approvals\n\n" + "\n".join(
                     f"- #{a['id']}: {md(a['action'])} / task #{a['task_id']} — {md(a['state'])}: {md(a['explanation'])}"

@@ -38,7 +38,8 @@
     "can_handle_private_user_data": false,
     "planning_token_budget_per_model_per_workday": 60000,
     "maximum_prompt_characters": 12000,
-    "maximum_output_tokens_per_request": 1000
+    "maximum_output_tokens_per_request": 1000,
+    "require_human_review_comment": "Current initial synthetic cloud pilot only; future approved routine code uses independent manager+QA quality gate, not per-commit owner signoff"
   },
   "models": [
     {
@@ -79,5 +80,61 @@
       "owner_activation_approved"
     ],
     "workday_timezone": "America/Moncton"
+  },
+  "premium_quality_review": {
+    "status": "planning_only_no_api_execution",
+    "purpose": "Use included consumer subscription allowances for high-value integration/architecture reviews without artificial token consumption",
+    "wind_down_percent_used": 90,
+    "routing_priority": [
+      {
+        "work": "cross_module_architecture_and_critical_backend",
+        "reviewer": "chatgpt_plus_codex",
+        "fallback": "owner-led review queue"
+      },
+      {
+        "work": "frontend_integration_mobile_ui_accessibility",
+        "reviewer": "google_ai_plus_supported_ui",
+        "fallback": "owner-led review queue"
+      },
+      {
+        "work": "high_risk_or_uncertain_integration",
+        "reviewer": "both_in_separate_independent_sessions",
+        "fallback": "manual specialist review"
+      }
+    ],
+    "resources": {
+      "chatgpt_plus_codex": {
+        "mode": "human_initiated_supported_interface_only",
+        "autonomous_api_entitlement_assumed": false,
+        "five_hour_usage_window": "account_specific_verify_in_settings",
+        "weekly_usage_window": "account_specific_verify_in_settings",
+        "focus": [
+          "architecture_contracts",
+          "difficult_debugging",
+          "critical_regression_review",
+          "security_and_privacy_escalation"
+        ]
+      },
+      "google_ai_plus_supported_ui": {
+        "mode": "human_initiated_supported_interface_only",
+        "autonomous_api_entitlement_assumed": false,
+        "five_hour_refresh_assumed": false,
+        "usage_policy": "AI Plus Antigravity baseline primarily weekly; verify actual product plan and usage meter",
+        "focus": [
+          "frontend_and_mobile_integration",
+          "UI_accessibility",
+          "second_independent_review",
+          "integration_test_design"
+        ]
+      }
+    },
+    "goals": [
+      "purposeful_features",
+      "stable_cross_module_interfaces",
+      "actual_green_tests",
+      "independent_quality_assurance",
+      "accepted_changes_per_eligible_credit"
+    ],
+    "when_exhausted": "checkpoint_and_resume_on_verified_reset; never buy credits or switch accounts without owner authorization"
   }
 }

@@ -85,7 +85,7 @@ Develop a *separate* low-risk patch worker that reads an approved GitHub Issue, 
 | --- | --- | --- |
 | Engineering | Qwen3.8-27B | Synthetic code proposal; later an approved small helper |
 | Quality Assurance | GPT-OSS-120B | Independent first-pass critique |
-| Executive | GitHub issue backlog and owner | Task approval, merge decisions |
+| Executive | GitHub issue backlog, managers and owner | Managers handle verified routine commits; owner handles finance and high-impact decisions |
 | Operations | Existing read-only workday scheduler | Reporting (default-off) |
 | Architecture and security escalation | ChatGPT Plus / Gemini (interactive) | Human-reviewed decisions only |
 
@@ -98,7 +98,7 @@ An Obsidian HQ view can be generated later from GitHub issues, PRs, and structur
 - [x] Manual synthetic cloud-model script and tests proposed (PR #10)
 - [x] Manual GitHub Actions workflow proposed (PR #10)
 - [ ] GitHub CI confirms all checks
-- [ ] Owner reviews and separately approves merge
+- [ ] Current draft foundation requires review before merge; future routine code merges can be manager-delegated only after trusted safeguards are verified and enabled
 - [ ] Mock workflow runs on default branch
 - [ ] Eligible owner/admin verifies free account, quota, terms and GitHub usage
 - [ ] Owner authorizes secret and manual live-test variables, if applicable

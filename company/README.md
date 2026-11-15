@@ -4,6 +4,46 @@ This directory contains the **persistent organizational foundation**, not a
 running swarm of AI models. It is designed to grow into a company that operates
 short cloud jobs during two five-hour shifts with a human owner.
 
+## Engineering department pilot (integrated)
+
+An [offline end-to-end engineering pipeline](ENGINEERING_DEPARTMENT.md)
+now demonstrates a synthetic issue → bounded isolated code patch → QA static
+review → department handoff → owner decision queue → Obsidian evidence.
+It does **not** execute generated source, call actual models, create a GitHub
+PR or alter product code.
+
+```bash
+python3 backend/test_engineering_pipeline.py
+python3 -m company.engineering_pipeline \
+  --task config/engineering_demo_task.json \
+  --source-root . \
+  --artifact-root /tmp/serenity-eng-evidence-new \
+  --db /tmp/serenity-eng-company.sqlite3
+```
+
+## Manager QA evidence and authority
+
+The [quality-first policy](../docs/DELEGATED_ENGINEERING_AUTHORITY.md)
+permits managers to commit validated routine changes **after actual**
+independent QA and CI. The current gate evaluates proposed evidence and logs
+its decision in the company ledger; it does **not** push code.
+
+An intentionally incomplete sample must return `BLOCKED`:
+
+```bash
+python3 -m company.cli --db /tmp/serenity-policy-demo.sqlite3 new \
+  "Demo routine task" --department engineering --risk low \
+  --acceptance "Passing integration tests and independent review"
+python3 -m company.cli --db /tmp/serenity-policy-demo.sqlite3 manager-gate 1 \
+  --evidence config/manager_quality_example.json
+python3 -m company.cli --db /tmp/serenity-policy-demo.sqlite3 \
+  manager_quality_checks
+```
+
+The Obsidian export includes `Serenity HQ/Manager Quality Gates.md`.
+No fabricated CI pass, quota snapshot or premium-model review may authorize a
+commit. New spending or high-impact production permissions remain owner-only.
+
 ## Commands
 
 Run from the Serenity repository root. Python 3.11+ and standard library are
@@ -66,7 +106,7 @@ python3 backend/test_company_manager.py
 ```
 
 The simulation covers task intake, an Engineering→QA message, acknowledgement,
-14:00 checkpoint, a second-shift operations event, and pending owner approval.
+14:00 checkpoint, a second-shift operations event, and an illustrative owner financial approval.
 Sample activity is marked as **simulated**, not actual work.
 
 ### 6. Read real GitHub issues (optional manual action)
@@ -118,5 +158,4 @@ The full phased business and product program is in
 GitHub [company epic #13](https://github.com/Baraka-Hani/Serenity/issues/13)
 tracks dependencies and departmental assignments.
 
-**Owner boundaries:** never merge, deploy, enable billing, provision secrets,
-publish, or modify production data without a specific owner approval.
+**Delegated manager policy:** routine branch commits and draft PRs can be manager-approved after verifiable tests, independent QA and architectural alignment. Low-risk protected-branch merges additionally need enforced GitHub rules and actual CI evidence. The currently running demo does not write GitHub. The owner retains approval of financial exposure, credentials/access, production or public releases, production data and material security/privacy changes. See [delegated authority](../docs/DELEGATED_ENGINEERING_AUTHORITY.md).

@@ -77,7 +77,7 @@ The task manager must:
 5. on a reset, observe a **new provider window** with refreshed allowance and check all other active quotas; compare to the prior checkpoint;
 6. resume the previous unfinished task before assigning new work; avoid duplicate external side effects;
 7. record model-attributed time and token/usage evidence to GitHub/Obsidian later, without private data;
-8. keep every merge, deployment, new credentials, spending, publication and production edit human-approved.
+8. allow independently verified routine low-risk branch commits and, after trusted branch rules and CI enforcement are activated, qualifying protected merges to be manager-approved; reserve owner approval for financial exposure, credentials/access, public deployment, production data, material privacy/security risks and strategic changes. See [delegated engineering policy](DELEGATED_ENGINEERING_AUTHORITY.md).
 
 **Use provider-specific adapters** in future. A manual observation can inform a human, but it is **not sufficient to authorize an unattended background runner**. Do not run model calls using a personal ChatGPT/Gemini subscription by borrowing browser cookies or undocumented endpoints. For Groq, approved API credentials and response headers are the intended path, subject to account eligibility and free-tier limits.
 

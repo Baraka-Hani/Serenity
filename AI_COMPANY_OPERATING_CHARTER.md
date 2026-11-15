@@ -1,6 +1,6 @@
 # Serenity AI Company Operating Charter
 
-**Version:** 1.1 — 2026-11-14  
+**Version:** 1.2 — 2026-11-14  
 **Status:** Owner-approved operating policy; implementation of autonomous execution remains subject to verification and activation.
 
 ## Mission
@@ -48,11 +48,39 @@ New billing, paid APIs, subscriptions, purchases, material financial commitments
 
 **A blocked financial decision pauses only the affected task, not the workforce.** Save progress, place the request in an approval queue, and work on another authorized task. If no eligible work exists, prepare no-cost proposals. Silence is not approval.
 
-## Other permission boundaries
+## Quality-first engineering delegation
 
-Agents may independently conduct research, propose issues, edit code/docs/tests in isolated workspaces, and run safe local checks. Internal workflow changes require tests, review, logging, and rollback within an already approved scope.
+The owner's normal involvement is **financial, strategic and material
+production/security authority**, not approving each ordinary commit.
+Engineering Managers may approve routine, low-risk feature-branch commits
+and draft pull requests when all relevant automated tests, independent QA,
+architecture/interface alignment, mission criteria and rollback checks are
+genuinely verified. Unverified model claims are not evidence of passing tests.
 
-**Owner approval is required** for protected/default-branch changes and merges, deployments, production data changes, destructive actions, external communications/publication, credential or access changes, billing changes, strategic pivots, and unapproved spending. Existing `AGENTS.md` rules remain authoritative; when rules conflict, apply the stricter rule until the owner resolves it.
+Protected-branch low-risk merges may eventually be delegated **only after**
+trusted head-SHA CI and reviewer evidence, enforced branch rules, independent
+integration smoke tests and a permission-scoped, auditable manager executor
+are implemented and separately activated. No such automatic execution
+is enabled today. Medium-risk changes require specialist Architecture and
+QA review; sensitive credentials/authentication, private locations, payments,
+production data, public deployments, privacy decisions and strategic changes
+retain owner gates as appropriate.
+
+**Owner approval is always required** for new financial commitments,
+usage overages, vendor/subscription additions and spending beyond an exact
+approved budget. Owner approval is also required for enabling new
+production/credential access, public deployment/publication and material
+high-impact security or privacy changes. Don't block unaffected engineering
+teams while waiting on an owner decision.
+
+Every change must be purposeful, integrated and verifiable; **open-weight
+coding receives the same quality bar as premium-model coding**. Evaluate
+success by accepted tested user value, regression rates, end-to-end behavior,
+design consistency and maintainability, rather than code volume or exhausting
+credits for its own sake. The detailed rule is
+[docs/DELEGATED_ENGINEERING_AUTHORITY.md](docs/DELEGATED_ENGINEERING_AUTHORITY.md).
+Versioned `AGENTS.md` and this charter establish the policy; future manager
+commit/merge permissions still require independent technical safeguards.
 
 ## Durable task state
 
@@ -66,7 +94,7 @@ Maintain three auditable stores: **project memory** (architecture, code, decisio
 
 ## Daily executive report
 
-At 7 PM report: verified completions with links and test evidence; ongoing/checkpointed tasks; newly discovered opportunities; priority changes; blockers; pending individual and aggregate financial approvals; authorized spending against budget; incidents and failures; and next-day plans. Clearly distinguish proposed, built, reviewed, merged, and deployed.
+At 7 PM report: verified completions with links and test evidence; ongoing/checkpointed tasks; independently approved routine branch commits/merges; newly discovered opportunities; priority changes; blockers; pending financial/high-impact owner approvals; authorized spending against budget; incidents and failures; and next-day plans. Clearly distinguish proposed, built, tested, reviewed, committed, merged, and deployed. Avoid flooding the owner with individual routine commit approvals.
 
 ## Implementation roadmap
 
@@ -76,7 +104,12 @@ At 7 PM report: verified completions with links and test evidence; ongoing/check
 4. Add checkpoint/recovery and approval-blocked task switching.
 5. Implement auditable spending controls and bulk approval interface, defaulting to zero spend.
 6. Test safe 9 AM intake, 2 PM handoff, 7 PM reporting, emergency stop, seven-day timezone behavior, and unattended recovery.
-7. Activate autonomous execution only after explicit owner authorization and verified safeguards; then consider LangGraph, LiteLLM, Langfuse, and more agents as needed.
+7. Add a trusted CI/reviewer/head-SHA quality gate so a manager can commit
+   or merge eligible routine code without owner intervention, but never
+   self-authorize new privileges, financial exposure or production deployment.
+8. Activate autonomous execution only after separately approved credentials,
+   provider terms, budget controls and verified safeguards; then consider
+   LangGraph, LiteLLM, Langfuse, and more agents as needed.
 
 ## Governance
 

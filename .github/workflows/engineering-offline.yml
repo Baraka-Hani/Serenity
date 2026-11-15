@@ -1,0 +1,51 @@
+name: Serenity Engineering — offline department review
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: serenity-engineering-manual-simulation
+  cancel-in-progress: false
+
+jobs:
+  engineering-demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Offline engineering safety tests
+        run: |
+          python3 backend/test_engineering_pipeline.py
+          python3 backend/test_company_office.py
+          python3 backend/test_company_manager.py
+      - name: Simulate issue to patch to review and Obsidian HQ
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          unset GROQ_API_KEY OPENAI_API_KEY GEMINI_API_KEY ANTHROPIC_API_KEY
+          python3 -m company.engineering_pipeline \
+            --task config/engineering_demo_task.json \
+            --source-root . \
+            --artifact-root "$RUNNER_TEMP/engineering-review" \
+            --db "$RUNNER_TEMP/company-engineering.sqlite3" \
+            > "$RUNNER_TEMP/engineering-summary.json"
+          python3 -m json.tool "$RUNNER_TEMP/engineering-summary.json" > /dev/null
+          test -s "$RUNNER_TEMP/engineering-review/proposed.patch"
+          test -s "$RUNNER_TEMP/engineering-review/qa-review.json"
+          test -s "$RUNNER_TEMP/engineering-review/obsidian-vault/Serenity HQ/Command Centre.md"
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"engineering-summary.json"; x=json.loads(p.read_text()); assert x["model_requests"]==0 and not x["github_repository_writes"] and x["owner_decision_required"]'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: serenity-engineering-offline-evidence
+          path: |
+            ${{ runner.temp }}/engineering-review/
+            ${{ runner.temp }}/engineering-summary.json
+          retention-days: 7
