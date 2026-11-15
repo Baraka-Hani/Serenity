@@ -1,0 +1,58 @@
+name: Serenity reviewed Node sandbox smoke
+
+# Explicit manual opt-in only. This workflow is not a scheduled AI agent.
+# Default OFF until a repository owner reviews the image digest and enables
+# the named repository variables on a protected main branch.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: serenity-reviewed-sandbox-manual
+  cancel-in-progress: false
+
+jobs:
+  module5-candidate-sandbox:
+    if: ${{ github.repository == 'Baraka-Hani/Serenity' && github.ref == 'refs/heads/main' && vars.SERENITY_SANDBOX_OWNER_APPROVED == 'true' && vars.SERENITY_APPROVED_NODE_IMAGE != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Check out reviewed default-branch source only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify manually approved official pinned image
+        env:
+          IMAGE: ${{ vars.SERENITY_APPROVED_NODE_IMAGE }}
+        run: |
+          python3 - <<'PY'
+          import os, re
+          approved = os.environ.get("IMAGE", "")
+          pattern = r"^docker\.io/library/node:22-bookworm-slim@sha256:[a-f0-9]{64}$"
+          assert re.fullmatch(pattern, approved), "owner-reviewed Node 22 image digest required"
+          PY
+      - name: Preload the approved image by exact digest
+        env:
+          IMAGE: ${{ vars.SERENITY_APPROVED_NODE_IMAGE }}
+        run: |
+          docker pull "$IMAGE"
+          docker image inspect "$IMAGE" > /dev/null
+      - name: Execute isolated test in network-off Docker
+        env:
+          SERENITY_SANDBOX_MANUAL: 'true'
+          SERENITY_APPROVED_NODE_IMAGE: ${{ vars.SERENITY_APPROVED_NODE_IMAGE }}
+        run: |
+          python3 -m company.sandbox_smoke \
+            --source-root . \
+            --output "$RUNNER_TEMP/serenity-reviewed-smoke"
+          test -s "$RUNNER_TEMP/serenity-reviewed-smoke/sandbox-smoke.json"
+      - name: Upload bounded smoke evidence (not a trusted signed attestation)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-reviewed-node-sandbox-smoke
+          path: ${{ runner.temp }}/serenity-reviewed-smoke/sandbox-smoke.json
+          if-no-files-found: ignore
+          retention-days: 7
