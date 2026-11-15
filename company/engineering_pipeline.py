@@ -157,10 +157,17 @@ def validate_proposal(proposal, manifest, root):
                or isinstance(n.func, ast.Attribute) and n.func.attr in UNSAFE_CALLS)
            for n in ast.walk(tree)):
         raise EngineeringBlocked("proposed code contains restricted constructs")
-    if len(tree.body) != 1 or not isinstance(tree.body[0], ast.FunctionDef):
+    # A module-level literal docstring is safe and common in repository
+    # fixtures. Ignore it, while rejecting every other module-level statement.
+    statements = list(tree.body)
+    if (statements and isinstance(statements[0], ast.Expr)
+            and isinstance(statements[0].value, ast.Constant)
+            and isinstance(statements[0].value.value, str)):
+        statements = statements[1:]
+    if len(statements) != 1 or not isinstance(statements[0], ast.FunctionDef):
         raise EngineeringBlocked("only one pure function definition permitted")
-    if tree.body[0].name != "destination_label":
-        raise EngineeringBlocked("unexpected function entry point")
+    if statements[0].name != "destination_label" or statements[0].decorator_list:
+        raise EngineeringBlocked("unexpected function entry point or decorator")
     return {"path": path, "original": original, "replacement": replacement}
 
 
