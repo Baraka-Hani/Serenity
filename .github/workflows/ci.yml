@@ -36,6 +36,7 @@ jobs:
           python3 backend/test_free_model_plan.py
           python3 backend/test_cloud_model_pilot.py
           python3 backend/test_company_office.py
+          python3 backend/test_company_manager.py
       - name: Generate sample Obsidian company HQ
         run: |
           python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
