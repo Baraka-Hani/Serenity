@@ -24,6 +24,18 @@ The company remains on four unmerged draft branches:
 → this [technical PR #31](https://github.com/Baraka-Hani/Serenity/pull/31).
 Do not merge/rebase out of order or silently reconcile `main`.
 
+## Module T: read-only sandbox source preflight and run reconciliation
+
+The next independently testable preparation is recorded in
+[MODULE_T_SANDBOX_RECONCILIATION.md](MODULE_T_SANDBOX_RECONCILIATION.md).
+CI now verifies the original Serenity source, manual owner-gated workflow
+and GitHub run-attempt reconciliation contracts, and exports a
+`sandbox-preflight.json` plus a clearly **blocked** Obsidian
+Operations/Sandbox Preflight page. This does not execute containers,
+call cloud models, create credentials or grant manager commit rights.
+Live smoke remains separately owner-gated and cannot run before the reviewed
+workflow exists on protected `main`.
+
 ## New technical implementation in PR #31
 
 ### 1. Exact-candidate readiness policy (default blocked)
