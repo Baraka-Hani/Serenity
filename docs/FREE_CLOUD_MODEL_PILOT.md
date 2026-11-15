@@ -53,18 +53,19 @@ GitHub Actions is software-project CI, not a general-purpose 24/7 server. Use sh
 - Actions terms: https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features
 - Scheduled workflow limitations: https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows
 
-## Proposed 9 AM–5 PM cadence (America/Moncton)
+## Proposed two five-hour shifts per day (America/Moncton)
 
 | Local time | Department | Action | Default |
 | --- | --- | --- | --- |
-| 09:00 | Executive | restore queue; inspect blocked tasks; select approved low-risk item | proposal only |
-| 09:15 | Engineering / Qwen | generate small patch candidate | disabled |
-| 11:15 | QA / GPT-OSS | review candidate and test plan | disabled |
-| 13:15 | Engineering / Qwen | repair verified issues | disabled |
-| 15:15 | QA / GPT-OSS | final non-critical review; record limits | disabled |
-| 16:45 | Operations | prepare evidence-backed owner report | existing read-only tool |
+| 09:00 | Executive | Shift 1 intake; restore queue and select approved low-risk items | proposal only |
+| 09:15–12:00 | Engineering / Qwen | Create small patch candidates and tests | disabled |
+| 12:00–14:00 | QA / GPT-OSS | Review results, checkpoint, and prepare 14:00 handoff | disabled |
+| 14:00 | Executive / Operations | Shift 1 closes; Shift 2 resumes eligible checkpointed work | disabled |
+| 14:15–17:00 | Engineering / Qwen | Perform corrections and remaining authorized tasks | disabled |
+| 17:00–19:00 | QA / GPT-OSS | Run final checks and prepare owner approvals | disabled |
+| 19:00 | Operations | Final evidence-backed report | existing read-only tool |
 
-Work is event-triggered, not continuous. Pending work survives as GitHub Issues/PRs and structured task records. On quota exhaustion, checkpoint and mark `BLOCKED_QUOTA`; do not silently bill, bypass caps, or repeatedly retry. A second model is a deliberate fallback only for approved low-risk tasks.
+The windows apply **every day, including weekends**: Shift 1 is 09:00–14:00, Shift 2 is 14:00–19:00. These are operating windows, **not** guarantees of 10 hours of inference, free compute, or subscription allowance resets. The existing shift scheduler is default-off and only creates read-only artifacts.
 
 ## Department handoff envelope
 
