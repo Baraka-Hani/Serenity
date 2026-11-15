@@ -144,6 +144,35 @@ class RunnerAttestationTests(unittest.TestCase):
                              expected_head_sha=HEAD,
                              approved_workflow_ref=WORKFLOW+"@refs/heads/feature")
 
+    def test_readiness_gate_can_record_job_match_but_not_authorize_writer(self):
+        from company.technical_readiness import assess_candidate
+        job, run = api_records()
+        task = {
+            "issue": 22, "risk": "low",
+            "target_path": "backend/test_destination_picker.js",
+            "requested_action": "branch_commit",
+            "original_sha256": SOURCE_SHA,
+            "candidate_sha256": CANDIDATE_SHA,
+            "pr_head_sha": HEAD,
+        }
+        result = assess_candidate(
+            task=task, original=b"synthetic baseline",
+            candidate=b"synthetic test case",
+            builder={"model": "qwen/qwen3.8-27b", "mode": "live",
+                     "candidate_sha256": CANDIDATE_SHA},
+            reviewer={"model": "openai/gpt-oss-120b", "mode": "live",
+                      "approved": True, "architecture_alignment": True,
+                      "findings": [], "candidate_sha256": CANDIDATE_SHA},
+            sandbox=fixture(),
+            sandbox_claim=evidence(), github_job=job, github_run=run,
+            approved_workflow_ref=SAFE_WORKFLOW_REF,
+        )
+        self.assertEqual(result["sandbox_github_job_correspondence"],
+                         "GITHUB_JOB_METADATA_MATCHED")
+        self.assertFalse(result["manager_commit_execution_authorized"])
+        self.assertFalse(result["actual_runner_provenance_verified"])
+        self.assertEqual(result["status"], "BLOCKED")
+
     def test_fake_json_claim_without_github_records_rejected(self):
         with self.assertRaises(AttestationBlocked):
             check_github_job(evidence(), job=None, run=None,
