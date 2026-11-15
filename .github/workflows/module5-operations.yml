@@ -1,0 +1,55 @@
+name: Serenity Module 5 manual shift recovery preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: Atlantic local date for deterministic shift simulation
+        required: true
+        type: string
+        default: '2026-11-14'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: serenity-module5-manual-checkpoint
+  cancel-in-progress: false
+
+jobs:
+  safe-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify restartability, sandbox/CI policy tests
+        run: |
+          python3 backend/test_module5_checkpoints.py
+          python3 backend/test_module5_sandbox_writer.py
+          python3 backend/test_module5_github_quality.py
+          python3 backend/test_module5_demo.py
+      - name: Build read-only company event journal and Obsidian HQ
+        env:
+          SIM_DAY: ${{ inputs.day }}
+        run: |
+          unset GROQ_API_KEY OPENAI_API_KEY GEMINI_API_KEY ANTHROPIC_API_KEY
+          unset SERENITY_REMOTE_STATE_WRITE SERENITY_SANDBOX_MANUAL
+          python3 -m company.module5_demo --day "$SIM_DAY" \
+            --output "$RUNNER_TEMP/module5-hq" \
+            > "$RUNNER_TEMP/module5-summary.json"
+          test -s "$RUNNER_TEMP/module5-hq/company-checkpoint.json"
+          test -s "$RUNNER_TEMP/module5-hq/obsidian-vault/Serenity Company.canvas"
+      - name: Save simulation artifact for owner review
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-module5-manual-two-shift-hq
+          path: |
+            ${{ runner.temp }}/module5-hq/company-checkpoint.json
+            ${{ runner.temp }}/module5-hq/obsidian-vault/
+            ${{ runner.temp }}/module5-summary.json
+          retention-days: 7
