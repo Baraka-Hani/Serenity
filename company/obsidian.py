@@ -27,7 +27,7 @@ def _safe_write(directory, name, content):
     return path
 
 
-def export_vault(office, base_directory):
+def export_vault(office, base_directory, *, checkpoint_ledger=None):
     """Create an isolated generated HQ directory; no external API calls."""
     base = Path(base_directory).expanduser()
     if base.is_symlink():
@@ -37,7 +37,7 @@ def export_vault(office, base_directory):
     if out.is_symlink():
         raise ValueError("refusing symbolic-link HQ output")
     out.mkdir(exist_ok=True)
-    for folder in ("Departments", "Agents", "Tasks", "Messages", "Engineering"):
+    for folder in ("Departments", "Agents", "Tasks", "Messages", "Engineering", "Operations"):
         sub = out / folder
         if sub.is_symlink():
             raise ValueError("refusing symbolic-link department directory")
@@ -77,6 +77,48 @@ def export_vault(office, base_directory):
         if not dept_tasks:
             detail.append("_No tasks assigned._")
         _safe_write(out / "Departments", slug + ".md", "\n".join(detail) + "\n")
+    if checkpoint_ledger is not None:
+        from company.checkpoint_store import validate_ledger, checkpoint_summary
+        validate_ledger(checkpoint_ledger)
+        state = checkpoint_summary(checkpoint_ledger)
+        summary.extend([
+            "", "## Module 5 — Shift and Cloud Checkpoint",
+            "", "- [[Operations/Shift Board|Shift Board and handoffs]]",
+            "- [[Operations/Task Checkpoints|Recoverable task state]]",
+            f"- Journal events: {state['event_count']}",
+            f"- Event-chain head: `{state['last_hash']}`",
+            "- Remote state confirmed: **NO** (local snapshot only)",
+            "- Agent execution: **DISABLED**",
+        ])
+        event_lines = [
+            "# Module 5 — Shift Board", "",
+            "> Read-only export from the validated checkpoint event journal.",
+            "> This is not a live worker or remote cloud session.", "",
+            f"- Events recorded: **{state['event_count']}**",
+            f"- Last event hash: `{state['last_hash']}`", "",
+            "## Last handoffs and events", "",
+        ]
+        for event in checkpoint_ledger["events"][-40:]:
+            event_lines.append(
+                f"- {md(event['timestamp'])}: **{md(event['kind'])}** "
+                f"({md(event['shift'])}) — {md(event['actor'])} / "
+                f"{md(event['task_ref'])}"
+            )
+        if not checkpoint_ledger["events"]:
+            event_lines.append("_No events yet._")
+        _safe_write(out / "Operations", "Shift Board.md",
+                    "\n".join(event_lines) + "\n")
+        task_lines = ["# Recoverable Task Checkpoints", "",
+                      "> Snapshot reflects task transitions only; no model is running.", ""]
+        for ref, item in sorted(state["tasks"].items()):
+            task_lines.append(
+                f"- **{md(ref)}** — {md(item['kind'])} in "
+                f"{md(item['shift'])}; last handled by {md(item['actor'])}"
+            )
+        if not state["tasks"]:
+            task_lines.append("_No tasks checkpointed._")
+        _safe_write(out / "Operations", "Task Checkpoints.md",
+                    "\n".join(task_lines) + "\n")
     summary.extend(["", "## Current Tasks", ""])
     for task in tasks:
         summary.append(f"- [[Tasks/task-{task['id']}|#{task['id']} {md(task['title'])}]] — {task['state']} / {task['department']}")
