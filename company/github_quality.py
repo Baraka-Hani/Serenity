@@ -185,3 +185,28 @@ class GithubQualityReader:
         reviews = self._get("/pulls/" + str(number) + "/reviews?per_page=100")
         return verify_pr_evidence(pull_request=pr, changed_files=files,
                                   checks=checks, reviews=reviews)
+
+    def inspect_sandbox_job(self, attestation_record, *, expected_head_sha):
+        """Read official job and run data for a candidate-bound sandbox claim.
+
+        This only establishes GitHub job correspondence, NOT a signed
+        execution attestation and NOT authority to commit or deploy.
+        """
+        from company.sandbox_attestation import (
+            AttestationBlocked, WORKFLOW, validate_claim, check_github_job,
+        )
+        try:
+            record = validate_claim(attestation_record)
+            job_id = record["github"]["job_id"]
+            run_id = record["github"]["run_id"]
+            if not 0 < job_id <= 10**16 or not 0 < run_id <= 10**16:
+                raise AttestationBlocked("GitHub job or run number exceeds policy bound")
+            job = self._get("/actions/jobs/" + str(job_id))
+            run = self._get("/actions/runs/" + str(run_id))
+            return check_github_job(
+                record, job=job, run=run,
+                expected_head_sha=expected_head_sha,
+                approved_workflow_ref=WORKFLOW + "@refs/heads/main",
+            )
+        except AttestationBlocked as exc:
+            raise EvidenceBlocked("sandbox correspondence blocked: " + str(exc)) from None
