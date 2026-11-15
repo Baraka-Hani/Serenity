@@ -48,6 +48,7 @@ def export_vault(office, base_directory):
     events = office.rows("events")
     quota = office.rows("quota_snapshots")
     engineering_runs = office.rows("engineering_runs")
+    manager_checks = office.rows("manager_quality_checks")
     snapshot = office.snapshot()
     summary = [
         "# Serenity HQ — Command Centre",
@@ -132,6 +133,14 @@ def export_vault(office, base_directory):
             details.append("- " + md(check))
         _safe_write(out / "Engineering", "run-" + str(run["id"]) + ".md",
                     "\n".join(details) + "\n")
+    summary.extend(["", "## Engineering Manager Quality Decisions", ""])
+    if not manager_checks:
+        summary.append("_No verified manager quality decisions._")
+    for check in manager_checks[-15:]:
+        summary.append(
+            f"- #{check['id']} task [[Tasks/task-{check['task_id']}]]: "
+            f"{md(check['action'])} — **{md(check['decision'])}** "
+            "(advisory; does not execute a GitHub commit)")
     summary.extend(["", "## Owner Approval Queue", ""])
     for approval in approvals:
         if approval["state"] == "PENDING":
@@ -149,6 +158,13 @@ def export_vault(office, base_directory):
     if not quota:
         summary.append("_No verified provider usage has been connected._")
     _safe_write(out, "Command Centre.md", "\n".join(summary) + "\n")
+    _safe_write(out, "Manager Quality Gates.md",
+                "# Manager Quality Gates\n\n"
+                "> These checks are advisory; real CI and reviewer evidence are not trusted merely because JSON says pass.\n\n"
+                + "\n".join(
+                    f"- #{g['id']} Task [[Tasks/task-{g['task_id']}]] "
+                    f"{md(g['action'])}: **{md(g['decision'])}**"
+                    for g in manager_checks) + "\n")
     _safe_write(out, "Owner Approvals.md",
                 "# Owner Approvals\n\n" + "\n".join(
                     f"- #{a['id']}: {md(a['action'])} / task #{a['task_id']} — {md(a['state'])}: {md(a['explanation'])}"
