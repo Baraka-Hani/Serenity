@@ -100,6 +100,56 @@ def review_existing_pr_trusted(pull_request, changed_files, checks, reviews):
         }
 
 
+def plan_draft_pr_intent(commit_plan, *, base_branch="main"):
+    """Return a strictly scoped DRAFT PR packet; never issue an API request.
+
+    This is a future-manager approval proposal, not an actual GitHub write.
+    GitHub App repository permissions do not natively limit writes to one
+    file; a separately reviewed executor and repository ruleset must also
+    enforce the allowlist. This function does not accept token/URL inputs.
+    """
+    if not isinstance(commit_plan, dict):
+        raise ManagerWriterBlocked("trusted commit plan required")
+    if (commit_plan.get("status") != "WAITING_TRUSTED_ATTESTATION_AND_OWNER_SETUP"
+            or commit_plan.get("issue") != 22
+            or commit_plan.get("path") != TARGET_PATH
+            or commit_plan.get("risk") != "low"
+            or commit_plan.get("financial_exposure") != 0
+            or commit_plan.get("manager_write_execution_authorized") is not False
+            or commit_plan.get("automatic_merge_authorized") is True):
+        raise ManagerWriterBlocked("candidate plan is not a bounded unapproved low-risk operation")
+    branch = commit_plan.get("branch")
+    digest = commit_plan.get("candidate_sha256")
+    if (not isinstance(branch, str) or not FEATURE_BRANCH.fullmatch(branch)
+            or not isinstance(digest, str) or not HEX64.fullmatch(digest)
+            or base_branch != "main"):
+        raise ManagerWriterBlocked("PR branch, base or exact candidate hash not approved")
+    identity = hashlib.sha256(
+        (branch + "\\n" + TARGET_PATH + "\\n" + digest).encode("utf-8")
+    ).hexdigest()
+    return {
+        "schema_version": 1, "repository": REPO, "issue": 22,
+        "base": "main", "head": branch, "draft": True,
+        "title": "test: verify first-party destination routes (issue #22)",
+        "candidate_sha256": digest,
+        "changed_files_allowlist": [TARGET_PATH],
+        "idempotency_key": identity,
+        "required_initial_owner_setup": [
+            "reviewed protected-branch ruleset",
+            "scoped GitHub App credentials with repository contents + PR permissions",
+            "trusted exact-head CI and approved independent QA",
+            "approved isolated sandbox execution evidence",
+            "emergency-stop control and audit trail",
+        ],
+        "permissions_policy": "repository app token still requires code-level path allowlist",
+        "new_spending_allowed": False,
+        "automatic_merge_allowed": False,
+        "draft_pr_creation_enabled": False,
+        "manager_branch_commit_enabled": False,
+        "production_deploy_enabled": False,
+    }
+
+
 def write_branch_commit(*args, **kwargs):
     raise ManagerWriterBlocked(
         "LIVE MANAGER WRITES NOT ENABLED: require a separately approved, "
