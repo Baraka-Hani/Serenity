@@ -97,6 +97,14 @@ CREATE TABLE IF NOT EXISTS engineering_runs (
   report_json TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS manager_quality_checks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id INTEGER NOT NULL REFERENCES tasks(id),
+  action TEXT NOT NULL,
+  decision TEXT NOT NULL,
+  reasons_json TEXT NOT NULL,
+  checked_at TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_task_state ON tasks(state);
 CREATE INDEX IF NOT EXISTS idx_events_id ON events(id);
 """
@@ -313,6 +321,28 @@ class CompanyOffice:
             self._event("owner_decision", row["task_id"], "owner", row["action"] + ": " + decision)
         # This writes a local decision record only, never performs the action.
 
+    def evaluate_manager_gate(self, task_id, record):
+        """Record a manager quality-policy assessment, NOT a GitHub action.
+
+        A self-described CI success is untrusted until a future repository
+        integration independently verifies run SHA, permissions and reviewers.
+        """
+        from company.quality_gate import evaluate_manager_action
+        task = self._get(task_id)
+        if not isinstance(record, dict) or record.get("risk") != task["risk"]:
+            raise ValueError("risk evidence does not match the task")
+        outcome = evaluate_manager_action(record)
+        with self.db:
+            self.db.execute(
+                """INSERT INTO manager_quality_checks
+                   (task_id,action,decision,reasons_json,checked_at)
+                   VALUES (?,?,?,?,?)""",
+                (task_id, outcome["action"], outcome["status"],
+                 json.dumps(outcome["reasons"][:20]), utc_now()))
+            self._event("manager_quality_gate", task_id, "chief-of-staff",
+                        outcome["action"] + ": " + outcome["status"])
+        return outcome
+
     def shift_checkpoint(self, name, note):
         if name not in ("shift_1_start", "shift_1_end_shift_2_start", "shift_2_end"):
             raise ValueError("invalid shift checkpoint")
@@ -334,7 +364,7 @@ class CompanyOffice:
         # Observations do not grant provider access or activate an agent.
 
     def rows(self, table):
-        if table not in {"tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots", "engineering_runs"}:
+        if table not in {"tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots", "engineering_runs", "manager_quality_checks"}:
             raise ValueError("unknown table")
         order = "id" if table not in {"agents", "departments"} else "slug"
         return [dict(row) for row in self.db.execute("SELECT * FROM " + table + " ORDER BY " + order)]
@@ -351,4 +381,5 @@ class CompanyOffice:
             "departments": len(DEPARTMENTS),
             "role_profiles": len(AGENTS),
             "engineering_runs": len(self.rows("engineering_runs")),
+            "manager_quality_checks": len(self.rows("manager_quality_checks")),
         }
