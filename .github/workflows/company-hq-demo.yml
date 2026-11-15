@@ -1,0 +1,38 @@
+name: Serenity HQ offline company simulation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: serenity-hq-manual-demo
+  cancel-in-progress: false
+
+jobs:
+  company-hq:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run comprehensive company ledger tests
+        run: python3 backend/test_company_office.py
+      - name: Simulate two five-hour shifts and create Obsidian HQ
+        run: |
+          python3 -m company.demo --vault company-hq-artifact > company-hq-summary.json
+          python3 -m json.tool company-hq-summary.json > /dev/null
+          test -s 'company-hq-artifact/Serenity HQ/Command Centre.md'
+          test -s 'company-hq-artifact/Serenity Company.canvas'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: serenity-company-hq-demo
+          path: |
+            company-hq-artifact/
+            company-hq-summary.json
+          retention-days: 7
