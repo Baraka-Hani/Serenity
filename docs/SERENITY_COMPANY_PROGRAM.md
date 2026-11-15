@@ -1,6 +1,8 @@
 # Serenity Company — Operating System and Product Roadmap
 
 **Program status:** implementation foundation in review; autonomous execution **disabled**.
+
+**Governance update (2026-11-14):** routine code changes can be manager-authorized after complete independent QA, relevant automated checks, architecture consistency and rollback evidence. Owner approval focuses on financial exposure, credentials/access, material privacy/security, public release, production data and strategic changes. This is a proposed future execution model; GitHub writing/merging automation is **not active**. See [delegated quality policy](DELEGATED_ENGINEERING_AUTHORITY.md).
 **Owner:** human company founder.
 **Primary product:** Serenity travel app.
 **Longer-term business:** reusable AI-assisted app-building platform, validated through Serenity and a second vertical.
@@ -115,12 +117,19 @@ provider quota adapters, and draft-PR creation remain outstanding.
       path validation and owner-approved task scope.
 - [ ] Run deterministic Python/JS/React tests and reject unsupported changes.
 - [ ] GPT-OSS independently reviews diff + evidence and requests repair.
-- [ ] Create a draft PR with a clear provenance record and explicit owner gate.
+- [ ] Create a draft PR with exact source/CI/review provenance and a
+      **manager quality gate**. Managers may authorize routine branch commits
+      without owner involvement once trusted evidence is verified.
+- [ ] Later allow low-risk protected merges under enforced branch rules and
+      passing full integration tests; owner controls financial, sensitive
+      production and public-release decisions.
 - [ ] ChatGPT and Gemini receive high-risk escalations **interactively**,
       unless supported, permitted APIs are later purchased/authorized.
 
-**Acceptance:** one small Serenity feature passes tests and independent review
-and appears as a draft PR with rollback instructions. No production merge.
+**Acceptance:** one small Serenity feature has passing actual functional,
+integration and security checks, independent QA and architectural review, and
+a manager-authorized isolated branch commit/draft PR with rollback evidence.
+No actual GitHub executor is active until approved safeguards are deployed.
 
 ### Phase D — Reliable quota-aware operational shifts (Weeks 3–5)
 
@@ -229,6 +238,11 @@ It does not connect live AI models or send agent messages independently.
    before any live external model request.
 5. Decide whether to open a public Serenity staging deployment; production
    hosting remains a separate reviewed project.
+6. Authorize a trusted, scoped manager GitHub writer **after** proven CI,
+   review identity, exact commit SHA, branch permissions and emergency stop.
+   Routine commits then need no repeated owner approval.
+7. Review financial and budget requests; no new spend without an explicit,
+   named-service and amount-limited owner decision.
 
 **Non-goal:** claim the entire company or a 70-hour autonomous workforce is
 running simply because a dashboard and scheduler exist.
