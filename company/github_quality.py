@@ -44,6 +44,11 @@ def verify_pr_evidence(*, pull_request, changed_files, checks, reviews):
         raise EvidenceBlocked("invalid exact head SHA")
     if not isinstance(branch, str) or not branch.startswith(ALLOWED_PREFIX):
         raise EvidenceBlocked("unapproved manager feature branch")
+    if (not isinstance(head.get("repo"), dict)
+            or head["repo"].get("full_name") != REPO
+            or not isinstance(base.get("repo"), dict)
+            or base["repo"].get("full_name") != REPO):
+        raise EvidenceBlocked("fork-based or cross-repository pull requests are not delegated")
     if base.get("ref") not in {"main", "company/engineering-issue-to-review-pipeline",
                                "company/module4-hosted-model-dispatch"}:
         raise EvidenceBlocked("unexpected base branch")
@@ -88,8 +93,8 @@ def verify_pr_evidence(*, pull_request, changed_files, checks, reviews):
     missing = sorted(REQUIRED_JOBS - passed)
     if missing:
         raise EvidenceBlocked("missing trusted checks: " + ", ".join(missing))
-    if not isinstance(reviews, list):
-        raise EvidenceBlocked("review metadata missing")
+    if not isinstance(reviews, list) or len(reviews) >= 100:
+        raise EvidenceBlocked("review metadata missing or pagination incomplete")
     author_login = author.get("login")
     if not isinstance(author_login, str) or not author_login:
         raise EvidenceBlocked("invalid PR author")
