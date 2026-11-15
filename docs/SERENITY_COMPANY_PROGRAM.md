@@ -131,6 +131,23 @@ integration and security checks, independent QA and architectural review, and
 a manager-authorized isolated branch commit/draft PR with rollback evidence.
 No actual GitHub executor is active until approved safeguards are deployed.
 
+### Module 5 checkpoint — durable shift/QA/manager foundations
+
+[Module 5 PR #25](https://github.com/Baraka-Hani/Serenity/pull/25) adds
+hash-linked and replayable task checkpoints, atomic local storage, an optional
+default-OFF GitHub CAS state writer, network-none container test runner
+contracts, read-only exact-head CI and independent PR review verification,
+strictly scoped manager commit/PR plans, two five-hour shift simulations and
+Obsidian Operations/Shift Board artifacts. It also adds Serenity's real
+first-party destination-picker and local API architecture guard tests.
+
+**These are audited building blocks, not autonomous active employees.** The
+actual remote state branch, trusted Docker image digest and runtime,
+credentials, real candidate functional tests, manager GitHub writer, and
+two-shift scheduling are **not activated**. Review the dependency stack
+(#12 → #21 → #23 → #25) and prioritize the actual travel app integration
+and Module 6 issue #26 before any production changes.
+
 ### Module 4 checkpoint — cloud-model integration in a scoped product QA workflow
 
 The new [Module 4 operating guide](MODULE4_CLOUD_ENGINEERING.md) and
