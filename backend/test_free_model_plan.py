@@ -58,6 +58,15 @@ class FreeModelRoutingTests(unittest.TestCase):
         with self.assertRaises(module.PolicyError):
             module.route(enabled, task_type="docs", risk="low")
 
+    def test_paid_consumer_accounts_not_assumed_as_background_apis(self):
+        policy = CONFIG["premium_quality_review"]
+        self.assertEqual(policy["wind_down_percent_used"], 90)
+        self.assertEqual(policy["status"], "planning_only_no_api_execution")
+        for provider in policy["resources"].values():
+            self.assertFalse(provider["autonomous_api_entitlement_assumed"])
+            self.assertEqual(provider["mode"], "human_initiated_supported_interface_only")
+        self.assertFalse(policy["resources"]["google_ai_plus_supported_ui"]["five_hour_refresh_assumed"])
+
     def test_model_roles_must_both_be_present(self):
         missing = json.loads(json.dumps(CONFIG))
         missing["models"].pop()
