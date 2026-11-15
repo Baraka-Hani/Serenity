@@ -33,6 +33,9 @@ jobs:
           python3 backend/test_workday_report.py
           python3 backend/test_workday_schedule.py
           python3 backend/test_quota_guard.py
+          python3 backend/test_free_model_plan.py
+          python3 backend/test_cloud_model_pilot.py
+          python3 backend/test_company_office.py
       - name: Dependency-free JavaScript checks
         run: |
           node backend/test_chat_ui.js
