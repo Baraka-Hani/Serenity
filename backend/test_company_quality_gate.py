@@ -119,6 +119,42 @@ class QualityGateTests(unittest.TestCase):
         with self.assertRaises(QualityPolicyError):
             evaluate_manager_action([])
 
+    def test_company_ledger_records_quality_gate_without_executing(self):
+        import tempfile
+        from company.office import CompanyOffice
+        with tempfile.TemporaryDirectory() as temp:
+            office = CompanyOffice(Path(temp) / "quality.sqlite3")
+            try:
+                task = office.new_task("Review a safe helper", "engineering",
+                                       "Relevant code tests pass", risk="low")
+                decision = office.evaluate_manager_gate(task, evidence())
+                self.assertEqual(decision["status"],
+                                 "MANAGER_POLICY_ELIGIBLE_PENDING_TRUSTED_INTEGRATION")
+                self.assertFalse(decision["execution_authorized"])
+                self.assertEqual(len(office.rows("manager_quality_checks")), 1)
+                self.assertFalse(office.snapshot()["execution_enabled"])
+                from company.obsidian import export_vault
+                out = Path(temp) / "vault"
+                export_vault(office, out)
+                note = (out / "Serenity HQ" / "Manager Quality Gates.md").read_text()
+                self.assertIn("MANAGER_POLICY_ELIGIBLE", note)
+                self.assertIn("advisory", note)
+            finally:
+                office.close()
+
+    def test_ledger_rejects_mismatched_risk_evidence(self):
+        import tempfile
+        from company.office import CompanyOffice
+        with tempfile.TemporaryDirectory() as temp:
+            office = CompanyOffice(Path(temp) / "quality.sqlite3")
+            try:
+                task = office.new_task("Sensitive work", "engineering",
+                                       "Must not auto-approve", risk="high")
+                with self.assertRaises(ValueError):
+                    office.evaluate_manager_gate(task, evidence())
+            finally:
+                office.close()
+
     def test_no_user_approval_each_good_routine_change(self):
         x = evaluate_manager_action(evidence())
         self.assertFalse(x["owner_approval_required"])
