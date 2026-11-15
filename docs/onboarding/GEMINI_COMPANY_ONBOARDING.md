@@ -240,3 +240,19 @@ Begin **G1 and G2**, not coding. Verify official provider docs, free-tier
 eligibility, model/account limits, GitHub least-privilege permissions
 and existing branch/CI facts. Create concrete, source-backed onboarding
 documents and a docs-only draft PR. Then complete G3 and G4.
+
+---
+
+## 8. Track G Completion Status & Module Evidence Index
+
+All four assigned onboarding modules have been completed and verified under the strict zero-spend, docs-only mandate:
+
+| Module | Fact Checked? | Official Source URLs | Account Eligibility | Owner Action | New Cost | Output Deliverable | Status | Joint Handoff Target |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **G1** | Yes | [Groq Limits](https://console.groq.com/docs/rate-limits), [Groq Models](https://console.groq.com/docs/models), [OpenAI Usage](https://help.openai.com/en/articles/20001516), [Gemini Usage](https://support.google.com/gemini/answer/16275805) | Free Tier (No Card) | Setup `GROQ_API_KEY` secret & variables | $0.00 | [`01_PROVIDER_AND_QUOTAS.md`](01_PROVIDER_AND_QUOTAS.md) | **COMPLETE** | Informs C-track `company/hosted_inference.py` |
+| **G2** | Yes (Live API) | GitHub REST API (`repos/Baraka-Hani/Serenity`) | Public Repo (`isPrivate: false`) | Create Ruleset for `main` & Projects Board | $0.00 | [`02_GITHUB_AND_PERMISSIONS.md`](02_GITHUB_AND_PERMISSIONS.md) | **COMPLETE** | Informs C-track manager PR writer |
+| **G3** | Yes | Repo Architecture & [`company/obsidian.py`](../../company/obsidian.py) | Local SQLite / Markdown | Inspect Obsidian HQ on Mac | $0.00 | [`03_COMPANY_OPERATIONS_AND_HQ.md`](03_COMPANY_OPERATIONS_AND_HQ.md) | **COMPLETE** | Informs C-track `company/shift_coordinator.py` |
+| **G4** | Yes | Issue [#13](../../issues/13), [#27](../../issues/27), [#28](../../issues/28), [#29](../../issues/29), PR [#30](../../pull/30), [#31](../../pull/31) | System Integrated | Complete 5 minimum activation steps | $0.00 | [`04_ACTIVATION_DECISIONS_AND_HANDOFF.md`](04_ACTIVATION_DECISIONS_AND_HANDOFF.md) | **COMPLETE** | Informs Owner & Joint Review #29 |
+
+Comprehensive Index: [`docs/onboarding/README.md`](README.md)
+
