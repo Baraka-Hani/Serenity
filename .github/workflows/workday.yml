@@ -1,4 +1,4 @@
-name: Supervised AI workday
+name: Supervised AI daily shifts
 
 on:
   workflow_dispatch:
@@ -10,14 +10,18 @@ on:
         type: choice
         options:
           - intake
+          - handoff
           - report
   schedule:
-    # Covers 9 AM and 5 PM Atlantic in both standard and daylight time.
-    # The Python gate accepts only the correct local event.
-    - cron: "0 12 * * 1-5"
-    - cron: "0 13 * * 1-5"
-    - cron: "0 20 * * 1-5"
-    - cron: "0 21 * * 1-5"
+    # Two five-hour shifts daily, including weekends, America/Moncton:
+    # 09:00 intake, 14:00 handoff, 19:00 report.
+    # Covers both Atlantic daylight and standard time; Python rejects duplicate hours.
+    - cron: "0 12 * * *"
+    - cron: "0 13 * * *"
+    - cron: "0 17 * * *"
+    - cron: "0 18 * * *"
+    - cron: "0 22 * * *"
+    - cron: "0 23 * * *"
 
 permissions:
   contents: read
@@ -57,6 +61,6 @@ jobs:
         if: steps.gate.outputs.should_run == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: serenity-${{ steps.gate.outputs.event }}-report
+          name: serenity-${{ steps.gate.outputs.shift }}-${{ steps.gate.outputs.event }}-report
           path: workday-report.md
           retention-days: 14

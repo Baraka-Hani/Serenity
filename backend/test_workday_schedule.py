@@ -1,4 +1,4 @@
-"""Tests for the default-off supervised workforce schedule."""
+"""Tests for the default-off two-shift daily workforce schedule."""
 
 import importlib.util
 import subprocess
@@ -25,23 +25,38 @@ class WorkdayScheduleTests(unittest.TestCase):
         self.assertEqual(result["event"], "report")
         self.assertTrue(result["should_run"])
 
-    def test_weekends_do_not_run(self):
-        result = schedule.evaluate(datetime(2026, 7, 4, 12, 0, tzinfo=timezone.utc), enabled=True)
-        self.assertEqual(result["reason"], "weekend")
+    def test_weekends_are_in_scope_when_enabled(self):
+        saturday = datetime(2026, 7, 4, tzinfo=timezone.utc)
+        self.assertEqual(schedule.evaluate(saturday.replace(hour=12), True)["event"], "intake")
+        self.assertEqual(schedule.evaluate(saturday.replace(hour=17), True)["event"], "handoff")
+        self.assertEqual(schedule.evaluate(saturday.replace(hour=22), True)["event"], "report")
+
+    def test_manual_handoff_without_activation(self):
+        result = schedule.evaluate(datetime(2026, 11, 14, 15, tzinfo=timezone.utc), manual_event="handoff")
+        self.assertTrue(result["should_run"])
+        self.assertEqual(result["shift"], "shift_2")
+
+    def test_disabled_weekends_never_schedule(self):
+        result = schedule.evaluate(datetime(2026, 7, 4, 12, tzinfo=timezone.utc))
+        self.assertFalse(result["should_run"])
 
     def test_daylight_time_events(self):
         monday = datetime(2026, 7, 6, tzinfo=timezone.utc)
         self.assertEqual(schedule.evaluate(monday.replace(hour=12), True)["event"], "intake")
-        self.assertEqual(schedule.evaluate(monday.replace(hour=20), True)["event"], "report")
+        self.assertEqual(schedule.evaluate(monday.replace(hour=17), True)["event"], "handoff")
+        self.assertEqual(schedule.evaluate(monday.replace(hour=22), True)["event"], "report")
+        self.assertEqual(schedule.evaluate(monday.replace(hour=17), True)["shift"], "shift_2")
 
     def test_standard_time_events(self):
         monday = datetime(2026, 1, 5, tzinfo=timezone.utc)
         self.assertEqual(schedule.evaluate(monday.replace(hour=13), True)["event"], "intake")
-        self.assertEqual(schedule.evaluate(monday.replace(hour=21), True)["event"], "report")
+        self.assertEqual(schedule.evaluate(monday.replace(hour=18), True)["event"], "handoff")
+        self.assertEqual(schedule.evaluate(monday.replace(hour=23), True)["event"], "report")
 
     def test_wrong_hour_or_minute_does_not_run(self):
         monday = datetime(2026, 7, 6, tzinfo=timezone.utc)
         self.assertFalse(schedule.evaluate(monday.replace(hour=14), True)["should_run"])
+        self.assertFalse(schedule.evaluate(monday.replace(hour=20), True)["should_run"])
         self.assertFalse(schedule.evaluate(monday.replace(hour=12, minute=1), True)["should_run"])
 
     def test_delayed_runner_uses_nominal_schedule_time(self):
@@ -65,6 +80,7 @@ class WorkdayScheduleTests(unittest.TestCase):
             ], check=True)
             text = Path(output.name).read_text(encoding="utf-8")
         self.assertIn("event=intake", text)
+        self.assertIn("shift=shift_1", text)
         self.assertIn("local_date=2026-01-05", text)
 
 
