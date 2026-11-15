@@ -101,6 +101,14 @@ quota observations and an owner-viewable artifact; no repo or production writes.
 
 ### Phase C — Real Builder → Reviewer → Test workflow (Weeks 2–4)
 
+**Offline implementation checkpoint (stacked engineering PR):** fixed-scope
+synthetic issue manifest, verified source SHA, bounded proposed patch in
+isolated scratch directory, static QA, persisted messages and owner queue,
+Obsidian run evidence and cloud CI artifact. These are **simulated roles**;
+actual model-generated application code, safe execution sandbox, real
+provider quota adapters, and draft-PR creation remain outstanding.
+
+
 - [ ] A GitHub Issue with clear acceptance criteria produces an approved task
       in the company ledger; duplicate processing is prevented.
 - [ ] Qwen proposes a bounded patch; apply only to an isolated checkout after
