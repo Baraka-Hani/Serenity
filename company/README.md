@@ -21,6 +21,29 @@ python3 -m company.engineering_pipeline \
   --db /tmp/serenity-eng-company.sqlite3
 ```
 
+## Manager QA evidence and authority
+
+The [quality-first policy](../docs/DELEGATED_ENGINEERING_AUTHORITY.md)
+permits managers to commit validated routine changes **after actual**
+independent QA and CI. The current gate evaluates proposed evidence and logs
+its decision in the company ledger; it does **not** push code.
+
+An intentionally incomplete sample must return `BLOCKED`:
+
+```bash
+python3 -m company.cli --db /tmp/serenity-policy-demo.sqlite3 new \
+  "Demo routine task" --department engineering --risk low \
+  --acceptance "Passing integration tests and independent review"
+python3 -m company.cli --db /tmp/serenity-policy-demo.sqlite3 manager-gate 1 \
+  --evidence config/manager_quality_example.json
+python3 -m company.cli --db /tmp/serenity-policy-demo.sqlite3 \
+  manager_quality_checks
+```
+
+The Obsidian export includes `Serenity HQ/Manager Quality Gates.md`.
+No fabricated CI pass, quota snapshot or premium-model review may authorize a
+commit. New spending or high-impact production permissions remain owner-only.
+
 ## Commands
 
 Run from the Serenity repository root. Python 3.11+ and standard library are
