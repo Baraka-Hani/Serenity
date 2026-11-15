@@ -94,9 +94,10 @@ def validate_ledger(ledger):
         if not isinstance(eid, str) or not EVENT_ID.fullmatch(eid) or eid in keys:
             raise CheckpointBlocked("duplicate or invalid event id")
         keys.add(eid)
-        if event["kind"] not in EVENT_TYPES or event["actor"] not in ACTORS:
+        if (type(event["kind"]) is not str or type(event["actor"]) is not str
+                or event["kind"] not in EVENT_TYPES or event["actor"] not in ACTORS):
             raise CheckpointBlocked("unknown event or actor")
-        if event["shift"] not in SHIFTS:
+        if type(event["shift"]) is not str or event["shift"] not in SHIFTS:
             raise CheckpointBlocked("unknown shift")
         _text(event["task_ref"], 120)
         timestamp = _time(event["timestamp"])
