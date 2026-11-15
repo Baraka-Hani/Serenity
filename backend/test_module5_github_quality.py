@@ -15,8 +15,10 @@ SHA = "a"*40
 def sample_pr():
     return {
         "number": 101, "state": "open", "draft": True, "changed_files": 1,
-        "head": {"sha": SHA, "ref": "ai/serenity-issue-22"},
-        "base": {"ref": "main"}, "user": {"login": "serenity-manager"},
+        "head": {"sha": SHA, "ref": "ai/serenity-issue-22",
+                 "repo": {"full_name": "Baraka-Hani/Serenity"}},
+        "base": {"ref": "main", "repo": {"full_name": "Baraka-Hani/Serenity"}},
+        "user": {"login": "serenity-manager"},
     }
 
 
@@ -110,6 +112,18 @@ class TrustedEvidenceTests(unittest.TestCase):
                 verify_pr_evidence(**record)
         record = self.good()
         record["pull_request"]["base"]["ref"] = "production"
+        with self.assertRaises(EvidenceBlocked):
+            verify_pr_evidence(**record)
+
+    def test_forked_pr_cannot_be_used_for_delegated_manager_review(self):
+        record = self.good()
+        record["pull_request"]["head"]["repo"]["full_name"] = "unknown/Serenity"
+        with self.assertRaises(EvidenceBlocked):
+            verify_pr_evidence(**record)
+
+    def test_overfull_review_pagination_fails_closed(self):
+        record = self.good()
+        record["reviews"] = record["reviews"]*100
         with self.assertRaises(EvidenceBlocked):
             verify_pr_evidence(**record)
 
