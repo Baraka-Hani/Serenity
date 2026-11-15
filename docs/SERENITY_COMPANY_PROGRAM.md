@@ -131,6 +131,19 @@ integration and security checks, independent QA and architectural review, and
 a manager-authorized isolated branch commit/draft PR with rollback evidence.
 No actual GitHub executor is active until approved safeguards are deployed.
 
+### Module 4 checkpoint — cloud-model integration in a scoped product QA workflow
+
+The new [Module 4 operating guide](MODULE4_CLOUD_ENGINEERING.md) and
+[issue #22](https://github.com/Baraka-Hani/Serenity/issues/22)
+describe a real product test-file task, selected Qwen/GPT-OSS Groq adapters,
+per-model 90%-quota dispatch, a strictly bounded candidate change, separate
+review, JS *syntax-only* parsing, manager quality gate and Obsidian evidence.
+These are implemented and exercised by default-off mock CI. **No actual
+cloud model calls, generated-code functional testing, GitHub commits or paid
+provider access are active.** Next dependencies are trusted quota readers,
+isolated test execution, independently verified complete QA/CI, an approved
+manager GitHub writer, and durable cloud state.
+
 ### Phase D — Reliable quota-aware operational shifts (Weeks 3–5)
 
 - [ ] Trusted provider-specific quota readers for free hosted inference, using
