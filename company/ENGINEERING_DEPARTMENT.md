@@ -57,6 +57,14 @@ The future manager is authorized by policy to handle routine code only after
 real independent QA, actual CI and architecture gates; none of those live
 controls are enabled by this demo.
 
+The existing manager evidence evaluator now persists each **advisory**
+quality-gate decision and publishes it in Obsidian, but does not grant GitHub
+write privileges. The full gate requires passing Python, JavaScript and React
+checks, independent QA, integration tests, privacy/security scans, rollback
+evidence and documentation alignment. ChatGPT Plus/Codex and Google AI Plus
+are planned for high-impact architecture and integration reviews **through
+their supported interactive interfaces**, not assumed unattended APIs.
+
 The PR's existing [Serenity checks](../.github/workflows/ci.yml) execute this
 demonstration in GitHub-hosted CI and publish a short-lived evidence artifact.
 A separate [manual-only workflow](../.github/workflows/engineering-offline.yml)
