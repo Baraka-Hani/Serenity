@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from company.office import AGENTS
 
 ZONE = ZoneInfo("America/Moncton")
-STATES_TO_RESUME = {"IN_PROGRESS": 0, "IN_REVIEW": 1, "QUEUED": 2}
+STATES_TO_RESUME = {"IN_PROGRESS": 0, "QUEUED": 1}
 INACTIVE = {"CANCELLED", "DONE", "BLOCKED_APPROVAL", "BLOCKED_DEPENDENCY",
             "PAUSED", "BLOCKED_QUOTA", "AWAITING_OWNER_ACTION", "PROPOSED", "EVALUATED", "VERIFIED"}
 
@@ -49,6 +49,7 @@ def propose_work(office, quotas, *, now, max_candidates=3):
         "blocked": [],
         "owner_approvals": [],
         "pending_messages": [],
+        "review_queue": [],
     }
     tasks = office.rows("tasks")
     approvals = office.rows("approvals")
@@ -60,6 +61,10 @@ def propose_work(office, quotas, *, now, max_candidates=3):
     summary["pending_messages"] = [
         {"message_id": m["id"], "task_id": m["task_id"],
          "recipient": m["recipient"]} for m in messages if not m["acknowledged"]
+    ]
+    summary["review_queue"] = [
+        {"task_id": t["id"], "why": "awaiting independent QA role, not Builder rerun"}
+        for t in tasks if t["state"] == "IN_REVIEW"
     ]
     if shift == "outside_workday":
         summary["reason"] = "outside coordination shift; no new work proposals"
