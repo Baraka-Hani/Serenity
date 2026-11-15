@@ -20,6 +20,7 @@ from company.module4_pipeline import (
 from company.office import CompanyOffice
 from company.obsidian import export_vault
 from company.technical_readiness import assess_candidate
+from company.sandbox_preflight import preflight
 
 TASK_FILE = "config/module4_destination_task.json"
 UNTRUSTED_REASON = "model_qa_simulation_not_real_ci"
@@ -35,6 +36,7 @@ def generate_packet(source_root, target_dir):
     if manifest_path.is_symlink() or not manifest_path.is_file() or manifest_path.stat().st_size > 12000:
         raise ValueError("unexpected task manifest")
     task = validate_task(json.loads(manifest_path.read_text(encoding="utf-8")))
+    sandbox_preflight = preflight(source_root)
     original = check_source(source_root, SOURCE_PATH)
     proposal = mock_builder(task, original)
     validated = validate_builder_output(proposal, task, original)
@@ -82,6 +84,23 @@ def generate_packet(source_root, target_dir):
             "Mock candidate checkpoint only; no actual model call, test execution or authorized commit")
         hq = export_vault(office, target_dir/"obsidian-vault",
                           checkpoint_ledger=journal)
+        operations = target_dir/"obsidian-vault"/"Serenity HQ"/"Operations"
+        (operations/"Sandbox Preflight.md").write_text(
+            "# Module T — Verified Source / Sandbox Preconditions\n\n"
+            "> This is a static checkout and policy check, not live sandbox execution.\n\n"
+            "- Status: **BLOCKED — OWNER IMAGE AND RUN AUTHORIZATION**\n"
+            "- Reviewed test source SHA-256: `" + sandbox_preflight["source_sha256"] + "`\n"
+            "- Reviewed app SHA-256: `" + sandbox_preflight["app_sha256"] + "`\n"
+            "- Manual workflow SHA-256: `" + sandbox_preflight["workflow_sha256"] + "`\n"
+            "- Static workflow-policy checks: **passed**\n"
+            "- Actual Docker execution: **NO**\n"
+            "- GitHub main rules, quota and image digest: **NOT VERIFIED**\n"
+            "- Manager writes and billing: **DISABLED**\n",
+            encoding="utf-8")
+        cmd = target_dir/"obsidian-vault"/"Serenity HQ"/"Command Centre.md"
+        with cmd.open("a", encoding="utf-8") as stream:
+            stream.write("\n## Module T — Sandbox Owner Preflight\n"
+                         "- [[Operations/Sandbox Preflight|Sandbox preflight and owner blockers]]\n")
     finally:
         office.close()
     result = {
@@ -96,10 +115,13 @@ def generate_packet(source_root, target_dir):
         "automatic_merge_enabled": False,
         "billing_or_deployment_changed": False,
         "readiness": readiness,
+        "sandbox_preflight": sandbox_preflight,
         "checkpoint": checkpoint_summary(journal),
         "hq": {"mode": "generated_local_mock", "status": "BLOCKED",
                "note": "Obsidian view is a snapshot, not live synchronization"},
     }
+    (target_dir/"sandbox-preflight.json").write_text(
+        json.dumps(sandbox_preflight, indent=2)+"\n", encoding="utf-8")
     (target_dir/"technical-readiness.json").write_text(
         json.dumps(result, indent=2)+"\n", encoding="utf-8")
     (target_dir/"READINESS.md").write_text(
@@ -111,7 +133,8 @@ def generate_packet(source_root, target_dir):
         "- Independent GitHub PR-head and human QA verification: **NOT FETCHED**\n"
         "- GitHub App writer / durable cloud state: **DISABLED**\n"
         "- Billing, production, merge, deployment: **UNCHANGED**\n"
-        "- Evidence: `technical-readiness.json`, `company-checkpoint.json`, "
+        "- Sandbox owner preflight: **STATIC CHECK PASS, LIVE RUN BLOCKED**\n"
+        "- Evidence: `sandbox-preflight.json`, `technical-readiness.json`, `company-checkpoint.json`, "
         "`obsidian-vault/Serenity HQ/`\n\n"
         "## Next permitted engineering actions\n\n"
         "1. Verify eligible free provider/account and actual complete quota telemetry; "
