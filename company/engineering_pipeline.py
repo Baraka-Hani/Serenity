@@ -14,7 +14,6 @@ from pathlib import Path, PurePosixPath
 
 from company.office import CompanyOffice
 from company.obsidian import export_vault
-from company.quality_gate import evaluate_manager_action
 
 # Narrow initial allowlist. New real Serenity code paths must be approved in
 # an independently reviewed policy change; issue descriptions do NOT grant scope.
@@ -261,7 +260,7 @@ def run_offline(manifest, *, source_root, artifact_root, db_path):
             office.checkpoint(
                 task_id,
                 "Static fixture screen recorded; waiting for independent QA, real CI and integration evidence")
-            manager_policy = evaluate_manager_action({
+            manager_policy = office.evaluate_manager_gate(task_id, {
                 "action": "branch_commit", "risk": "low",
                 "changed_files": [manifest["target_path"]],
                 "product_purpose": "documented",
@@ -273,8 +272,6 @@ def run_offline(manifest, *, source_root, artifact_root, db_path):
                 "checks": {}, "ci_conclusion": "not_run", "qa_conclusion": "not_run",
                 "provider_allowance": "unused"
             })
-            office._event("manager_quality_gate", task_id, "chief-of-staff",
-                          manager_policy["status"] + ": insufficient QA evidence")
             report = {
                 "schema_version": 1,
                 "run_key": manifest["run_key"],
