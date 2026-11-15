@@ -17,6 +17,34 @@ The [quota-aware model policy](docs/QUOTA_AWARE_SHIFTS.md) defines the 90%
 wind-down threshold and verified-reset rule. Both schedules remain
 coordination-only until separately approved agents are connected.
 
+## Module 5: Durable AI operations (draft)
+
+[Module 5 operations guide](docs/MODULE5_DURABLE_OPERATIONS.md) details a
+replayable company checkpoint ledger, optional **disabled** GitHub cloud state,
+bounded sandbox-test plan, exact-commit GitHub review verifier, scoped
+Engineering Manager commit/PR plans, and an Obsidian two-shift HQ preview.
+
+**Live execution is not enabled:** model-generated code hasn't been executed
+in the approved container, no GitHub state branch/app credentials have been
+provisioned, and manager commit/merge methods are hard-disabled. Purposeful
+Serenity app integration remains the priority, with financial/production
+decisions reserved for the owner.
+
+```bash
+python3 -m company.module5_demo --output /tmp/serenity-module5-new
+```
+
+## Module 4: Cloud Engineering (in review)
+
+The [Module 4 engineering guide](docs/MODULE4_CLOUD_ENGINEERING.md)
+describes a disabled-by-default Qwen Builder / GPT-OSS Reviewer gateway,
+per-model 90% quota dispatch, and a **real Serenity test-source** candidate
+workflow linked to [issue #22](https://github.com/Baraka-Hani/Serenity/issues/22).
+CI uses mock responses, verifies bounded changes, records engineering/QA handoff,
+and exports Obsidian evidence. It does **not** invoke hosted models, execute
+generated code, or authorize a commit. Routine manager commits can be delegated
+after trusted full quality gates; spending remains owner-controlled.
+
 ## AI company headquarters (in development)
 
 Serenity is also the pilot for a human-supervised AI software company:

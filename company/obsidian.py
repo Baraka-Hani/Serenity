@@ -27,7 +27,7 @@ def _safe_write(directory, name, content):
     return path
 
 
-def export_vault(office, base_directory):
+def export_vault(office, base_directory, *, checkpoint_ledger=None):
     """Create an isolated generated HQ directory; no external API calls."""
     base = Path(base_directory).expanduser()
     if base.is_symlink():
@@ -37,7 +37,7 @@ def export_vault(office, base_directory):
     if out.is_symlink():
         raise ValueError("refusing symbolic-link HQ output")
     out.mkdir(exist_ok=True)
-    for folder in ("Departments", "Agents", "Tasks", "Messages", "Engineering"):
+    for folder in ("Departments", "Agents", "Tasks", "Messages", "Engineering", "Operations"):
         sub = out / folder
         if sub.is_symlink():
             raise ValueError("refusing symbolic-link department directory")
@@ -48,6 +48,7 @@ def export_vault(office, base_directory):
     events = office.rows("events")
     quota = office.rows("quota_snapshots")
     engineering_runs = office.rows("engineering_runs")
+    module4_runs = office.rows("module4_runs")
     manager_checks = office.rows("manager_quality_checks")
     snapshot = office.snapshot()
     summary = [
@@ -76,6 +77,48 @@ def export_vault(office, base_directory):
         if not dept_tasks:
             detail.append("_No tasks assigned._")
         _safe_write(out / "Departments", slug + ".md", "\n".join(detail) + "\n")
+    if checkpoint_ledger is not None:
+        from company.checkpoint_store import validate_ledger, checkpoint_summary
+        validate_ledger(checkpoint_ledger)
+        state = checkpoint_summary(checkpoint_ledger)
+        summary.extend([
+            "", "## Module 5 — Shift and Cloud Checkpoint",
+            "", "- [[Operations/Shift Board|Shift Board and handoffs]]",
+            "- [[Operations/Task Checkpoints|Recoverable task state]]",
+            f"- Journal events: {state['event_count']}",
+            f"- Event-chain head: `{state['last_hash']}`",
+            "- Remote state confirmed: **NO** (local snapshot only)",
+            "- Agent execution: **DISABLED**",
+        ])
+        event_lines = [
+            "# Module 5 — Shift Board", "",
+            "> Read-only export from the validated checkpoint event journal.",
+            "> This is not a live worker or remote cloud session.", "",
+            f"- Events recorded: **{state['event_count']}**",
+            f"- Last event hash: `{state['last_hash']}`", "",
+            "## Last handoffs and events", "",
+        ]
+        for event in checkpoint_ledger["events"][-40:]:
+            event_lines.append(
+                f"- {md(event['timestamp'])}: **{md(event['kind'])}** "
+                f"({md(event['shift'])}) — {md(event['actor'])} / "
+                f"{md(event['task_ref'])}"
+            )
+        if not checkpoint_ledger["events"]:
+            event_lines.append("_No events yet._")
+        _safe_write(out / "Operations", "Shift Board.md",
+                    "\n".join(event_lines) + "\n")
+        task_lines = ["# Recoverable Task Checkpoints", "",
+                      "> Snapshot reflects task transitions only; no model is running.", ""]
+        for ref, item in sorted(state["tasks"].items()):
+            task_lines.append(
+                f"- **{md(ref)}** — {md(item['kind'])} in "
+                f"{md(item['shift'])}; last handled by {md(item['actor'])}"
+            )
+        if not state["tasks"]:
+            task_lines.append("_No tasks checkpointed._")
+        _safe_write(out / "Operations", "Task Checkpoints.md",
+                    "\n".join(task_lines) + "\n")
     summary.extend(["", "## Current Tasks", ""])
     for task in tasks:
         summary.append(f"- [[Tasks/task-{task['id']}|#{task['id']} {md(task['title'])}]] — {task['state']} / {task['department']}")
@@ -133,6 +176,52 @@ def export_vault(office, base_directory):
             details.append("- " + md(check))
         _safe_write(out / "Engineering", "run-" + str(run["id"]) + ".md",
                     "\n".join(details) + "\n")
+    summary.extend(["", "## Module 4: Real Serenity Test Candidate Runs", ""])
+    if not module4_runs:
+        summary.append("_No hosted model workflow candidates recorded._")
+    for run in module4_runs:
+        ev = json.loads(run["evidence_json"])
+        summary.append(
+            f"- [[Engineering/module4-{run['id']}|Module 4 #{run['id']}]] — "
+            f"{md(run['state'])}; issue #{ev['issue']}; "
+            f"{md(run['builder_id'])} → {md(run['reviewer_id'])}"
+        )
+        lines = [
+            f"# Module 4 Run #{run['id']}", "",
+            "> This is a candidate review, not a deployed or approved change.",
+            "",
+            f"- Issue: #{ev['issue']}",
+            f"- Task: [[../Tasks/task-{run['task_id']}]]",
+            f"- Mode: **{md(run['mode'])}**",
+            f"- Status: **{md(run['state'])}**",
+            f"- Actual builder: {md(run['builder_id'])}",
+            f"- Actual reviewer: {md(run['reviewer_id'])}",
+            f"- Source SHA-256: {md(ev['source_sha256'])}",
+            f"- Candidate SHA-256: {md(ev['candidate_sha256'])}",
+            f"- Architecture SHA-256: {md(ev['architecture_sha256'])}",
+            f"- JS syntax-only check: {md(ev['syntax_only']['syntax'])}",
+            f"- Actual model calls: {ev.get('actual_model_requests', 0)}",
+            "- Executed functional tests: **NO**",
+            "- Trusted CI/review evidence: **NOT YET VERIFIED**",
+            "- Manager commit gate: **BLOCKED**",
+            "- GitHub repository writes: **NO**",
+            "",
+            "## Next action",
+            "Independent model QA, isolated execution of full functional tests, "
+            "trusted architecture and exact-commit CI evidence are required.",
+            "",
+            "## Quota state per model",
+        ]
+        for role, q in ev.get("quota", {}).get("models", {}).items():
+            lines.append(
+                f"- {md(role)} / {md(q.get('model_id'))}: "
+                f"{md(q.get('quota_state'))}, {md(q.get('reason'))}"
+            )
+        lines.extend(["", "## Added assertions"])
+        for assertion in ev.get("added_regression_assertions", []):
+            lines.append("- " + md(assertion))
+        _safe_write(out / "Engineering", f"module4-{run['id']}.md",
+                    "\n".join(lines) + "\n")
     summary.extend(["", "## Engineering Manager Quality Decisions", ""])
     if not manager_checks:
         summary.append("_No verified manager quality decisions._")

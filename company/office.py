@@ -97,6 +97,18 @@ CREATE TABLE IF NOT EXISTS engineering_runs (
   report_json TEXT NOT NULL,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS module4_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id INTEGER NOT NULL REFERENCES tasks(id),
+  run_key TEXT NOT NULL UNIQUE,
+  mode TEXT NOT NULL CHECK (mode IN ('mock','live')),
+  state TEXT NOT NULL,
+  builder_id TEXT NOT NULL,
+  reviewer_id TEXT NOT NULL,
+  quota_json TEXT NOT NULL,
+  evidence_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS manager_quality_checks (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   task_id INTEGER NOT NULL REFERENCES tasks(id),
@@ -364,7 +376,7 @@ class CompanyOffice:
         # Observations do not grant provider access or activate an agent.
 
     def rows(self, table):
-        if table not in {"tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots", "engineering_runs", "manager_quality_checks"}:
+        if table not in {"tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots", "engineering_runs", "manager_quality_checks", "module4_runs"}:
             raise ValueError("unknown table")
         order = "id" if table not in {"agents", "departments"} else "slug"
         return [dict(row) for row in self.db.execute("SELECT * FROM " + table + " ORDER BY " + order)]
@@ -382,4 +394,5 @@ class CompanyOffice:
             "role_profiles": len(AGENTS),
             "engineering_runs": len(self.rows("engineering_runs")),
             "manager_quality_checks": len(self.rows("manager_quality_checks")),
+            "module4_runs": len(self.rows("module4_runs")),
         }

@@ -44,6 +44,47 @@ The Obsidian export includes `Serenity HQ/Manager Quality Gates.md`.
 No fabricated CI pass, quota snapshot or premium-model review may authorize a
 commit. New spending or high-impact production permissions remain owner-only.
 
+## Module 5 — Durable shifts and trusted quality foundations
+
+The [operations guide](../docs/MODULE5_DURABLE_OPERATIONS.md) covers
+idempotent SHA-linked task checkpoints, a disabled GitHub CAS-backed state
+adapter, an opt-in resource-capped network-off sandbox, read-only trusted
+GitHub exact-SHA QA evidence, manager commit/PR plans and an Obsidian Shift
+Board.
+
+```bash
+python3 backend/test_module5_checkpoints.py
+python3 backend/test_module5_sandbox_writer.py
+python3 backend/test_module5_github_quality.py
+python3 backend/test_module5_demo.py
+python3 backend/test_module5_architecture.py
+python3 -m company.module5_demo --output /tmp/serenity-module5-demo-new
+```
+
+These commands do not create accounts, grant permissions, activate models,
+spend money, commit code or deploy anything. The actual cloud state branch,
+network-disabled untrusted test sandbox and manager writer await initial
+authorization and further live integration.
+
+## Module 4 — Hosted provider / real-source candidate
+
+See [the Module 4 operating guide](../docs/MODULE4_CLOUD_ENGINEERING.md).
+The new two-model gateway is default-off and only configured for verified
+eligible Free accounts with explicit manual per-task permission. Normal CI
+runs **mock models** on real Serenity test source and never executes a
+model-generated candidate. Evidence, manager QA blocks, and quota observations
+appear in the Obsidian HQ export.
+
+```bash
+python3 backend/test_module4_providers.py
+python3 backend/test_module4_pipeline.py
+python3 -m company.module4_pipeline \
+  --task config/module4_destination_task.json \
+  --root . \
+  --artifacts /tmp/serenity-module4-evidence-new \
+  --db /tmp/serenity-module4-company.sqlite3
+```
+
 ## Commands
 
 Run from the Serenity repository root. Python 3.11+ and standard library are

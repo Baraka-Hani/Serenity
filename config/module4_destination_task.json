@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "run_key": "serenity-m4-destination-api-001",
+  "issue": 22,
+  "title": "Strengthen destination picker first-party request regression checks",
+  "acceptance": "Preserve existing destination-picker tests and add an assertion that location search uses only Serenity first-party API routes. Block commit until real sandboxed functional tests, independent QA and architecture checks pass.",
+  "risk": "low",
+  "department": "engineering",
+  "target_path": "backend/test_destination_picker.js",
+  "architecture_path": "docs/ARCHITECTURE.md",
+  "source_kind": "serenity_real_test"
+}
