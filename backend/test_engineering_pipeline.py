@@ -63,6 +63,7 @@ class EngineeringPipelineTests(unittest.TestCase):
             self.assertEqual(len(office.rows("engineering_runs")), 1)
             self.assertEqual(len(office.rows("messages")), 2)
             self.assertEqual(len(office.rows("approvals")), 0)
+            self.assertEqual(len(office.rows("manager_quality_checks")), 1)
             self.assertEqual(office.rows("tasks")[0]["state"], "IN_REVIEW")
             self.assertTrue(office.rows("messages")[0]["acknowledged"])
             self.assertFalse(office.snapshot()["execution_enabled"])
