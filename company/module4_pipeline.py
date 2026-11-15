@@ -229,6 +229,10 @@ def run_module4(task, *, root, artifacts, db, mode="mock", quotas=None,
         if found:
             raise Module4Blocked("idempotent run already recorded; no duplicate task or model calls")
         system, prompt = _prompts(task, original, architecture)
+        builder_usage = {}
+        reviewer_usage = {}
+        builder_partial_quota = None
+        reviewer_partial_quota = None
         if mode == "mock":
             builder = mock_builder(task, original)
             builder_source = "deterministic_mock_not_qwen"
@@ -238,6 +242,8 @@ def run_module4(task, *, root, artifacts, db, mode="mock", quotas=None,
             response = provider("builder", system, prompt, ctx=manual_context, api_key=api_key)
             builder = response["output"]
             builder_source = response["model_id"]
+            builder_usage = response.get("usage", {})
+            builder_partial_quota = response.get("quota_partial")
         validated = validate_builder_output(builder, task, original)
         proposed = validated["replacement"]
         patch = "".join(difflib.unified_diff(
@@ -263,6 +269,8 @@ def run_module4(task, *, root, artifacts, db, mode="mock", quotas=None,
                                 ctx=manual_context, api_key=api_key)
             review = response["output"]
             reviewer_source = response["model_id"]
+            reviewer_usage = response.get("usage", {})
+            reviewer_partial_quota = response.get("quota_partial")
             if reviewer_source == builder_source:
                 raise Module4Blocked("Builder and Reviewer must be different models")
         review = validate_review(review, task)
@@ -280,6 +288,15 @@ def run_module4(task, *, root, artifacts, db, mode="mock", quotas=None,
                   else "MANUAL_LIVE_REVIEW_PENDING_FULL_TESTS" if review_pass
                   else "CHANGES_REQUIRED")
         with office.db:
+            # Advisory observations are recorded for BOTH models independently,
+            # never interpreted as permission to bypass provider limits.
+            for role, quota_result in decision["models"].items():
+                office.record_quota_state(
+                    {"model": MODELS[role],
+                     "state": quota_result["quota_state"],
+                     "reason": quota_result["reason"]},
+                    "simulation" if mode == "mock" else "account_usage_manual",
+                    now.isoformat())
             task_id = office.import_issue(
                 "Baraka-Hani/Serenity", task["issue"], task["title"],
                 task["acceptance"], ["dept:engineering", "risk:low"])
@@ -319,6 +336,12 @@ def run_module4(task, *, root, artifacts, db, mode="mock", quotas=None,
                 "added_regression_assertions": validated["added_assertions"],
                 "builder_actual": builder_source, "reviewer_actual": reviewer_source,
                 "reviewed_by_distinct_model": mode == "live",
+                "actual_model_requests": 0 if mode == "mock" else 2,
+                "usage_tokens": {"builder": builder_usage, "reviewer": reviewer_usage},
+                "provider_header_quota_partial": {
+                    "builder": builder_partial_quota,
+                    "reviewer": reviewer_partial_quota,
+                },
                 "reviewer_verdict": review, "syntax_only": syntax,
                 "functional_tests_executed": False,
                 "manager_commit_eligible": False,
