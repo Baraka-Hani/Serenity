@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   acceptance TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'PROPOSED',
   assigned_agent TEXT REFERENCES agents(slug),
   checkpoint TEXT NOT NULL DEFAULT '', branch TEXT NOT NULL DEFAULT '',
-  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+  external_ref TEXT UNIQUE
 );
 CREATE TABLE IF NOT EXISTS messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER NOT NULL REFERENCES tasks(id),
@@ -119,6 +120,12 @@ class CompanyOffice:
             self.db = sqlite3.connect(str(self.filename))
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
+        if "external_ref" not in {
+                row["name"] for row in self.db.execute("PRAGMA table_info(tasks)") }:
+            # Additive schema migration for existing pilot ledgers.
+            self.db.execute("ALTER TABLE tasks ADD COLUMN external_ref TEXT")
+        self.db.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_tasks_external_ref ON tasks(external_ref)")
         self.db.commit()
         self.seed()
 
@@ -159,6 +166,45 @@ class CompanyOffice:
             task_id = cursor.lastrowid
             self._event("task_created", task_id, "office", title)
         return task_id
+
+    def import_issue(self, repo, number, title, body, labels):
+        """Read-only import of an external GitHub issue as an unapproved proposal.
+
+        This does NOT trust instructions in issue text or start any agent.
+        Reimports are idempotent and cannot overwrite local task state.
+        """
+        if repo != "Baraka-Hani/Serenity":
+            raise ValueError("external repository not allowlisted")
+        if isinstance(number, bool) or not isinstance(number, int) or number <= 0:
+            raise ValueError("invalid issue number")
+        if not isinstance(labels, list):
+            raise ValueError("issue labels must be a list")
+        label_names = {x for x in labels if isinstance(x, str)}
+        depts = [name.split(":", 1)[1] for name in label_names
+                 if name.startswith("dept:") and name.split(":", 1)[1] in DEPARTMENTS]
+        department = sorted(depts)[0] if depts else "executive"
+        risk = "low" if "risk:low" in label_names else "medium"
+        external_ref = f"github:{repo}#{number}"
+        found = self.db.execute("SELECT id FROM tasks WHERE external_ref=?",
+                                (external_ref,)).fetchone()
+        if found:
+            return found["id"]
+        title = clean(title, 180)
+        acceptance = clean(body[:3000] if isinstance(body, str) and body.strip()
+                           else "Owner must supply acceptance criteria before evaluation", 3000)
+        with self.db:
+            cursor = self.db.execute(
+                "INSERT OR IGNORE INTO tasks(title,department,risk,acceptance,created_at,updated_at,external_ref) VALUES (?,?,?,?,?,?,?)",
+                (title, department, risk, acceptance, utc_now(), utc_now(), external_ref))
+            if cursor.lastrowid:
+                task_id = cursor.lastrowid
+                self._event("issue_imported", task_id, "github-readonly", external_ref)
+                return task_id
+        existing = self.db.execute("SELECT id FROM tasks WHERE external_ref=?",
+                                   (external_ref,)).fetchone()
+        if existing is None:
+            raise ValueError("issue import failed")
+        return existing["id"]
 
     def transition(self, task_id, target, note, actor="office"):
         if target not in STATES:
