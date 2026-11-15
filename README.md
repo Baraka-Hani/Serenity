@@ -13,6 +13,9 @@ guide](docs/WORKDAY_REPORTING.md) defines the 9 AM intake, 2 PM shift handoff,
 and 7 PM evidence report.
 The [supervised scheduling guide](docs/WORKDAY_SCHEDULING.md) defines the
 default-off two five-hour shifts every day, including weekends, and emergency stop.
+The [quota-aware model policy](docs/QUOTA_AWARE_SHIFTS.md) defines the 90%
+wind-down threshold and verified-reset rule. Both schedules remain
+coordination-only until separately approved agents are connected.
 
 ## Projects
 
