@@ -30,7 +30,7 @@ def build_parser():
 
     s.add_parser("init", help="initialize roles, departments and empty database")
     s.add_parser("status", help="current operational status, not live model telemetry")
-    for name in ("tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots"):
+    for name in ("tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots", "manager_quality_checks"):
         s.add_parser(name, help="read ledger rows for " + name)
 
     a = s.add_parser("new", help="create an unapproved task proposal")
@@ -82,6 +82,11 @@ def build_parser():
     a = s.add_parser("quota-import", help="store an offline advisory quota assessment")
     a.add_argument("file", type=Path)
 
+    a = s.add_parser("manager-gate", help="record advisory QA/CI policy decision, never commit code")
+    a.add_argument("id", type=int)
+    a.add_argument("--evidence", type=Path, required=True,
+                   help="local JSON summary; cannot prove its own CI claims")
+
     a = s.add_parser("plan", help="dry-run Chief of Staff task selection; no model calls")
     a.add_argument("--quota-snapshot", type=Path, help="offline JSON quota snapshot to assess")
     a.add_argument("--now", help="time-aware ISO-8601 timestamp for dry-run testing")
@@ -100,7 +105,7 @@ def main(argv=None):
             answer = office.snapshot()
         elif c == "status":
             answer = office.snapshot()
-        elif c in ("tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots"):
+        elif c in ("tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots", "manager_quality_checks"):
             answer = office.rows(c)
         elif c == "new":
             answer = {"task_id": office.new_task(args.title, args.department, args.acceptance, args.risk)}
@@ -131,6 +136,11 @@ def main(argv=None):
             office.record_quota_state(result, snapshot.get("source", "unverified"),
                                       snapshot.get("observed_at", "unknown"))
             answer = result
+        elif c == "manager-gate":
+            if args.evidence.stat().st_size > 16000:
+                raise ValueError("quality evidence too large")
+            record = json.loads(args.evidence.read_text(encoding="utf-8"))
+            answer = office.evaluate_manager_gate(args.id, record)
         elif c == "plan":
             now = (datetime.fromisoformat(args.now.replace("Z", "+00:00"))
                    if args.now else datetime.now(timezone.utc))
