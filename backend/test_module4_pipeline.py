@@ -46,6 +46,8 @@ class Module4PipelineTests(unittest.TestCase):
         self.assertFalse(report["manager_commit_eligible"])
         self.assertFalse(report["reviewed_by_distinct_model"])
         self.assertFalse(report["github_writes"])
+        self.assertEqual(report["actual_model_requests"], 0)
+        self.assertEqual(report["quota"]["models"]["builder"]["quota_state"], "READY")
         self.assertEqual(report["syntax_only"]["syntax"], "pass")
         self.assertEqual((self.src / SOURCE_PATH).read_bytes(), before)
         self.assertIn(ADDED_ASSERT, (self.out / "proposed.patch").read_text())
@@ -57,6 +59,9 @@ class Module4PipelineTests(unittest.TestCase):
         try:
             self.assertEqual(len(office.rows("module4_runs")), 1)
             self.assertEqual(len(office.rows("manager_quality_checks")), 1)
+            self.assertEqual(len(office.rows("quota_snapshots")), 2)
+            self.assertEqual({q["model"] for q in office.rows("quota_snapshots")},
+                             set(MODELS.values()))
             self.assertEqual(len(office.rows("messages")), 2)
             self.assertEqual(len(office.rows("approvals")), 0)
             self.assertEqual(office.rows("tasks")[0]["state"], "IN_REVIEW")
