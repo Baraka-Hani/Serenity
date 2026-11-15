@@ -41,6 +41,10 @@ jobs:
           python3 backend/test_company_quality_gate.py
           python3 backend/test_module4_providers.py
           python3 backend/test_module4_pipeline.py
+          python3 backend/test_module5_checkpoints.py
+          python3 backend/test_module5_sandbox_writer.py
+          python3 backend/test_module5_github_quality.py
+          python3 backend/test_module5_demo.py
       - name: Generate sample Obsidian company HQ
         run: |
           python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
@@ -93,6 +97,23 @@ jobs:
           path: |
             ${{ runner.temp }}/module4-evidence/
             ${{ runner.temp }}/module4-summary.json
+          retention-days: 7
+      - name: Simulate durable two shifts and Obsidian HQ without agents
+        run: |
+          python3 -m company.module5_demo --output "$RUNNER_TEMP/module5-demo" \
+            > "$RUNNER_TEMP/module5-summary.json"
+          python3 -m json.tool "$RUNNER_TEMP/module5-summary.json" > /dev/null
+          test -s "$RUNNER_TEMP/module5-demo/company-checkpoint.json"
+          test -s "$RUNNER_TEMP/module5-demo/obsidian-vault/Serenity HQ/Operations/Shift Board.md"
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"module5-summary.json"; s=json.loads(p.read_text()); assert s["actual_autonomous_shifts"]==0 and s["actual_code_commits"]==0 and not s["github_remote_persistence_enabled"]'
+      - name: Upload Module 5 read-only operations evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-module5-shift-hq-preview
+          path: |
+            ${{ runner.temp }}/module5-demo/company-checkpoint.json
+            ${{ runner.temp }}/module5-demo/obsidian-vault/
+            ${{ runner.temp }}/module5-summary.json
           retention-days: 7
       - name: Dependency-free JavaScript checks
         run: |
