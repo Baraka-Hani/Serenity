@@ -33,7 +33,7 @@ Qwen3.8-27B and GPT-OSS-120B weights use Apache-2.0 licensing. The *hosted servi
 3. Automated checks: deterministic repository tests and lint/build checks. Failing checks block handoff.
 4. GPT-OSS reviewer: checks the exact task, diff, and test outcomes; requests focused corrections. It is not a substitute for automated tests or independent critical review.
 5. ChatGPT Plus/Codex or Gemini: **user-initiated** escalation for auth, Firebase rules, public/private travel content, location privacy, security or architectural boundary changes. Consumer subscriptions do not automatically grant unattended API access.
-6. Owner: approves all merges, deployment, finance, credentials, publication and any production changes.
+6. Managers: may authorize quality-verified routine branch commits and PRs; protected low-risk merges require future trusted CI/branch enforcement and a separate activation decision. Owner: approves new financial exposure, credentials/access, public deployment, production data, material security/privacy and strategy. See [delegated engineering policy](DELEGATED_ENGINEERING_AUTHORITY.md).
 
 Allowed low-risk types: documentation, test generation, UI scaffold with no auth or data migration, non-sensitive refactoring, isolated utility functions. **Every output must be verifiable** even when simple. Forbidden to unattended models: authentication/session handling, payment integrations, visibility/privacy controls, real-location tracking, destructive database operations, secrets, deployments, and repository governance changes.
 
@@ -62,7 +62,7 @@ GitHub Actions is software-project CI, not a general-purpose 24/7 server. Use sh
 | 12:00–14:00 | QA / GPT-OSS | Review results, checkpoint, and prepare 14:00 handoff | disabled |
 | 14:00 | Executive / Operations | Shift 1 closes; Shift 2 resumes eligible checkpointed work | disabled |
 | 14:15–17:00 | Engineering / Qwen | Perform corrections and remaining authorized tasks | disabled |
-| 17:00–19:00 | QA / GPT-OSS | Run final checks and prepare owner approvals | disabled |
+| 17:00–19:00 | QA / GPT-OSS | Verify integration and manager gate; escalate financial or high-impact decisions to owner | disabled |
 | 19:00 | Operations | Final evidence-backed report | existing read-only tool |
 
 The windows apply **every day, including weekends**: Shift 1 is 09:00–14:00, Shift 2 is 14:00–19:00. These are operating windows, **not** guarantees of 10 hours of inference, free compute, or subscription allowance resets. The existing shift scheduler is default-off and only creates read-only artifacts.
