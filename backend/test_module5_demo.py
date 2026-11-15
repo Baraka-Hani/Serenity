@@ -30,8 +30,9 @@ class Module5DemoTests(unittest.TestCase):
         self.assertEqual(len(ledger["events"]), 4)
         vault = out / "obsidian-vault" / "Serenity HQ"
         board = (vault / "Operations/Shift Board.md").read_text()
-        self.assertIn("SHIFT_STARTED", board)
-        self.assertIn("SHIFT_ENDED", board)
+        readable = board.replace(chr(92), "")
+        self.assertIn("SHIFT_STARTED", readable)
+        self.assertIn("SHIFT_ENDED", readable)
         self.assertIn("19:00", (vault / "Shift Handoffs.md").read_text())
         self.assertIn("Module 5", (vault / "Command Centre.md").read_text())
         self.assertIn("module5-company-ledger", (out/"company-checkpoint.json").read_text())
