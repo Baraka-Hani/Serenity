@@ -7,7 +7,7 @@ Serenity's proposed operating hours are **every day, including weekends**, in `A
 | Shift 1 | 09:00–14:00 | 5 hours | 09:00 intake; 14:00 shift handoff |
 | Shift 2 | 14:00–19:00 | 5 hours | 14:00 handoff/intake; 19:00 daily report |
 
-Total planned coverage: **10 hours/day, 70 hours/week**, conditional on provider eligibility, free quotas and explicit future owner activation. These are *operating windows*, not ten hours of guaranteed model inference or automatic subscription-credit resets.
+Total planned coverage: **10 hours/day, 70 hours/week**, conditional on provider eligibility, free quotas and explicit future owner activation. **These are coordination windows, not automatic five-hour credit reset moments.** Codex, Gemini and Groq have distinct quota scopes and reset behavior. At **90% utilization of any applicable model quota**, stop assigning new model work and checkpoint. Start/resume model work only on a freshly **verified** quota reset with enough five-hour, weekly and other applicable allowance. If a model resets later than 14:00, its second-shift work waits; other authorized work may continue. The fail-closed policy is in [QUOTA_AWARE_SHIFTS.md](QUOTA_AWARE_SHIFTS.md).
 
 ## What the existing read-only workflow does
 
