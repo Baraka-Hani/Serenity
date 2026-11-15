@@ -11,7 +11,7 @@ code change. No actual AI models are called by this pipeline.
 - **QA** independently inspects the proposed patch and its verification evidence.
 - **Operations** stores the task checkpoint, audit events, handoff messages and quota notes.
 - **Obsidian HQ** displays run provenance, owner decisions and departmental status.
-- **Owner** determines whether a code change is acceptable and authorizes any merge or release.
+- **Engineering Manager** authorizes routine commits after true CI, independent QA, integration checks and policy alignment. The **owner** retains finance, production/public release, credentials and high-impact security/privacy decisions. The current demo cannot authorize any GitHub action.
 
 This is one workstream within [the company master program](../docs/SERENITY_COMPANY_PROGRAM.md)
 and [Engineering issue #14](https://github.com/Baraka-Hani/Serenity/issues/14).
@@ -50,14 +50,21 @@ The process creates:
 | `obsidian-vault/Serenity HQ/` | Updated command centre, engineering evidence, messages and owner queue |
 | `obsidian-vault/Serenity Company.canvas` | Native Obsidian organizational visualization |
 
-The CLI prints a machine-readable report. The simulated task is explicitly
-left at `AWAITING_OWNER_ACTION` in its private SQLite ledger. Its illustrative
-merge-approval request has **no authority** to merge an actual PR.
+The CLI prints a machine-readable report. The simulated task remains in
+`IN_REVIEW`: deterministic static checks are insufficient to pass the
+manager's commit gate. It does not create a fictitious owner merge request.
+The future manager is authorized by policy to handle routine code only after
+real independent QA, actual CI and architecture gates; none of those live
+controls are enabled by this demo.
 
 The PR's existing [Serenity checks](../.github/workflows/ci.yml) execute this
 demonstration in GitHub-hosted CI and publish a short-lived evidence artifact.
 A separate [manual-only workflow](../.github/workflows/engineering-offline.yml)
 can be run after the file reaches `main` by a **separate owner-approved merge**.
+
+## Quality-first manager delegation
+
+The proposed [quality gate](quality_gate.py) and [policy](../docs/DELEGATED_ENGINEERING_AUTHORITY.md) require actual passing Python, JS, React and integration checks, an independent reviewer, architecture/mission alignment, a bounded diff and rollback evidence. The evaluation is advisory and always reports `execution_authorized=false`; a mock static screen can never authorize a commit. Owner approval is focused on financial and material high-impact decisions, not every routine patch.
 
 ## Security and safety gates already implemented
 
@@ -102,8 +109,9 @@ can be run after the file reaches `main` by a **separate owner-approved merge**.
 
 ## Next engineer-to-QA milestone
 
-1. **Owner reviews the stack:** PR #12 company HQ and this follow-up engineering
-   PR; do not merge either without explicit authorization.
+1. **Initial governance migration:** PR #12 company HQ and this stacked
+   engineering PR remain drafts until reviewed. Thereafter verified routine
+   work can be delegated to managers without per-commit approval.
 2. **Provider eligibility and accounting:** eligible owner/admin confirms
    Groq free plan, data terms, actual quotas and GitHub Actions cost boundary.
    No credentials are required for offline mode.
@@ -116,9 +124,11 @@ can be run after the file reaches `main` by a **separate owner-approved merge**.
    independent second-model review; introduce a defensible sandbox for test
    execution. Provider-specific quota readers must check every applicable
    window and stop new work at 90% consumed.
-6. **PR creation gate:** add a separately permissioned and tested flow that
-   creates a *draft* PR only after code checks, with provenance and owner
-   review. No automated merge or public deployment.
+6. **Manager commit / PR gate:** add a separately permissioned, CI-verified
+   flow for isolated branch commits and draft PRs after independent QA.
+   Low-risk protected merges may be manager-operated only behind proven
+   branch protections and an activation decision; public deployment and
+   spending remain owner controlled.
 7. **Durable handoffs:** remote approved state store, restart/replay handling
    and Obsidian sync. Then trial time windows and quota-reset recovery,
    not automatic resets at 14:00.
