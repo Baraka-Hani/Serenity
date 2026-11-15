@@ -1,0 +1,27 @@
+{
+  "action": "branch_commit",
+  "risk": "low",
+  "changed_files": [
+    "company/fixtures/destination_label.py"
+  ],
+  "product_purpose": "documented",
+  "architecture_alignment": "unverified",
+  "acceptance_met": false,
+  "rollback_documented": false,
+  "new_financial_exposure": false,
+  "independent_reviewer": "not_run",
+  "checks": {
+    "python_integration": "not_run",
+    "browser_js": "not_run",
+    "react_typecheck_build": "not_run",
+    "dependency_security": "not_run",
+    "privacy_scan": "not_run",
+    "architecture_integration": "not_run",
+    "regression_tests": "not_run"
+  },
+  "ci_conclusion": "not_run",
+  "qa_conclusion": "not_run",
+  "provider_allowance": "unknown",
+  "branch_protection": "unknown",
+  "integration_smoke": "not_run"
+}
