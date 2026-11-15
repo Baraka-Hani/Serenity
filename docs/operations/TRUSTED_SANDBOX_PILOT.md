@@ -57,6 +57,34 @@ coordination is [issue #29](https://github.com/Baraka-Hani/Serenity/issues/29).
    tampering, wrong commit, wrong attempt, skipped CI step, mount injection,
    wrong image digest, default-off gate, and no generated-code execution.
 
+## Read-only GitHub API verification and manager PR preview
+
+The `GithubQualityReader.inspect_sandbox_job(record, expected_head_sha=...)`
+method uses two fixed, read-only GitHub REST paths:
+`/actions/jobs/{job_id}` and `/actions/runs/{run_id}`. It checks the
+reported exact GitHub job and run identities against the candidate-bound
+record and ensures the protected-main manual workflow genuinely executed
+the named sandbox test step. Job identity matching is **not** a signed
+attestation of the container environment and cannot authorize commits
+on its own. The workflow's current protected-main smoke tests a trusted
+checked-in file; it is **not** the same as executing a proposed PR candidate.
+
+`company/manager_writer.py::plan_draft_pr_intent` supplies the next
+manager-authorization review artifact without requesting any GitHub token.
+It requires a low-risk, zero-spend candidate from issue #22, an isolated
+`ai/serenity-issue-22*` branch, one allowed test file, a fixed `main`
+base, an exact candidate digest, and `draft=true`. It returns an
+idempotency key and lists the initial approval prerequisites (trusted
+QA/CI, scoped GitHub App, reviewed branch ruleset, rollback/emergency
+stop). It **never** calls GitHub's write API or unlocks the existing
+`write_branch_commit` / `create_draft_pr` methods.
+
+The code-level allowlist is essential: GitHub App `contents:write`
+permissions are repository-scoped, not naturally limited to a single
+file. An initial owner-approved GitHub App plus trusted workflow and
+branch/ruleset enforcement are necessary; the manager cannot self-authorize
+wider access.
+
 ## Exact administrative prerequisites for the first *manual* smoke
 
 These are **not yet completed**. Gemini's provider/onboarding team can
