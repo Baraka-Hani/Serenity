@@ -79,7 +79,8 @@ def event(ledger, eid, when, kind="WORK_CHECKPOINT"):
 class TechnicalReadinessTests(unittest.TestCase):
     def test_exact_sha_verification_is_still_never_a_write_authorization(self):
         result = assess_candidate(**proof())
-        self.assertEqual(result["status"], "READY_FOR_SEPARATE_OWNER_APPROVED_WRITER_INTEGRATION")
+        self.assertEqual(result["status"], "BLOCKED_PENDING_TRUSTED_ISOLATION_ATTESTATION")
+        self.assertIn("trust root", " ".join(result["issues"]))
         self.assertEqual(result["github_evidence_state"], "GITHUB_API_CHECKS_AND_HUMAN_QA_PASSED")
         self.assertFalse(result["actual_runner_provenance_verified"])
         self.assertFalse(result["manager_commit_execution_authorized"])
