@@ -1,0 +1,60 @@
+name: Serenity HQ manual company simulation
+
+on:
+  workflow_dispatch:
+    inputs:
+      data_source:
+        description: Which company work should HQ show?
+        required: true
+        default: simulated
+        type: choice
+        options:
+          - simulated
+          - github-issues
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: serenity-hq-manual-demo
+  cancel-in-progress: false
+
+jobs:
+  company-hq:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify operating system contract tests
+        run: python3 backend/test_company_office.py
+      - name: Simulate two shifts and generate Obsidian HQ
+        if: inputs.data_source == 'simulated'
+        run: |
+          python3 -m company.demo --vault company-hq-artifact > company-hq-summary.json
+          python3 -m json.tool company-hq-summary.json > /dev/null
+      - name: Import real Serenity issues read-only and generate Obsidian HQ
+        if: inputs.data_source == 'github-issues'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 -m company.github_read --explicit-read-only-github --db company-hq.sqlite3 > company-hq-summary.json
+          python3 -m company.cli --db company-hq.sqlite3 export --vault company-hq-artifact > company-hq-export.json
+      - name: Validate generated artifacts
+        run: |
+          test -s 'company-hq-artifact/Serenity HQ/Command Centre.md'
+          test -s 'company-hq-artifact/Serenity Company.canvas'
+          python3 -m json.tool company-hq-summary.json > /dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: serenity-company-hq-${{ inputs.data_source }}
+          path: |
+            company-hq-artifact/
+            company-hq-summary.json
+            company-hq-export.json
+          retention-days: 7

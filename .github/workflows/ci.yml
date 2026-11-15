@@ -35,6 +35,22 @@ jobs:
 python3 backend/test_free_model_plan.py
           python3 backend/test_cloud_model_pilot.py
           python3 backend/test_quota_guard.py
+          python3 backend/test_free_model_plan.py
+          python3 backend/test_cloud_model_pilot.py
+          python3 backend/test_company_office.py
+          python3 backend/test_company_manager.py
+      - name: Generate sample Obsidian company HQ
+        run: |
+          python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
+          test -s "$RUNNER_TEMP/serenity-vault/Serenity Company.canvas"
+      - name: Upload sample company HQ artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-company-hq-simulated
+          path: |
+            ${{ runner.temp }}/serenity-vault/
+            ${{ runner.temp }}/company-summary.json
+          retention-days: 7
       - name: Dependency-free JavaScript checks
         run: |
           node backend/test_chat_ui.js
