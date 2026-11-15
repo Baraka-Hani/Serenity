@@ -45,6 +45,7 @@ jobs:
           python3 backend/test_module5_sandbox_writer.py
           python3 backend/test_module5_github_quality.py
           python3 backend/test_module5_demo.py
+          python3 backend/test_module5_architecture.py
       - name: Generate sample Obsidian company HQ
         run: |
           python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
@@ -122,6 +123,21 @@ jobs:
           node backend/test_feed_hub.js
           node backend/test_studio_grouping.js
           node backend/test_studio_publication.js
+
+  module5-privacy-and-architecture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate Serenity local API, privacy boundary and agent scope contracts
+        run: |
+          python3 backend/test_module5_architecture.py
+          python3 backend/test_module5_github_quality.py
 
   react-prototype:
     runs-on: ubuntu-latest
