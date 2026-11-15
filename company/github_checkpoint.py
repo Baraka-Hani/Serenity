@@ -6,8 +6,10 @@ App installation and an explicit per-run activation flag. This module does not
 provision the state branch, secrets, billing, cron jobs or workers.
 """
 import base64
+import hashlib
 import json
 import os
+import re
 from urllib import parse, request, error
 
 from company.checkpoint_store import (
@@ -80,17 +82,30 @@ class GithubCheckpointStore:
     def read(self):
         result = self._query(READ_URL)
         if (result.get("type") != "file" or result.get("path") != STATE_PATH
-                or result.get("encoding") != "base64" or not isinstance(result.get("sha"), str)
-                or len(result["sha"]) != 40 or not isinstance(result.get("content"), str)):
+                or result.get("encoding") != "base64"
+                or not isinstance(result.get("sha"), str)
+                or not re.fullmatch(r"[a-f0-9]{40}", result["sha"])
+                or not isinstance(result.get("content"), str)):
             raise RemoteStateBlocked("untrusted GitHub contents metadata")
         try:
-            raw = base64.b64decode(result["content"], validate=False)
+            # GitHub's base64 field can include line breaks; allow whitespace
+            # only, then require strict base64 syntax and a valid Git blob SHA.
+            encoded = "".join(result["content"].split())
+            raw = base64.b64decode(encoded, validate=True)
             if len(raw) > MAX_SNAPSHOT_BYTES:
                 raise RemoteStateBlocked("remote checkpoint too large")
+            if "size" in result and (type(result["size"]) is not int
+                                     or result["size"] != len(raw)):
+                raise RemoteStateBlocked("GitHub content length does not match metadata")
+            blob_sha = hashlib.sha1(
+                b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw
+            ).hexdigest()
+            if blob_sha != result["sha"]:
+                raise RemoteStateBlocked("checkpoint Git blob hash mismatch")
             ledger = validate_ledger(json.loads(raw.decode("utf-8")))
-        except (ValueError, UnicodeError, CheckpointBlocked) as exc:
+        except (ValueError, UnicodeError, CheckpointBlocked, base64.binascii.Error) as exc:
             raise RemoteStateBlocked("remote ledger content invalid") from exc
-        return {"ledger": ledger, "remote_git_blob_sha": result["sha"],
+        return {"ledger": ledger, "remote_git_blob_sha": blob_sha,
                 "source": "github_contents_read_only", "branch": STATE_BRANCH}
 
     def write_once(self, ledger, *, expected_git_blob_sha,
