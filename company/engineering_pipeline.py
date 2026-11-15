@@ -14,6 +14,7 @@ from pathlib import Path, PurePosixPath
 
 from company.office import CompanyOffice
 from company.obsidian import export_vault
+from company.quality_gate import evaluate_manager_action
 
 # Narrow initial allowlist. New real Serenity code paths must be approved in
 # an independently reviewed policy change; issue descriptions do NOT grant scope.
@@ -251,16 +252,29 @@ def run_offline(manifest, *, source_root, artifact_root, db_path):
             office.send_message(task_id, "qa-director", "chief-of-staff",
                                 "Static review: " + review["recommendation"] +
                                 "; not an AI review or executed functional test")
-            status = "SIMULATED_REVIEW_PENDING_OWNER"
-            if review["recommendation"] == "PASS_STATIC_SCREEN":
-                office.transition(task_id, "VERIFIED", "Static-only checks verified; functional tests not run")
-                office.transition(task_id, "AWAITING_OWNER_ACTION", "Owner may inspect artifact; never auto-merge")
-                office.request_approval(
-                    task_id, "merge",
-                    "Illustrative only. No PR exists. Actual code tests, AI QA and human sign-off still required.")
-            else:
-                status = "SIMULATED_CHANGES_REQUIRED"
-                office.checkpoint(task_id, "Offline review requested changes; not suitable for owner merge")
+            # Static-only QA is NOT independent model review or functional
+            # testing. Neither manager nor owner should receive a fake merge
+            # approval request for an incomplete routine code change.
+            status = ("SIMULATED_PENDING_FULL_QA"
+                      if review["recommendation"] == "PASS_STATIC_SCREEN"
+                      else "SIMULATED_CHANGES_REQUIRED")
+            office.checkpoint(
+                task_id,
+                "Static fixture screen recorded; waiting for independent QA, real CI and integration evidence")
+            manager_policy = evaluate_manager_action({
+                "action": "branch_commit", "risk": "low",
+                "changed_files": [manifest["target_path"]],
+                "product_purpose": "documented",
+                "architecture_alignment": "unverified",
+                "acceptance_met": False,
+                "rollback_documented": False,
+                "new_financial_exposure": False,
+                "independent_reviewer": "not_run",
+                "checks": {}, "ci_conclusion": "not_run", "qa_conclusion": "not_run",
+                "provider_allowance": "unused"
+            })
+            office._event("manager_quality_gate", task_id, "chief-of-staff",
+                          manager_policy["status"] + ": insufficient QA evidence")
             report = {
                 "schema_version": 1,
                 "run_key": manifest["run_key"],
@@ -282,8 +296,10 @@ def run_offline(manifest, *, source_root, artifact_root, db_path):
                 "github_repository_writes": False,
                 "model_execution_authorized": False,
                 "automatic_merges_or_deploys": False,
-                "owner_decision_required": True,
-                "next_gate": "Approved, sandboxed real code/test worker and independent actual model reviewer",
+                "owner_decision_required": False,
+                "manager_quality_gate": manager_policy,
+                "manager_commit_authorized": False,
+                "next_gate": "Independent actual QA, full CI and integration checks before a delegated manager commit",
             }
             office.db.execute(
                 """INSERT INTO engineering_runs(task_id,run_key,mode,status,source_sha256,
