@@ -83,7 +83,7 @@ python3 backend/test_company_manager.py
 ```
 
 The simulation covers task intake, an Engineering→QA message, acknowledgement,
-14:00 checkpoint, a second-shift operations event, and pending owner approval.
+14:00 checkpoint, a second-shift operations event, and an illustrative owner financial approval.
 Sample activity is marked as **simulated**, not actual work.
 
 ### 6. Read real GitHub issues (optional manual action)
@@ -135,5 +135,4 @@ The full phased business and product program is in
 GitHub [company epic #13](https://github.com/Baraka-Hani/Serenity/issues/13)
 tracks dependencies and departmental assignments.
 
-**Owner boundaries:** never merge, deploy, enable billing, provision secrets,
-publish, or modify production data without a specific owner approval.
+**Delegated manager policy:** routine branch commits and draft PRs can be manager-approved after verifiable tests, independent QA and architectural alignment. Low-risk protected-branch merges additionally need enforced GitHub rules and actual CI evidence. The currently running demo does not write GitHub. The owner retains approval of financial exposure, credentials/access, production or public releases, production data and material security/privacy changes. See [delegated authority](../docs/DELEGATED_ENGINEERING_AUTHORITY.md).
