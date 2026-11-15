@@ -48,6 +48,8 @@ jobs:
           python3 backend/test_module5_architecture.py
           python3 backend/test_module6_technical_readiness.py
           python3 backend/test_module6_technical_report.py
+          python3 backend/test_module7_sandbox_attestation.py
+          python3 backend/test_module7_sandbox_smoke.py
       - name: Generate sample Obsidian company HQ
         run: |
           python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
