@@ -98,7 +98,7 @@ class GithubCheckpointStore:
                                      or result["size"] != len(raw)):
                 raise RemoteStateBlocked("GitHub content length does not match metadata")
             blob_sha = hashlib.sha1(
-                b"blob " + str(len(raw)).encode("ascii") + b"\\0" + raw
+                b"blob " + str(len(raw)).encode("ascii") + bytes([0]) + raw
             ).hexdigest()
             if blob_sha != result["sha"]:
                 raise RemoteStateBlocked("checkpoint Git blob hash mismatch")
