@@ -36,9 +36,10 @@ def create_claim(result, *, head_sha, run_id, run_attempt, job_id,
 
     This is merely a claim until checked against GitHub-owned metadata.
     """
-    if not isinstance(result, dict) or set(result) < {
+    if not isinstance(result, dict) or not {
             "candidate_sha256", "image_digest", "passed", "returncode",
-            "actual_functional_test_executed", "sandbox", "command_template"}:
+            "actual_functional_test_executed", "sandbox", "command_template"
+            }.issubset(result):
         raise AttestationBlocked("runner result incomplete")
     if (not isinstance(head_sha, str) or not HEX40.fullmatch(head_sha)
             or not all(isinstance(s, str) and HEX64.fullmatch(s)
@@ -138,6 +139,7 @@ def check_github_job(record, *, job, run, expected_head_sha, approved_workflow_r
     ref = record["github"]
     if (job.get("id") != ref["job_id"] or job.get("run_id") != ref["run_id"]
             or job.get("name") != JOB or job.get("status") != "completed"
+            or job.get("head_sha") != expected_head_sha
             or job.get("conclusion") != "success"):
         raise AttestationBlocked("job identity or successful conclusion mismatch")
     if (run.get("id") != ref["run_id"]
@@ -149,6 +151,14 @@ def check_github_job(record, *, job, run, expected_head_sha, approved_workflow_r
         raise AttestationBlocked("workflow run identity/head SHA mismatch")
     if run.get("path") != approved_workflow_ref:
         raise AttestationBlocked("GitHub did not execute approved workflow ref")
+    steps = job.get("steps")
+    if (not isinstance(steps, list) or not any(
+            isinstance(step, dict)
+            and step.get("name") == "Execute isolated test in network-off Docker"
+            and step.get("status") == "completed"
+            and step.get("conclusion") == "success"
+            for step in steps)):
+        raise AttestationBlocked("actual isolated functional test step not verified")
     if record["passed"] is not True:
         raise AttestationBlocked("claimed functional test did not pass")
     return {
