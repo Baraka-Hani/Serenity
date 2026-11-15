@@ -42,7 +42,7 @@ EXHAUSTED / VERIFY_RESET / UNKNOWN
 
 The **90% threshold means 90% of the applicable usage allowance consumed**, *not 90% of elapsed time*. Evaluate all documented quotas, including weekly caps. No workload should be admitted without a reliable recent quota observation. If the provider only exposes reset time at the limit, or the percentage cannot be measured, status is `UNKNOWN`; suspend quota-sensitive automated calls and request an authorized human observation.
 
-At 90%, reserve the final 10% **only for estimated, bounded completion**, not fresh features. If the estimated remaining cost is uncertain, checkpoint before a further model call. Abort on 429/limit response and record the next retry time; never launch retry storms. A *model's* limit pauses that model, not all departments; available non-model work or a separately eligible model may continue according to approved routing.
+At 90%, reserve the final 10% **only for estimated, bounded completion**, not fresh features. The pure `plan_bounded_finish()` helper requires an estimated cost for *every* active quota scope and rejects an in-flight call whose cost, with a **25% safety margin**, would exceed remaining allowance. This is an advisory estimator only, never permission to call a model. If cost in subscription-limit units cannot be estimated reliably, checkpoint instead of sending another model request. Abort on 429/limit response and record the next retry time; never launch retry storms. A *model's* limit pauses that model, not all departments; available non-model work or a separately eligible model may continue according to approved routing.
 
 ## What is implemented now
 
