@@ -14,8 +14,8 @@ from company.sandbox_runner import (
     SandboxBlocked, prepare_workspace, fixed_command, run_manual_sandbox,
 )
 from company.manager_writer import (
-    ManagerWriterBlocked, plan_branch_commit, write_branch_commit,
-    create_draft_pr, merge_protected_branch,
+    ManagerWriterBlocked, plan_branch_commit, plan_draft_pr_intent,
+    write_branch_commit, create_draft_pr, merge_protected_branch,
 )
 
 IMAGE = "docker.io/library/node:22-bookworm-slim@sha256:" + "a"*64
@@ -161,6 +161,34 @@ class SandboxAndWriterContracts(unittest.TestCase):
                      {"changed_files": ["backend/server.py"]}, {"issue": 24}):
             with self.subTest(edit=edit), self.assertRaises(ManagerWriterBlocked):
                 plan_branch_commit(**{**original, **edit})
+
+    def test_manager_draft_pr_intent_is_dry_run_only_and_idempotent(self):
+        plan = plan_branch_commit(**evidence(self.source.read_bytes()))
+        intent = plan_draft_pr_intent(plan)
+        duplicate = plan_draft_pr_intent(plan)
+        self.assertEqual(intent["idempotency_key"], duplicate["idempotency_key"])
+        self.assertEqual(intent["repository"], "Baraka-Hani/Serenity")
+        self.assertEqual(intent["base"], "main")
+        self.assertTrue(intent["draft"])
+        self.assertEqual(intent["changed_files_allowlist"], [TARGET])
+        self.assertFalse(intent["draft_pr_creation_enabled"])
+        self.assertFalse(intent["manager_branch_commit_enabled"])
+        self.assertFalse(intent["automatic_merge_allowed"])
+        self.assertFalse(intent["new_spending_allowed"])
+
+    def test_manager_pr_intent_cannot_escalate_branch_budget_or_scope(self):
+        plan = plan_branch_commit(**evidence(self.source.read_bytes()))
+        for field, value in (
+            ("branch", "main"), ("issue", 32), ("risk", "high"),
+            ("financial_exposure", 1),
+            ("path", ".github/workflows/ci.yml"),
+            ("manager_write_execution_authorized", True),
+        ):
+            modified = dict(plan, **{field: value})
+            with self.subTest(field=field), self.assertRaises(ManagerWriterBlocked):
+                plan_draft_pr_intent(modified)
+        with self.assertRaises(ManagerWriterBlocked):
+            plan_draft_pr_intent(plan, base_branch="production")
 
     def test_no_git_push_pr_create_or_merge_without_separate_activation(self):
         for action in (write_branch_commit, create_draft_pr, merge_protected_branch):
