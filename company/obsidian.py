@@ -48,6 +48,7 @@ def export_vault(office, base_directory):
     events = office.rows("events")
     quota = office.rows("quota_snapshots")
     engineering_runs = office.rows("engineering_runs")
+    module4_runs = office.rows("module4_runs")
     manager_checks = office.rows("manager_quality_checks")
     snapshot = office.snapshot()
     summary = [
@@ -133,6 +134,45 @@ def export_vault(office, base_directory):
             details.append("- " + md(check))
         _safe_write(out / "Engineering", "run-" + str(run["id"]) + ".md",
                     "\n".join(details) + "\n")
+    summary.extend(["", "## Module 4: Real Serenity Test Candidate Runs", ""])
+    if not module4_runs:
+        summary.append("_No hosted model workflow candidates recorded._")
+    for run in module4_runs:
+        ev = json.loads(run["evidence_json"])
+        summary.append(
+            f"- [[Engineering/module4-{run['id']}|Module 4 #{run['id']}]] — "
+            f"{md(run['state'])}; issue #{ev['issue']}; "
+            f"{md(run['builder_id'])} → {md(run['reviewer_id'])}"
+        )
+        lines = [
+            f"# Module 4 Run #{run['id']}", "",
+            "> This is a candidate review, not a deployed or approved change.",
+            "",
+            f"- Issue: #{ev['issue']}",
+            f"- Task: [[../Tasks/task-{run['task_id']}]]",
+            f"- Mode: **{md(run['mode'])}**",
+            f"- Status: **{md(run['state'])}**",
+            f"- Actual builder: {md(run['builder_id'])}",
+            f"- Actual reviewer: {md(run['reviewer_id'])}",
+            f"- Source SHA-256: {md(ev['source_sha256'])}",
+            f"- Candidate SHA-256: {md(ev['candidate_sha256'])}",
+            f"- Architecture SHA-256: {md(ev['architecture_sha256'])}",
+            f"- JS syntax-only check: {md(ev['syntax_only']['syntax'])}",
+            "- Executed functional tests: **NO**",
+            "- Trusted CI/review evidence: **NOT YET VERIFIED**",
+            "- Manager commit gate: **BLOCKED**",
+            "- GitHub repository writes: **NO**",
+            "",
+            "## Next action",
+            "Independent model QA, isolated execution of full functional tests, "
+            "trusted architecture and exact-commit CI evidence are required.",
+            "",
+            "## Added assertions",
+        ]
+        for assertion in ev.get("added_regression_assertions", []):
+            lines.append("- " + md(assertion))
+        _safe_write(out / "Engineering", f"module4-{run['id']}.md",
+                    "\n".join(lines) + "\n")
     summary.extend(["", "## Engineering Manager Quality Decisions", ""])
     if not manager_checks:
         summary.append("_No verified manager quality decisions._")
