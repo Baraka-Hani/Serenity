@@ -19,7 +19,7 @@ from company.github_checkpoint import (
     GithubCheckpointStore, RemoteStateBlocked, READ_URL, API_URL,
 )
 from company.shift_coordinator import simulate_two_shifts, propose_shift
-from company.model_dispatch import synthetic_snapshot
+from company.model_dispatch import synthetic_snapshot, verified_reset
 from company.hosted_inference import MODELS
 
 NOW = datetime(2026, 11, 14, 15, 0, tzinfo=timezone.utc)
@@ -138,6 +138,19 @@ class DurableCheckpointTests(unittest.TestCase):
         result = propose_shift(empty_ledger(), quota, now=NOW)
         self.assertEqual(result["decision"], "WIND_DOWN")
         self.assertFalse(result["provider_calls_authorized"])
+
+    def test_verified_quota_reset_requires_fresh_new_window_evidence(self):
+        model = MODELS["builder"]
+        old = synthetic_snapshot(model, now=NOW, remaining_fraction=0.75)
+        old["limits"][0]["remaining"] = 0
+        refreshed = synthetic_snapshot(model, now=NOW+timedelta(minutes=2),
+                                       remaining_fraction=0.75)
+        before = verified_reset(old, refreshed, now=NOW+timedelta(minutes=2))
+        self.assertFalse(before["resume"])
+        refreshed["limits"][0]["window_id"] = "verified-provider-minute-window-B"
+        reset = verified_reset(old, refreshed, now=NOW+timedelta(minutes=2))
+        self.assertTrue(reset["resume"])
+        self.assertFalse(reset["model_calls_authorized"])
 
     def test_remote_read_verifies_contents_and_hash_chain(self):
         ledger = one_event()
