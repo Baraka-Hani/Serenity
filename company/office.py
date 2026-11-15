@@ -86,6 +86,17 @@ CREATE TABLE IF NOT EXISTS quota_snapshots (
   id INTEGER PRIMARY KEY AUTOINCREMENT, model TEXT NOT NULL, source TEXT NOT NULL,
   state TEXT NOT NULL, observed_at TEXT NOT NULL, reason TEXT NOT NULL, created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS engineering_runs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task_id INTEGER NOT NULL REFERENCES tasks(id),
+  run_key TEXT NOT NULL UNIQUE,
+  mode TEXT NOT NULL CHECK (mode = 'offline_fixture_only'),
+  status TEXT NOT NULL,
+  source_sha256 TEXT NOT NULL,
+  patch_sha256 TEXT NOT NULL,
+  report_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_task_state ON tasks(state);
 CREATE INDEX IF NOT EXISTS idx_events_id ON events(id);
 """
@@ -323,7 +334,7 @@ class CompanyOffice:
         # Observations do not grant provider access or activate an agent.
 
     def rows(self, table):
-        if table not in {"tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots"}:
+        if table not in {"tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots", "engineering_runs"}:
             raise ValueError("unknown table")
         order = "id" if table not in {"agents", "departments"} else "slug"
         return [dict(row) for row in self.db.execute("SELECT * FROM " + table + " ORDER BY " + order)]
@@ -339,4 +350,5 @@ class CompanyOffice:
             "unacknowledged_messages": sum(not m["acknowledged"] for m in self.rows("messages")),
             "departments": len(DEPARTMENTS),
             "role_profiles": len(AGENTS),
+            "engineering_runs": len(self.rows("engineering_runs")),
         }
