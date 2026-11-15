@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "run_key": "serenity-synthetic-destination-label-001",
+  "source_kind": "synthetic_issue_fixture",
+  "title": "Synthetic issue: annotate a travel destination-label helper",
+  "acceptance": "A small Python destination-label fixture receives type annotations, a bounded patch, a static QA result, an owner review request, and an Obsidian HQ record. No actual model calls.",
+  "risk": "low",
+  "department": "engineering",
+  "target_path": "company/fixtures/destination_label.py",
+  "simulation_only": true
+}
