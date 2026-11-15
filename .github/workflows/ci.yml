@@ -50,6 +50,8 @@ jobs:
           python3 backend/test_module6_technical_report.py
           python3 backend/test_module7_sandbox_attestation.py
           python3 backend/test_module7_sandbox_smoke.py
+          python3 backend/test_module8_sandbox_reconcile.py
+          python3 backend/test_module8_sandbox_preflight.py
       - name: Generate sample Obsidian company HQ
         run: |
           python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
@@ -129,8 +131,10 @@ jobs:
           python3 -m json.tool "$RUNNER_TEMP/serenity-technical-brief.json" > /dev/null
           test -s "$RUNNER_TEMP/serenity-technical-readiness/technical-readiness.json"
           test -s "$RUNNER_TEMP/serenity-technical-readiness/company-checkpoint.json"
+          test -s "$RUNNER_TEMP/serenity-technical-readiness/sandbox-preflight.json"
+          test -s "$RUNNER_TEMP/serenity-technical-readiness/obsidian-vault/Serenity HQ/Operations/Sandbox Preflight.md"
           test -s "$RUNNER_TEMP/serenity-technical-readiness/obsidian-vault/Serenity HQ/Operations/Shift Board.md"
-          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"serenity-technical-readiness/technical-readiness.json"; x=json.loads(p.read_text()); assert x["readiness"]["status"]=="BLOCKED" and x["actual_ai_calls"]==0 and not x["manager_branch_commit_enabled"]'
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"serenity-technical-readiness/technical-readiness.json"; x=json.loads(p.read_text()); assert x["readiness"]["status"]=="BLOCKED" and x["actual_ai_calls"]==0 and not x["manager_branch_commit_enabled"] and x["sandbox_preflight"]["status"]=="BLOCKED_OWNER_IMAGE_AND_RUN_AUTHORIZATION"'
       - name: Attach technical readiness and HQ artifact
         uses: actions/upload-artifact@v4
         with:
@@ -138,6 +142,7 @@ jobs:
           path: |
             ${{ runner.temp }}/serenity-technical-readiness/company-checkpoint.json
             ${{ runner.temp }}/serenity-technical-readiness/technical-readiness.json
+            ${{ runner.temp }}/serenity-technical-readiness/sandbox-preflight.json
             ${{ runner.temp }}/serenity-technical-readiness/READINESS.md
             ${{ runner.temp }}/serenity-technical-readiness/obsidian-vault/
             ${{ runner.temp }}/serenity-technical-brief.json
