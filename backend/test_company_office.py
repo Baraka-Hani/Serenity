@@ -32,6 +32,50 @@ class OfficeContractTests(unittest.TestCase):
         self.office.assign(task_id, "lead-builder")
         self.office.transition(task_id, "QUEUED", "Approved low risk work")
 
+    def test_git_issue_import_is_idempotent_and_never_starts_work(self):
+        task_id = self.office.import_issue(
+            "Baraka-Hani/Serenity", 42, "Scope travel feed cards",
+            "Need card acceptance criteria", ["dept:engineering", "risk:low"])
+        again = self.office.import_issue(
+            "Baraka-Hani/Serenity", 42, "Changed remote title",
+            "Changed remote body", ["dept:qa", "risk:high"])
+        self.assertEqual(task_id, again)
+        self.assertEqual(len(self.office.rows("tasks")), 1)
+        self.assertEqual(self.office.rows("tasks")[0]["department"], "engineering")
+        self.assertEqual(self.office.rows("tasks")[0]["state"], "PROPOSED")
+        self.assertFalse(self.office.snapshot()["execution_enabled"])
+
+    def test_unclassified_issue_defaults_to_medium_risk(self):
+        self.office.import_issue("Baraka-Hani/Serenity", 42, "Unknown task", "", [])
+        task = self.office.rows("tasks")[0]
+        self.assertEqual(task["risk"], "medium")
+        self.assertEqual(task["department"], "executive")
+
+    def test_cross_repo_issue_import_blocked(self):
+        with self.assertRaises(ValueError):
+            self.office.import_issue("foreign/repo", 42, "Unknown task", "criteria", [])
+
+    def test_readonly_github_response_ignores_pull_requests(self):
+        from company.github_read import validate_items, ingest
+        raw = [
+            {"number": 9, "title": "Workday", "body": "acceptance",
+             "labels": [{"name": "dept:operations"}]},
+            {"number": 10, "title": "PR must not be task", "pull_request": {"url": "hidden"}},
+        ]
+        self.assertEqual(len(validate_items(raw)), 1)
+        summary = ingest(self.office, raw)
+        self.assertEqual(len(summary), 1)
+        self.assertEqual(self.office.rows("tasks")[0]["external_ref"],
+                         "github:Baraka-Hani/Serenity#9")
+
+    def test_imported_issue_preserves_local_task_progress(self):
+        id_ = self.office.import_issue(
+            "Baraka-Hani/Serenity", 4, "Test", "Acceptance", ["dept:engineering", "risk:low"])
+        self.office.transition(id_, "EVALUATED", "reviewed")
+        self.office.import_issue(
+            "Baraka-Hani/Serenity", 4, "Remote changed", "new instructions", ["dept:qa"])
+        self.assertEqual(self.office.rows("tasks")[0]["state"], "EVALUATED")
+
     def test_initial_company_has_complete_departments_and_disabled_roles(self):
         self.assertEqual(len(self.office.rows("departments")), len(DEPARTMENTS))
         self.assertEqual(len(self.office.rows("agents")), len(AGENTS))
