@@ -158,6 +158,7 @@ def export_vault(office, base_directory):
             f"- Candidate SHA-256: {md(ev['candidate_sha256'])}",
             f"- Architecture SHA-256: {md(ev['architecture_sha256'])}",
             f"- JS syntax-only check: {md(ev['syntax_only']['syntax'])}",
+            f"- Actual model calls: {ev.get('actual_model_requests', 0)}",
             "- Executed functional tests: **NO**",
             "- Trusted CI/review evidence: **NOT YET VERIFIED**",
             "- Manager commit gate: **BLOCKED**",
@@ -167,8 +168,14 @@ def export_vault(office, base_directory):
             "Independent model QA, isolated execution of full functional tests, "
             "trusted architecture and exact-commit CI evidence are required.",
             "",
-            "## Added assertions",
+            "## Quota state per model",
         ]
+        for role, q in ev.get("quota", {}).get("models", {}).items():
+            lines.append(
+                f"- {md(role)} / {md(q.get('model_id'))}: "
+                f"{md(q.get('quota_state'))}, {md(q.get('reason'))}"
+            )
+        lines.extend(["", "## Added assertions"])
         for assertion in ev.get("added_regression_assertions", []):
             lines.append("- " + md(assertion))
         _safe_write(out / "Engineering", f"module4-{run['id']}.md",
