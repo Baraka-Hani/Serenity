@@ -73,7 +73,7 @@ def model_for(config, role):
 def create_payload(model, role):
     if role not in INSTRUCTIONS:
         raise PilotBlocked("unsupported role")
-    return {
+    payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": "You are a code reviewer working on synthetic public test data. Output is a suggestion, not verified code."},
@@ -82,6 +82,11 @@ def create_payload(model, role):
         "max_completion_tokens": MAX_OUTPUT_TOKENS,
         "stream": False,
     }
+    if model == "qwen/qwen3.8-27b":
+        payload["reasoning_effort"] = "none"
+    else:
+        payload["reasoning_effort"] = "low"
+    return payload
 
 
 def observed_quota(headers):
@@ -124,8 +129,13 @@ def live_response(payload, *, api_key):
         headers={"Authorization": "Bearer " + api_key,
                  "Content-Type": "application/json", "Accept": "application/json"},
     )
+    class NoRedirect(request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    opener = request.build_opener(NoRedirect)
     try:
-        with request.urlopen(req, timeout=20) as resp:
+        with opener.open(req, timeout=20) as resp:
             if resp.geturl() != ENDPOINT:
                 raise PilotBlocked("redirected response rejected")
             raw = resp.read(MAX_RESPONSE_BYTES + 1)
