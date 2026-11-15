@@ -74,6 +74,8 @@ def inspect_exact_pr(reader, *, pr_number, expected_base_sha256,
         pr = reader._get("/pulls/" + str(pr_number))
         if not isinstance(pr, dict):
             raise DossierBlocked("GitHub PR record missing")
+        if type(pr.get("number")) is not int or pr["number"] != pr_number:
+            raise DossierBlocked("GitHub PR number does not match request")
         head, base = pr.get("head") or {}, pr.get("base") or {}
         head_sha, base_sha = head.get("sha"), base.get("sha")
         if (not isinstance(head_sha, str) or not SHA.fullmatch(head_sha)
