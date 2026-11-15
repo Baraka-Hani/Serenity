@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "status": "disabled",
+  "purpose": "Design-only routing manifest; no network calls, GitHub writes, scheduling, or agent execution",
+  "provider": {
+    "name": "groq",
+    "base_url": "https://api.groq.com/openai/v1",
+    "free_only": true,
+    "api_key_environment_variable": "GROQ_API_KEY",
+    "account_limits_require_verification": true
+  },
+  "policies": {
+    "allowed_task_types": [
+      "docs",
+      "tests",
+      "scaffold",
+      "low_risk_refactor"
+    ],
+    "allowed_risk_levels": [
+      "low"
+    ],
+    "blocked_task_types": [
+      "auth",
+      "payments",
+      "privacy",
+      "location_history",
+      "secrets",
+      "deployment",
+      "data_migration",
+      "production"
+    ],
+    "require_human_review": true,
+    "can_push": false,
+    "can_merge": false,
+    "can_deploy": false,
+    "can_make_paid_calls": false,
+    "can_contact_users": false,
+    "can_handle_private_user_data": false,
+    "planning_token_budget_per_model_per_workday": 60000,
+    "maximum_prompt_characters": 12000,
+    "maximum_output_tokens_per_request": 1000
+  },
+  "models": [
+    {
+      "role": "builder",
+      "model_id": "qwen/qwen3.8-27b",
+      "provider": "groq",
+      "hosting_status": "preview",
+      "task_types": [
+        "docs",
+        "tests",
+        "scaffold",
+        "low_risk_refactor"
+      ]
+    },
+    {
+      "role": "first_pass_reviewer",
+      "model_id": "openai/gpt-oss-120b",
+      "provider": "groq",
+      "hosting_status": "production_designated",
+      "task_types": [
+        "docs",
+        "tests",
+        "scaffold",
+        "low_risk_refactor"
+      ]
+    }
+  ],
+  "future_execution": {
+    "enabled": false,
+    "mode": "manual_only",
+    "required_gates": [
+      "service_eligibility_verified",
+      "data_and_secret_access_approved",
+      "actual_free_quota_verified",
+      "github_actions_budget_checked",
+      "manual_synthetic_smoke_test_passed",
+      "independent_review_passed",
+      "owner_activation_approved"
+    ],
+    "workday_timezone": "America/Moncton"
+  }
+}
