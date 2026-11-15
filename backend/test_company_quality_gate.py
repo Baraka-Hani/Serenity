@@ -137,7 +137,7 @@ class QualityGateTests(unittest.TestCase):
                 out = Path(temp) / "vault"
                 export_vault(office, out)
                 note = (out / "Serenity HQ" / "Manager Quality Gates.md").read_text()
-                self.assertIn("MANAGER_POLICY_ELIGIBLE", note)
+                self.assertIn("MANAGER_POLICY_ELIGIBLE", note.replace("\\\\_", "_"))
                 self.assertIn("advisory", note)
             finally:
                 office.close()
