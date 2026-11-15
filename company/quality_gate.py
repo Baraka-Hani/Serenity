@@ -12,7 +12,8 @@ OWNER_ACTIONS = frozenset({"spending", "credentials", "production_deployment",
                            "public_release", "production_data", "strategic_change",
                            "external_publication"})
 SENSITIVE_TERMS = (
-    ".env", "secrets", "credentials", "billing", "payments", "firebase",
+    ".env", "secrets", "credentials", "billing", "payment", "payments",
+    "backend/data/", "/data/", "firebase",
     "auth", "session", "accounts", "location_history", "privacy", "migration",
     "database", "deploy", "workflows", ".github", "agents.md",
     "operating_charter",
