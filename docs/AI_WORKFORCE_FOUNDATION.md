@@ -2,8 +2,8 @@
 
 ## Session 1 checkpoint
 
-This document is the durable control panel for Serenity's first 9 AM–5 PM AI
-development pilot. The first version deliberately uses GitHub issues, isolated
+This document is the durable control panel for Serenity's supervised two-shift AI
+development pilot (9 AM–2 PM and 2 PM–7 PM Atlantic, every day). The first version deliberately uses GitHub issues, isolated
 workspaces, pull requests, and automated checks instead of a custom dashboard or
 agent-orchestration framework.
 
@@ -44,38 +44,46 @@ acceptance criteria, and evidence format when comparing models later.
 | ME | Owner decision or access | choose feature, authorize accounts/secrets, accept cost, approve merge |
 | STOP | Never proceed without explicit approval | production deploy/data, billing, secrets, purchase, public publishing |
 
-## A real 9 AM–5 PM pilot day
+## Example supervised two-shift day (America/Moncton, seven days a week)
 
-### 9:00 — Intake (ME, 10 minutes)
+### 9:00 — Shift 1 intake
 
-- Pick one issue labelled for the pilot.
-- Confirm outcome, acceptance criteria, risk, and the no-spend default.
-- Confirm that no production credentials or real user data are required.
+- Restore the approved task queue, open PRs, quotas, and unresolved approvals.
+- Confirm acceptance criteria, risk class, and the default zero-spend policy.
+- Do not load private user data or production credentials into model requests.
 
-### 9:10–12:00 — Build (AI)
+### 9:15–12:00 — Shift 1 low-risk build
 
-- Create an isolated branch/worktree.
-- Implement the smallest complete change.
-- Run the relevant Python, JavaScript, or React checks.
-- Record changed files, results, limitations, security/cost impact and rollback.
+- Builder prepares isolated changes and tests for eligible tasks.
+- Record changed files, checkpoint, token usage, limits and failures.
+- Stop when model or Actions quotas are exhausted; do not bypass or pay.
 
-### 12:00–2:00 — Review (AI)
+### 12:00–14:00 — Shift 1 review and handoff
 
-- Review the task and diff without relying on the Builder's summary.
-- Check correctness, privacy, authentication, data ownership and regressions.
-- Rerun relevant checks and request changes for unsupported claims.
+- First-pass QA inspects diffs and automated tests.
+- At 14:00 record remaining tasks, blockers, branch refs, pending reviews,
+  approved permissions and next safe action.
+- A handoff artifact alone does not automatically transfer live work.
 
-### 2:00–4:30 — Repair and verify (AI)
+### 14:00–17:00 — Shift 2 resumes authorized work
 
-- Builder addresses findings.
-- Reviewer verifies the repairs.
-- CI must pass or the failure must be explicitly explained.
+- Restore checkpoints without repeating prior writes or creating duplicate PRs.
+- Repair verified defects or proceed to the next eligible low-risk task.
+- Escalate critical auth/privacy/security decisions to human-led review.
 
-### 4:30–5:00 — Decision and report (ME + AI)
+### 17:00–19:00 — Shift 2 verification and report
 
-- AI produces an evidence-backed daily report.
-- ME approves, rejects, or defers the pull request.
-- No automatic merge or deployment.
+- Record passing checks, independent review and the final handoff state.
+- At 19:00 produce an evidence-backed report and owner approval queue.
+- No automatic merge, production deployment, credential changes or spending.
+
+These are scheduled coordination windows, not guaranteed continuous model work
+or guaranteed resetting of subscription five-hour usage limits. At **90% used**
+on any applicable verified model quota, wind down new work and preserve a
+bounded completion reserve. If telemetry is missing or stale, pause model
+calls. Resume only after a new verified quota window with sufficient remaining
+capacity in *all* applicable quotas. The rules and simulation tests are in
+[QUOTA_AWARE_SHIFTS.md](QUOTA_AWARE_SHIFTS.md).
 
 ## Daily report template
 
@@ -103,7 +111,7 @@ acceptance criteria, and evidence format when comparing models later.
 - [ ] Request changes
 - [ ] Approve a separately described deployment
 
-## Next workday
+## Next shift or day
 - First task:
 - Known blocker:
 ```

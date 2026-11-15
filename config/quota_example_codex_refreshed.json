@@ -1,0 +1,22 @@
+{
+  "model": "codex/plus",
+  "source": "simulation",
+  "complete": true,
+  "observed_at": "2026-11-14T18:01:00Z",
+  "limits": [
+    {
+      "name": "five_hour",
+      "total": 100,
+      "remaining": 100,
+      "reset_at": "2026-11-14T23:00:00Z",
+      "window_id": "example-fivehour-B"
+    },
+    {
+      "name": "weekly",
+      "total": 100,
+      "remaining": 30,
+      "reset_at": "2026-11-19T13:00:00Z",
+      "window_id": "example-week-A"
+    }
+  ]
+}

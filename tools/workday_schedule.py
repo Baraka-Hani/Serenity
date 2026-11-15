@@ -2,19 +2,19 @@
 """Gate Serenity's supervised workday events in Atlantic local time."""
 
 import argparse
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 
 LOCAL_ZONE = ZoneInfo("America/Moncton")
-EVENTS = {9: "intake", 17: "report"}
+EVENTS = {9: ("intake", "shift_1"), 14: ("handoff", "shift_2"), 19: ("report", "shift_2")}
+MANUAL_EVENTS = {event: shift for event, shift in EVENTS.values()}
 
 
 def evaluate(now, enabled=False, manual_event=None, nominal_utc_hour=None):
     if manual_event:
-        return {"should_run": True, "event": manual_event, "reason": "manual dry run"}
+        return {"should_run": True, "event": manual_event, "shift": MANUAL_EVENTS[manual_event], "reason": "manual dry run"}
     if not enabled:
         return {"should_run": False, "event": "none", "reason": "workforce disabled"}
     event_time = now
@@ -23,12 +23,11 @@ def evaluate(now, enabled=False, manual_event=None, nominal_utc_hour=None):
             hour=nominal_utc_hour, minute=0, second=0, microsecond=0
         )
     local = event_time.astimezone(LOCAL_ZONE)
-    if local.weekday() >= 5:
-        return {"should_run": False, "event": "none", "reason": "weekend"}
-    event = EVENTS.get(local.hour) if local.minute == 0 else None
-    if not event:
+    scheduled_event = EVENTS.get(local.hour) if local.minute == 0 else None
+    if not scheduled_event:
         return {"should_run": False, "event": "none", "reason": "outside event time"}
-    return {"should_run": True, "event": event, "reason": "scheduled workday event"}
+    event, shift = scheduled_event
+    return {"should_run": True, "event": event, "shift": shift, "reason": "scheduled shift event"}
 
 
 def parse_now(value):
@@ -43,7 +42,7 @@ def parse_now(value):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--enabled", action="store_true")
-    parser.add_argument("--manual-event", choices=("intake", "report"))
+    parser.add_argument("--manual-event", choices=("intake", "handoff", "report"))
     parser.add_argument("--scheduled-cron", help="nominal GitHub cron expression")
     parser.add_argument("--now", help="timezone-aware ISO timestamp for verification")
     parser.add_argument("--github-output", type=Path)
@@ -65,6 +64,7 @@ def main(argv=None):
     lines = [
         f"should_run={str(result['should_run']).lower()}",
         f"event={result['event']}",
+        f"shift={result.get('shift', 'none')}",
         f"reason={result['reason']}",
         f"local_date={now.astimezone(LOCAL_ZONE).date().isoformat()}",
     ]
