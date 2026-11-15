@@ -4,7 +4,7 @@ Foundational repository for the scalable AI infrastructure that Serenity is goin
 ## AI development workflow
 
 Serenity uses a supervised Builder → Reviewer workflow with isolated branches,
-automated checks and a human merge/deployment gate. Start with
+automated checks, manager-authorized routine commits after verified quality, and owner-controlled financial/public-release decisions. Start with
 [`AGENTS.md`](AGENTS.md), then see the [agent roles](docs/AGENT_ROLES.md),
 [architecture](docs/ARCHITECTURE.md), [task-management
 workflow](docs/TASK_MANAGEMENT.md), and [workforce foundation
