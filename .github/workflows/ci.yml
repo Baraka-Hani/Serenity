@@ -39,6 +39,8 @@ jobs:
           python3 backend/test_company_manager.py
           python3 backend/test_engineering_pipeline.py
           python3 backend/test_company_quality_gate.py
+          python3 backend/test_module4_providers.py
+          python3 backend/test_module4_pipeline.py
       - name: Generate sample Obsidian company HQ
         run: |
           python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
@@ -70,6 +72,27 @@ jobs:
           path: |
             ${{ runner.temp }}/engineering-review/
             ${{ runner.temp }}/engineering-summary.json
+          retention-days: 7
+      - name: Module 4 real Serenity task / mock models / QA / Obsidian preview
+        run: |
+          python3 -m company.module4_pipeline \
+            --task config/module4_destination_task.json \
+            --root . \
+            --artifacts "$RUNNER_TEMP/module4-evidence" \
+            --db "$RUNNER_TEMP/module4-company.sqlite3" \
+            > "$RUNNER_TEMP/module4-summary.json"
+          python3 -m json.tool "$RUNNER_TEMP/module4-summary.json" > /dev/null
+          test -s "$RUNNER_TEMP/module4-evidence/proposed.patch"
+          test -s "$RUNNER_TEMP/module4-evidence/reviewer-output.json"
+          test -s "$RUNNER_TEMP/module4-evidence/obsidian-vault/Serenity HQ/Engineering/module4-1.md"
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"module4-summary.json"; d=json.loads(p.read_text()); assert d["mode"]=="mock" and not d["github_writes"] and not d["manager_commit_eligible"] and not d["functional_tests_executed"]'
+      - name: Upload Module 4 department QA preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-module4-engineering-evidence
+          path: |
+            ${{ runner.temp }}/module4-evidence/
+            ${{ runner.temp }}/module4-summary.json
           retention-days: 7
       - name: Dependency-free JavaScript checks
         run: |
