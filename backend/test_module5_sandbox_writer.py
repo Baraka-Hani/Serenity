@@ -87,6 +87,22 @@ class SandboxAndWriterContracts(unittest.TestCase):
         self.assertNotIn("bash", command)
         self.assertNotIn("GITHUB_TOKEN", joined)
 
+    def test_docker_mount_delimiter_injection_is_rejected(self):
+        attack = self.dir / "bad,src=/var/run/docker.sock"
+        attack.mkdir(parents=True)
+        with self.assertRaises(SandboxBlocked):
+            fixed_command(attack, image_digest=IMAGE)
+
+    def test_arbitrary_pinned_digest_is_not_owner_approved(self):
+        with patch.dict(os.environ, {"SERENITY_SANDBOX_MANUAL": "true"}, clear=True):
+            with self.assertRaises(SandboxBlocked) as err:
+                run_manual_sandbox(ROOT, self.source, self.dir / "unapproved",
+                                   candidate_sha256=self.sha,
+                                   approved_image_digest=IMAGE,
+                                   owner_approved_sandbox=True)
+        self.assertIn("not authorized", str(err.exception))
+        self.assertFalse((self.dir / "unapproved").exists())
+
     def test_digest_and_symlink_rejected(self):
         with self.assertRaises(SandboxBlocked):
             prepare_workspace(ROOT, self.source, self.dir/"scratch",
@@ -111,7 +127,8 @@ class SandboxAndWriterContracts(unittest.TestCase):
             calls.append((command, kwargs))
             return SimpleNamespace(returncode=0, stdout="Destination picker tests passed",
                                    stderr="")
-        with patch.dict(os.environ, {"SERENITY_SANDBOX_MANUAL": "true"}):
+        with patch.dict(os.environ, {"SERENITY_SANDBOX_MANUAL": "true",
+                                     "SERENITY_APPROVED_NODE_IMAGE": IMAGE}):
             result = run_manual_sandbox(ROOT, self.source, self.dir/"scratch",
                                        candidate_sha256=self.sha,
                                        approved_image_digest=IMAGE,
