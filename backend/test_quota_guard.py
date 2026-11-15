@@ -117,6 +117,31 @@ class QuotaGuardTests(unittest.TestCase):
         snapshot = make_snapshot(remaining=9)
         self.assertFalse(guard.can_resume(snapshot, snapshot, now=NOW)["resume"])
 
+    def test_bounded_finish_passes_with_safety_margin(self):
+        snapshot = make_snapshot(remaining=9)
+        # Conservative estimate uses 6 of 9 remaining five-hour units.
+        result = guard.plan_bounded_finish(
+            snapshot, {"five_hour": 6, "weekly": 1}, now=NOW)
+        self.assertTrue(result["bounded_finish_recommended"])
+        self.assertFalse(result["model_calls_authorized"])
+
+    def test_bounded_finish_rejects_large_call(self):
+        snapshot = make_snapshot(remaining=9)
+        result = guard.plan_bounded_finish(
+            snapshot, {"five_hour": 8, "weekly": 1}, now=NOW)
+        self.assertFalse(result["bounded_finish_recommended"])
+
+    def test_bounded_finish_requires_all_window_estimates(self):
+        snapshot = make_snapshot(remaining=9)
+        result = guard.plan_bounded_finish(snapshot, {"five_hour": 3}, now=NOW)
+        self.assertFalse(result["bounded_finish_recommended"])
+
+    def test_bounded_finish_rejects_uncertain_or_exhausted_snapshot(self):
+        snapshot = make_snapshot(remaining=0)
+        result = guard.plan_bounded_finish(
+            snapshot, {"five_hour": 0, "weekly": 1}, now=NOW)
+        self.assertFalse(result["bounded_finish_recommended"])
+
     def test_groq_minute_or_daily_limit_controls(self):
         snapshot = {
             "model": "groq/qwen", "source": "provider_headers", "complete": True,
