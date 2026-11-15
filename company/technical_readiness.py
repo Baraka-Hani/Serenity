@@ -8,6 +8,7 @@ import hashlib
 import re
 
 from company.github_quality import EvidenceBlocked, verify_pr_evidence
+from company.sandbox_attestation import AttestationBlocked, check_github_job
 
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
@@ -29,7 +30,9 @@ def _sha256(data):
 
 def assess_candidate(*, task, original, candidate, builder, reviewer,
                      sandbox, github_pr=None, github_files=None,
-                     github_checks=None, github_reviews=None):
+                     github_checks=None, github_reviews=None,
+                     sandbox_claim=None, github_job=None, github_run=None,
+                     approved_workflow_ref=None):
     """Return an inspectable blocked/verified-readiness *advisory* report.
 
     Inputs from GitHub should be fetched independently by the read-only
@@ -112,9 +115,29 @@ def assess_candidate(*, task, original, candidate, builder, reviewer,
         issues.append("trusted GitHub review gate failed: " + str(exc))
     if sandbox_status == "NOT_PROVEN":
         issues.append("functional test isolation not verified")
-    # Even with checks green, never authorize a write based on JSON input.
+    job_correspondence = "NOT_VERIFIED"
+    if any(x is not None for x in (sandbox_claim, github_job, github_run,
+                                    approved_workflow_ref)):
+        if not all(x is not None for x in (sandbox_claim, github_job, github_run,
+                                           approved_workflow_ref)):
+            issues.append("incomplete independently fetched sandbox job/run evidence")
+        else:
+            try:
+                job_proof = check_github_job(
+                    sandbox_claim, job=github_job, run=github_run,
+                    expected_head_sha=task.get("pr_head_sha"),
+                    approved_workflow_ref=approved_workflow_ref)
+                if job_proof["candidate_sha256"] != after_hash:
+                    issues.append("GitHub job corresponds to a different candidate")
+                else:
+                    job_correspondence = "GITHUB_JOB_METADATA_MATCHED"
+            except (AttestationBlocked, KeyError, TypeError) as exc:
+                issues.append("sandbox job/run correspondence failed: " + str(exc))
+    # Even correct GitHub metadata can corroborate a job but does not sign
+    # the evidence created inside it. A model or PR can fabricate JSON.
     if pr_status == "GITHUB_API_CHECKS_AND_HUMAN_QA_PASSED" and not issues:
-        status = "READY_FOR_SEPARATE_OWNER_APPROVED_WRITER_INTEGRATION"
+        status = "BLOCKED_PENDING_TRUSTED_ISOLATION_ATTESTATION"
+        issues.append("job correspondence does not independently attest runtime isolation; separate reviewed trust root needed")
     else:
         status = "BLOCKED"
     return {
@@ -129,6 +152,7 @@ def assess_candidate(*, task, original, candidate, builder, reviewer,
         "status": status,
         "issues": issues,
         "untrusted_json_is_not_a_security_attestation": True,
+        "sandbox_github_job_correspondence": job_correspondence,
         "actual_runner_provenance_verified": False,
         "manager_commit_execution_authorized": False,
         "automatic_merge_authorized": False,
