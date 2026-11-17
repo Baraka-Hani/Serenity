@@ -19,6 +19,7 @@ import social
 import studio_import
 import trip_visibility
 import trip_locations
+import visited_locations
 import messaging
 import account_discovery
 
@@ -43,6 +44,7 @@ STATIC.update({"/feed-hub.js": "feed-hub.js", "/feed-hub.css": "feed-hub.css"})
 STATIC.update({f'/{name}': name for name in ('studio-import.js', 'studio-import.css', 'studio-grouping.js', 'studio-video-analysis.js', 'studio-vision-worker.js')})
 STATIC.update({f'/{name}': name for name in ('studio-publication.js', 'studio-publication.css')})
 STATIC.update({f'/{name}': name for name in ('map.html', 'map-core.js', 'travel-map.js', 'travel-map.css', 'destination-picker.js', 'destination-picker.css')})
+STATIC.update({f'/{name}': name for name in ('map-world.js',)})
 STATIC.update({f'/{name}': name for name in ('messages-client.js', 'messages.js', 'messages.css')})
 STATIC.update({f'/{name}': name for name in ('account-discovery.js', 'account-discovery.css')})
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
@@ -139,6 +141,7 @@ def init():
         social.init(connection)
         studio_import.init(connection)
         trip_locations.init(connection)
+        visited_locations.init(connection)
         messaging.init(connection)
         account_discovery.init(connection)
         if not connection.execute("SELECT 1 FROM app_migrations WHERE name='global-user-feeds'").fetchone():
@@ -254,6 +257,8 @@ class Handler(BaseHTTPRequestHandler):
             return messaging.get(self, db)
         if path in ('/api/map/config', '/api/map/trips', '/api/places/search'):
             return trip_locations.get(self, db)
+        if path == visited_locations.PATH:
+            return visited_locations.get(self, db)
         if path == "/api/me":
             user = self.user()
             return self.respond(200, {"user": dict(user) if user else None})
@@ -489,6 +494,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_PUT(self):
         if not self.same_origin(): return
         path = urlparse(self.path).path
+        if path == visited_locations.PATH:
+            return visited_locations.put(self, db)
         visibility_feed = re.fullmatch(r'/api/feeds/([1-9]\d{0,17})/visibility', path)
         if visibility_feed:
             return trip_visibility.update(self, db, int(visibility_feed.group(1)))
@@ -594,6 +601,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         if not self.same_origin(): return
+        visit_match = visited_locations.VISIT_PATH.fullmatch(urlparse(self.path).path)
+        if visit_match:
+            return visited_locations.delete(self, db, int(visit_match.group(1)))
         user = self.require_user()
         if not user: return
         path = urlparse(self.path).path

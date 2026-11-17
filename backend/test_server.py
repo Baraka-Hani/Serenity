@@ -78,6 +78,76 @@ class BackendFlow(unittest.TestCase):
             self.assertEqual(response.headers.get("Cache-Control"), "no-store")
         self.assertEqual(payload, {"status": "ok", "service": "serenity"})
 
+    def test_visited_places_are_private_persistent_and_count_unique_coordinates(self):
+        anonymous = urllib.request.build_opener()
+        path = '/api/map/visits'
+        self.assertEqual(self.call(path, client=anonymous)[0], 401)
+        pin = {'lat': 0, 'lng': 0, 'label': 'Equator memory', 'provider': 'manual', 'source': 'pin'}
+        self.assertEqual(self.call(path, 'PUT', {'location': pin}, client=anonymous)[0], 401)
+        self.call('/api/register', 'POST', {'name': 'Journal Owner', 'email': 'journal@example.test', 'password': 'tripPass123'})
+        self.assertEqual(self.call(path)[1]['total'], 0)
+        status, saved = self.call(path, 'PUT', {'location': pin, 'visited_on': '2026-06-01', 'note': 'PRIVATE JOURNAL MEMORY'})
+        self.assertEqual(status, 201)
+        self.assertEqual(saved['total'], 1)
+        visit_id = saved['location']['id']
+        status, duplicate = self.call(path, 'PUT', {'location': {**pin, 'label': 'Renamed same pin'}})
+        self.assertEqual((status, duplicate['total'], duplicate['created']), (200, 1, False))
+        self.assertEqual(duplicate['location']['id'], visit_id)
+        self.assertEqual(duplicate['location']['note'], 'PRIVATE JOURNAL MEMORY')
+        self.assertEqual(self.call(path, 'PUT', {'location': {**pin, 'lat': 0.00001}})[1]['total'], 1)
+        results = list(ThreadPoolExecutor(max_workers=2).map(lambda _: self.call(path, 'PUT', {'location': {**pin, 'lat': 1}}), range(2)))
+        self.assertEqual(sorted(status for status, _ in results), [200, 201])
+        self.assertEqual(self.call(path)[1]['total'], 2)
+        server.init()
+        self.assertEqual(self.call(path)[1]['total'], 2)
+        self.assertNotIn('PRIVATE JOURNAL MEMORY', json.dumps(self.call('/api/map/trips', client=anonymous)[1]))
+        visitor = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        self.call('/api/register', 'POST', {'name': 'Journal Visitor', 'email': 'journal-visitor@example.test', 'password': 'tripPass123'}, client=visitor)
+        self.assertEqual(self.call(path, client=visitor)[1]['locations'], [])
+        self.assertEqual(self.call(f'{path}/{visit_id}', 'DELETE', client=visitor)[0], 404)
+        self.assertEqual(self.call(f'{path}/{visit_id}', 'DELETE', client=anonymous)[0], 401)
+        self.assertEqual(self.call(path, 'PUT', {'location': pin}, client=visitor)[1]['total'], 1)
+        self.assertEqual(self.call(f'{path}/{visit_id}', 'DELETE')[1]['total'], 1)
+        self.assertEqual(self.call(f'{path}/{visit_id}', 'DELETE')[0], 404)
+        self.assertEqual(self.call(path, client=visitor)[1]['total'], 1)
+
+    def test_visited_places_validate_inputs_and_origin(self):
+        self.call('/api/register', 'POST', {'name': 'Journal Validation', 'email': 'journal-validation@example.test', 'password': 'tripPass123'})
+        pin = {'lat': 51.1784, 'lng': -115.5708, 'label': 'Banff'}
+        invalid = [None, {}, {**pin, 'lat': True}, {**pin, 'lng': float('nan')}, {**pin, 'lat': float('inf')},
+                   {**pin, 'lng': -181}, {**pin, 'lat': 91}, {**pin, 'label': ' '}, {**pin, 'label': 'a' * 241},
+                   {**pin, 'provider': 'unknown'}, {**pin, 'place_id': []}]
+        for location in invalid:
+            self.assertEqual(self.call('/api/map/visits', 'PUT', {'location': location})[0], 400, str(location))
+        for extra in ({'visited_on': '2026-02-30'}, {'visited_on': 3}, {'visited_on': '20261116'}, {'note': 'x' * 1001}, {'note': []}):
+            self.assertEqual(self.call('/api/map/visits', 'PUT', {'location': pin, **extra})[0], 400)
+        request = urllib.request.Request(self.base + '/api/map/visits', method='PUT',
+            data=json.dumps({'location': pin}).encode(), headers={'Content-Type': 'application/json', 'Origin': 'https://other.example'})
+        with self.assertRaises(urllib.error.HTTPError) as rejected:
+            self.client.open(request)
+        self.assertEqual(rejected.exception.code, 403)
+        self.assertEqual(self.call('/api/map/visits')[1]['total'], 0)
+        self.assertEqual(self.call('/api/map/visits?offset=-1')[0], 400)
+        self.assertEqual(self.call('/api/map/visits?offset=NaN')[0], 400)
+        self.assertEqual(self.call('/api/map/visits?offset=1000001')[0], 400)
+
+    def test_visited_places_pagination_and_antimeridian_identity(self):
+        _, account = self.call('/api/register', 'POST', {'name': 'Journal Pages', 'email': 'journal-pages@example.test', 'password': 'tripPass123'})
+        pin = {'lat': 3, 'lng': 180, 'label': 'Date-line island'}
+        self.assertEqual(self.call('/api/map/visits', 'PUT', {'location': pin})[1]['total'], 1)
+        self.assertEqual(self.call('/api/map/visits', 'PUT', {'location': {**pin, 'lng': -180}})[1]['total'], 1)
+        self.assertEqual(self.call('/api/map/visits', 'PUT', {'location': {**pin, 'lat': 90, 'lng': 10}})[1]['total'], 2)
+        self.assertEqual(self.call('/api/map/visits', 'PUT', {'location': {**pin, 'lat': 90, 'lng': -10}})[1]['total'], 2)
+        with server.db() as connection:
+            for index in range(101):
+                connection.execute('''INSERT INTO visited_locations(user_id,lat,lng,label,provider,source,place_id,lat_key,lng_key,visited_on,note,saved_at)
+                    VALUES (?,?,?,'Test-only place','manual','pin','',?,?,'','',1)''', (account['user']['id'], 20, index, 200000, index * 10000))
+        page = self.call('/api/map/visits')[1]
+        second = self.call('/api/map/visits?offset=100')[1]
+        self.assertEqual((page['total'], len(page['locations']), page['has_more']), (103, 100, True))
+        self.assertEqual((second['total'], len(second['locations']), second['has_more']), (103, 3, False))
+        self.assertFalse({x['id'] for x in page['locations']} & {x['id'] for x in second['locations']})
+
     def test_account_clip_and_theme_are_private(self):
         email = "traveller@example.test"
         status, data = self.call("/api/register", "POST", {"name": "Traveller", "email": email, "password": "tripPass123"})
@@ -480,7 +550,7 @@ class BackendFlow(unittest.TestCase):
         self.assertIn('src="messages.js"', chat)
         self.assertNotIn('src="trip-sidebar.js"', chat)
         service_worker = self.call('/service-worker.js')[1].decode()
-        self.assertIn('serenity-shell-v12-people-chat', service_worker)
+        self.assertIn('serenity-shell-v13-travel-world', service_worker)
         for asset in ('messages.css', 'messages-client.js', 'messages.js'):
             self.assertIn(f"'/{asset}'", service_worker)
         self.assertIn("toggle.setAttribute('aria-controls', sidebar.id)", sidebar)

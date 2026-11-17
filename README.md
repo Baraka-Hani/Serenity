@@ -1,6 +1,10 @@
 # Serenity
 Foundational repository for the scalable AI infrastructure that Serenity is going to pilot. It also contains the Serenity travel app and a separate React/Firebase prototype.
 
+## Try the demo
+
+**[▶ Open the live demo](https://htmlpreview.github.io/?https://github.com/Baraka-Hani/Serenity/blob/main/user%20demo/app.html)**, or download the repository and double-click [`user demo/app.html`](user%20demo/app.html). It is a self-contained preview with sample data, so you don't need to install anything. See [`user demo/`](user%20demo/) for details.
+
 ## AI development workflow
 
 Serenity uses a supervised Builder → Reviewer workflow with isolated branches,
@@ -16,6 +20,29 @@ default-off two five-hour shifts every day, including weekends, and emergency st
 The [quota-aware model policy](docs/QUOTA_AWARE_SHIFTS.md) defines the 90%
 wind-down threshold and verified-reset rule. Both schedules remain
 coordination-only until separately approved agents are connected.
+
+## AI company headquarters (in development)
+
+Serenity is also the pilot for a human-supervised AI software company:
+Executive Office, Engineering, QA, Research & Product, Architecture,
+Operations and AI Platform. Its implementation is tracked in
+[the unified company roadmap](docs/SERENITY_COMPANY_PROGRAM.md) and
+[company program issue #13](https://github.com/Baraka-Hani/Serenity/issues/13).
+
+The [company OS quick-start](company/README.md) describes a runnable Python/
+SQLite task ledger, department-to-department messages, owner approval inbox,
+90% quota-aware Chief-of-Staff dry-run planner, two-shift checkpoints, a
+read-only GitHub Issue importer, and an Obsidian Canvas/Markdown exporter.
+
+```bash
+python3 -m company.demo --vault /path/to/temporary-vault
+python3 -m company.cli status
+python3 -m company.cli plan
+```
+
+These commands do not start AI models. Cloud AI and GitHub workflows remain
+manual-only or disabled until separately authorized; see
+[cloud pilot setup](docs/CLOUD_PILOT_SETUP.md).
 
 ## Projects
 

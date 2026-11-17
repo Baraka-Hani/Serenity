@@ -1,7 +1,10 @@
-"""Serenity company framework and operating control plane.
+"""Serenity company operating system and operating control plane.
 
-All autonomous agents remain disabled until authorized by the human owner.
-Zero new spend, fail-closed quotas, and deterministic verification.
+Persistent ledger and visual exports.
+
+All autonomous agents remain disabled until the owner explicitly approves
+controlled execution. Zero new spend, fail-closed quotas, and deterministic
+verification.
 """
 
 __version__ = "0.1.0"
