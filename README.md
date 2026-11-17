@@ -1,6 +1,10 @@
 # Serenity
 Foundational repository for the scalable AI infrastructure that Serenity is going to pilot. It also contains the Serenity travel app and a separate React/Firebase prototype.
 
+## Try the demo
+
+**[▶ Open the live demo](https://htmlpreview.github.io/?https://github.com/Baraka-Hani/Serenity/blob/main/user%20demo/app.html)**, or download the repository and double-click [`user demo/app.html`](user%20demo/app.html). It is a self-contained preview with sample data, so you don't need to install anything. See [`user demo/`](user%20demo/) for details.
+
 ## AI development workflow
 
 Serenity uses a supervised Builder → Reviewer workflow with isolated branches,
