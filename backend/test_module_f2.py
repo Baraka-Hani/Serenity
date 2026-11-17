@@ -16,7 +16,12 @@ from contextlib import redirect_stdout
 from datetime import datetime, timezone
 from pathlib import Path
 
-from company.cli import main as cli_main
+import sys
+from pathlib import Path as _Path
+
+sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+
+from company.ops_cli import main as cli_main
 from company.event_bus import EventBus, EventBusError
 from company.obsidian_exporter import DEPARTMENTS, ObsidianExporter
 from company.quota_ledger import QuotaLedger

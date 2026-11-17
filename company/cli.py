@@ -1,230 +1,156 @@
-"""Unified command-line interface for Serenity operations and verification.
-
-Allows offline inspection of company state, quota tracking, shift simulation,
-Obsidian HQ export, and governance gate verification without network access.
-"""
-
-from __future__ import annotations
-
+#!/usr/bin/env python3
+"""Local Serenity company operating-system command interface. No cloud calls."""
 import argparse
+import importlib.util
 import json
-import sys
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from company.office import CompanyOffice
+from company.obsidian import export_vault
+from company.manager import propose_work
+from datetime import datetime, timezone
 
-from company.event_bus import EventBus
-from company.governance_validator import GovernanceValidator, sha256_digest
-from company.obsidian_exporter import ObsidianExporter
-from company.quota_ledger import DEFAULT_DAILY_TOKEN_BUDGET, QuotaLedger
-from company.shift_runner import ShiftRunner
-
-
-def cmd_status(ledger: QuotaLedger, event_bus: EventBus, args: argparse.Namespace) -> int:
-    """Print high-level company status overview."""
-    now = datetime.now(timezone.utc)
-    shift_info = ShiftRunner.determine_shift(now)
-    usage = ledger.get_window_usage("qwen/qwen3.8-27b", now=now)
-    status = ledger.evaluate_status("qwen/qwen3.8-27b", now=now)
-    events_count = event_bus.count()
-    intact, msg = event_bus.verify_chain_integrity()
-
-    print("=" * 60)
-    print("           SERENITY AI COMPANY — OPERATING STATUS           ")
-    print("=" * 60)
-    print(f"Timestamp:          {now.isoformat()}")
-    print(f"Active Shift:       {shift_info['name']}")
-    print(f"Builder Model:      qwen/qwen3.8-27b (Groq Free)")
-    print(f"Quota Status:       {status['status']}")
-    print(f"Daily Tokens:       {usage['tokens_consumed']:,} / {DEFAULT_DAILY_TOKEN_BUDGET:,} ({usage['used_percent']}%)")
-    print(f"Remaining Tokens:   {usage['remaining_tokens']:,}")
-    print(f"Total Audit Events: {events_count} (Chain: {'INTACT' if intact else 'CORRUPT'})")
-    print(f"Total Financial:    $0.00 (Zero-Spend Policy Active)")
-    print("=" * 60)
-    return 0
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DB = ROOT / "backend" / "data" / "serenity_company.sqlite3"
 
 
-def cmd_quota(ledger: QuotaLedger, args: argparse.Namespace) -> int:
-    """Display detailed quota consumption and wind-down assessment."""
-    model = args.model
-    now = datetime.now(timezone.utc)
-    usage = ledger.get_window_usage(model, now=now)
-    status = ledger.evaluate_status(model, now=now)
-
-    print(f"Quota Telemetry for Model: {model}")
-    print("-" * 50)
-    print(f"Status:             {status['status']}")
-    print(f"Tokens Consumed:    {usage['tokens_consumed']:,} / {DEFAULT_DAILY_TOKEN_BUDGET:,}")
-    print(f"Used Percentage:    {usage['used_percent']}%")
-    print(f"Remaining:          {usage['remaining_tokens']:,} tokens")
-    print(f"Requests Count:     {usage['requests_count']}")
-    print(f"Accept New Work:    {status['accept_new_work']}")
-    print(f"Finish Only:        {status['finish_only']}")
-    print(f"Reason:             {status['reason']}")
-    return 0
+def quota_assessment(snapshot_path):
+    module_file = ROOT / "tools" / "quota_guard.py"
+    spec = importlib.util.spec_from_file_location("quota_guard", module_file)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    payload = json.loads(Path(snapshot_path).read_text(encoding="utf-8"))
+    return mod.assess(payload), payload
 
 
-def cmd_simulate_shift(ledger: QuotaLedger, event_bus: EventBus, args: argparse.Namespace) -> int:
-    """Simulate a deterministic 5-hour shift execution."""
-    shift_num = args.shift
-    tasks_count = args.tasks
-    model = args.model
+def build_parser():
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--db", type=Path, default=DEFAULT_DB,
+                   help="SQLite ledger; default is ignored backend/data directory")
+    s = p.add_subparsers(dest="command", required=True)
 
-    tasks = [
-        {
-            "task_id": f"TASK-SIM-{i+1:03d}",
-            "title": f"Simulated low-risk task #{i+1}",
-            "estimated_tokens": 2_000,
-        }
-        for i in range(tasks_count)
-    ]
+    s.add_parser("init", help="initialize roles, departments and empty database")
+    s.add_parser("status", help="current operational status, not live model telemetry")
+    for name in ("tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots"):
+        s.add_parser(name, help="read ledger rows for " + name)
 
-    event_bus.publish(
-        "SHIFT_SIMULATION_STARTED", "operations", "operations-director",
-        {"shift": shift_num, "task_count": tasks_count, "model": model}
-    )
+    a = s.add_parser("new", help="create an unapproved task proposal")
+    a.add_argument("title")
+    a.add_argument("--department", choices=(
+        "executive", "engineering", "qa", "research", "architecture", "operations", "platform"), required=True)
+    a.add_argument("--acceptance", required=True)
+    a.add_argument("--risk", choices=("low", "medium", "high"), default="low")
 
-    runner = ShiftRunner(ledger)
-    result = runner.simulate_shift(shift_num, tasks, model=model)
+    a = s.add_parser("advance", help="advance a task state; never starts external agents")
+    a.add_argument("id", type=int)
+    a.add_argument("state")
+    a.add_argument("--note", required=True)
 
-    event_bus.publish(
-        "SHIFT_SIMULATION_COMPLETED", "operations", "operations-director",
-        {"shift": shift_num, "completed": len(result["completed_tasks"]), "paused": len(result["paused_tasks"])}
-    )
+    a = s.add_parser("assign", help="assign an organizational role, not an API invocation")
+    a.add_argument("id", type=int)
+    a.add_argument("agent")
 
-    print(result["handoff_report"])
-    return 0
+    a = s.add_parser("checkpoint", help="record task checkpoint for a future shift")
+    a.add_argument("id", type=int)
+    a.add_argument("--note", required=True)
+    a.add_argument("--branch", default="")
 
+    a = s.add_parser("send", help="queue a persistent message between agent roles")
+    a.add_argument("id", type=int)
+    a.add_argument("--from-role", required=True)
+    a.add_argument("--to-role", required=True)
+    a.add_argument("--message", required=True)
 
-def cmd_export_hq(ledger: QuotaLedger, event_bus: EventBus, args: argparse.Namespace) -> int:
-    """Export Obsidian HQ vault and canvas to target directory."""
-    out_dir = Path(args.output).resolve()
-    exporter = ObsidianExporter(ledger, event_bus)
-    result = exporter.export_vault(out_dir)
+    a = s.add_parser("ack", help="acknowledge a queued role message")
+    a.add_argument("id", type=int)
+    a.add_argument("--recipient", required=True)
 
-    print(f"Successfully exported Serenity HQ:")
-    print(f"- Output Directory: {result['output_directory']}")
-    print(f"- Department Pages: {result['department_pages']}")
-    print(f"- Agent Pages:      {result['agent_pages']}")
-    print(f"- Operations Pages: {result['operations_pages']}")
-    print(f"- Visual Canvas:    {result['canvas_path']}")
-    return 0
+    a = s.add_parser("request-approval", help="request explicit owner decision")
+    a.add_argument("id", type=int)
+    a.add_argument("--action", required=True)
+    a.add_argument("--reason", required=True)
 
+    a = s.add_parser("decide", help="record owner's decision only; never performs external action")
+    a.add_argument("id", type=int)
+    a.add_argument("--decision", choices=("APPROVED", "REJECTED"), required=True)
+    a.add_argument("--note", required=True)
+    a.add_argument("--confirm-owner", action="store_true")
 
-def cmd_verify_gates(args: argparse.Namespace) -> int:
-    """Run GovernanceValidator on a known fixture to test all 5 gates."""
-    validator = GovernanceValidator()
-    orig = b"function test() { return 1; }\n"
-    cand = b"function test() { return 2; }\n"
-    orig_sha = sha256_digest(orig)
-    cand_sha = sha256_digest(cand)
-    head_sha = "abcdef1234567890abcdef1234567890abcdef12"
+    a = s.add_parser("shift", help="record an organizational shift checkpoint")
+    a.add_argument("name", choices=("shift_1_start", "shift_1_end_shift_2_start", "shift_2_end"))
+    a.add_argument("--note", required=True)
 
-    task = {
-        "issue": 22,
-        "risk": "low",
-        "target_path": "backend/test_destination_picker.js",
-        "original_sha256": orig_sha,
-        "candidate_sha256": cand_sha,
-    }
-    ci = {
-        "head_sha": head_sha,
-        "checks": {
-            "backend-and-browser-logic": {"conclusion": "success"},
-            "react-prototype": {"conclusion": "success"},
-            "module5-privacy-and-architecture": {"conclusion": "success"},
-        },
-    }
-    builder = {"agent_id": "lead-builder", "model": "qwen/qwen3.8-27b"}
-    reviewer = {"agent_id": "qa-director", "model": "openai/gpt-oss-120b", "verdict": "approve"}
+    a = s.add_parser("quota-import", help="store an offline advisory quota assessment")
+    a.add_argument("file", type=Path)
 
-    res = validator.assess(
-        task=task, original_bytes=orig, candidate_bytes=cand,
-        ci_evidence=ci, builder_info=builder, reviewer_info=reviewer,
-        head_sha=head_sha
-    )
+    a = s.add_parser("plan", help="dry-run Chief of Staff task selection; no model calls")
+    a.add_argument("--quota-snapshot", type=Path, help="offline JSON quota snapshot to assess")
+    a.add_argument("--now", help="time-aware ISO-8601 timestamp for dry-run testing")
 
-    print("Governance Quality Gate Evaluation:")
-    print("-" * 50)
-    print(f"All Gates Passed:       {res['all_quality_gates_passed']}")
-    print(f"Passed Gates:           {', '.join(res['passed_gates'])}")
-    print(f"Failed Gates:           {', '.join(res['failed_gates']) or 'None'}")
-    print(f"Recommendation:         {res['recommendation']}")
-    print(f"Manager Authorized:     {res['manager_commit_execution_authorized']} (Strictly False)")
-    return 0 if res["all_quality_gates_passed"] else 1
+    a = s.add_parser("export", help="render safe generated Markdown/Canvas inside an Obsidian vault")
+    a.add_argument("--vault", type=Path, required=True)
+    return p
 
 
-def cmd_verify_events(event_bus: EventBus, args: argparse.Namespace) -> int:
-    """Verify cryptographic integrity of event journal."""
-    intact, msg = event_bus.verify_chain_integrity()
-    print(f"Event Chain Integrity: {'VALID' if intact else 'COMPROMISED'}")
-    print(f"Details: {msg}")
-    return 0 if intact else 1
-
-
-def build_parser() -> argparse.ArgumentParser:
-    """Construct CLI argument parser."""
-    parser = argparse.ArgumentParser(
-        prog="serenity-ops",
-        description="Serenity AI Company offline operations and verification CLI.",
-    )
-    parser.add_argument("--db", default=":memory:", help="SQLite database path for ledger/events")
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # status
-    subparsers.add_parser("status", help="Show current operational status overview")
-
-    # quota
-    p_quota = subparsers.add_parser("quota", help="Display quota telemetry")
-    p_quota.add_argument("--model", default="qwen/qwen3.8-27b", help="Model identifier")
-
-    # simulate-shift
-    p_shift = subparsers.add_parser("simulate-shift", help="Simulate a 5-hour shift execution")
-    p_shift.add_argument("--shift", type=int, choices=[1, 2], default=1, help="Shift number (1 or 2)")
-    p_shift.add_argument("--tasks", type=int, default=3, help="Number of simulated tasks")
-    p_shift.add_argument("--model", default="qwen/qwen3.8-27b", help="Model identifier")
-
-    # export-hq
-    p_hq = subparsers.add_parser("export-hq", help="Export Obsidian HQ notes and Canvas")
-    p_hq.add_argument("--output", default=".", help="Target directory for Serenity HQ")
-
-    # verify-gates
-    subparsers.add_parser("verify-gates", help="Test 5-gate quality decision engine on fixture")
-
-    # verify-events
-    subparsers.add_parser("verify-events", help="Verify event journal hash-chain integrity")
-
-    return parser
-
-
-def main(argv: Optional[List[str]] = None) -> int:
-    """CLI entrypoint."""
-    parser = build_parser()
-    args = parser.parse_args(argv)
-
-    ledger = QuotaLedger(args.db)
-    event_bus = EventBus(args.db)
-
+def main(argv=None):
+    args = build_parser().parse_args(argv)
+    office = CompanyOffice(args.db)
     try:
-        if args.command == "status":
-            return cmd_status(ledger, event_bus, args)
-        elif args.command == "quota":
-            return cmd_quota(ledger, args)
-        elif args.command == "simulate-shift":
-            return cmd_simulate_shift(ledger, event_bus, args)
-        elif args.command == "export-hq":
-            return cmd_export_hq(ledger, event_bus, args)
-        elif args.command == "verify-gates":
-            return cmd_verify_gates(args)
-        elif args.command == "verify-events":
-            return cmd_verify_events(event_bus, args)
+        c = args.command
+        if c == "init":
+            answer = office.snapshot()
+        elif c == "status":
+            answer = office.snapshot()
+        elif c in ("tasks", "agents", "departments", "events", "messages", "approvals", "quota_snapshots"):
+            answer = office.rows(c)
+        elif c == "new":
+            answer = {"task_id": office.new_task(args.title, args.department, args.acceptance, args.risk)}
+        elif c == "advance":
+            office.transition(args.id, args.state, args.note)
+            answer = {"task_id": args.id, "state": args.state}
+        elif c == "assign":
+            office.assign(args.id, args.agent)
+            answer = {"task_id": args.id, "agent": args.agent}
+        elif c == "checkpoint":
+            office.checkpoint(args.id, args.note, args.branch)
+            answer = {"task_id": args.id, "checkpoint_saved": True}
+        elif c == "send":
+            answer = {"message_id": office.send_message(args.id, args.from_role, args.to_role, args.message)}
+        elif c == "ack":
+            office.acknowledge(args.id, args.recipient)
+            answer = {"message_id": args.id, "acknowledged": True}
+        elif c == "request-approval":
+            answer = {"approval_id": office.request_approval(args.id, args.action, args.reason)}
+        elif c == "decide":
+            office.decide_approval(args.id, args.decision, args.note, args.confirm_owner)
+            answer = {"approval_id": args.id, "recorded": args.decision, "executed_action": False}
+        elif c == "shift":
+            office.shift_checkpoint(args.name, args.note)
+            answer = {"shift_checkpoint": args.name, "agent_execution": False}
+        elif c == "quota-import":
+            result, snapshot = quota_assessment(args.file)
+            office.record_quota_state(result, snapshot.get("source", "unverified"),
+                                      snapshot.get("observed_at", "unknown"))
+            answer = result
+        elif c == "plan":
+            now = (datetime.fromisoformat(args.now.replace("Z", "+00:00"))
+                   if args.now else datetime.now(timezone.utc))
+            quotas = {}
+            if args.quota_snapshot:
+                result, _ = quota_assessment(args.quota_snapshot)
+                if result["model"]:
+                    quotas[result["model"]] = result
+            answer = propose_work(office, quotas, now=now)
+        elif c == "export":
+            answer = export_vault(office, args.vault)
         else:
-            parser.print_help()
-            return 1
+            raise ValueError("unknown command")
+    except (ValueError, OSError, KeyError) as exc:
+        raise SystemExit("BLOCKED: " + str(exc)) from None
     finally:
-        ledger.close()
-        event_bus.close()
+        office.close()
+    print(json.dumps(answer, indent=2, ensure_ascii=False))
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())

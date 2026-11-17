@@ -11,6 +11,11 @@ import os
 import unittest
 from datetime import datetime, timezone
 
+import sys
+from pathlib import Path as _Path
+
+sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+
 from company.governance_validator import sha256_digest
 from company.manager_intent import IntentError, ManagerIntentGenerator
 from company.mock_dispatcher import DispatcherError, MockDispatcher

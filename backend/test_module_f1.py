@@ -10,6 +10,11 @@ import os
 import unittest
 from datetime import datetime, time, timedelta, timezone
 
+import sys
+from pathlib import Path as _Path
+
+sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+
 from company.governance_validator import GovernanceValidator, sha256_digest
 from company.quota_ledger import (
     DEFAULT_DAILY_TOKEN_BUDGET,
