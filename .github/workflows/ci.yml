@@ -52,6 +52,11 @@ jobs:
           python3 backend/test_module7_sandbox_smoke.py
           python3 backend/test_module8_sandbox_reconcile.py
           python3 backend/test_module8_sandbox_preflight.py
+          python3 backend/test_module_u_evidence.py
+          python3 backend/test_module_u_recovery.py
+          python3 backend/test_module_u_shift.py
+          python3 backend/test_module_u_rehearsal.py
+          python3 backend/test_module_u_report.py
       - name: Generate sample Obsidian company HQ
         run: |
           python3 -m company.demo --vault "$RUNNER_TEMP/serenity-vault" > "$RUNNER_TEMP/company-summary.json"
@@ -146,6 +151,33 @@ jobs:
             ${{ runner.temp }}/serenity-technical-readiness/READINESS.md
             ${{ runner.temp }}/serenity-technical-readiness/obsidian-vault/
             ${{ runner.temp }}/serenity-technical-brief.json
+          retention-days: 7
+      - name: Module U — verify cloud recovery, manager rehearsal and HQ packet
+        run: |
+          python3 -m company.module_u_report \
+            --source-root . \
+            --output "$RUNNER_TEMP/serenity-module-u" \
+            > "$RUNNER_TEMP/serenity-module-u-summary.json"
+          python3 -m json.tool "$RUNNER_TEMP/serenity-module-u-summary.json" > /dev/null
+          test -s "$RUNNER_TEMP/serenity-module-u/module-u-report.json"
+          test -s "$RUNNER_TEMP/serenity-module-u/manager-pr-rehearsal.json"
+          test -s "$RUNNER_TEMP/serenity-module-u/cloud-recovery.json"
+          test -s "$RUNNER_TEMP/serenity-module-u/shift-readiness.json"
+          test -s "$RUNNER_TEMP/serenity-module-u/obsidian-vault/Serenity HQ/Operations/Cloud Recovery.md"
+          test -s "$RUNNER_TEMP/serenity-module-u/obsidian-vault/Serenity HQ/Operations/Manager PR Rehearsal.md"
+          python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"serenity-module-u/module-u-report.json"; x=json.loads(p.read_text()); assert x["status"]=="OFFLINE_CONTROL_PLANE_VERIFIED_LIVE_COMPANY_BLOCKED" and not x["manager_writes_authorized"] and x["github_writes_performed"]==0 and x["cloud_recovery"]["status"]=="REMOTE_NOT_OBSERVED" and not x["actual_sandbox_execution"]'
+      - name: Upload Module U replay, QA and manager preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: serenity-module-u-hq-readiness
+          path: |
+            ${{ runner.temp }}/serenity-module-u/module-u-report.json
+            ${{ runner.temp }}/serenity-module-u/manager-pr-rehearsal.json
+            ${{ runner.temp }}/serenity-module-u/cloud-recovery.json
+            ${{ runner.temp }}/serenity-module-u/shift-readiness.json
+            ${{ runner.temp }}/serenity-module-u/company-checkpoint.json
+            ${{ runner.temp }}/serenity-module-u/obsidian-vault/
+            ${{ runner.temp }}/serenity-module-u-summary.json
           retention-days: 7
       - name: Dependency-free JavaScript checks
         run: |

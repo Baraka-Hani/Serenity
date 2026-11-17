@@ -1,5 +1,6 @@
 """Security and restartability tests for Serenity's event journal and remote state."""
 import base64
+import hashlib
 import json
 import os
 import sys
@@ -154,13 +155,17 @@ class DurableCheckpointTests(unittest.TestCase):
 
     def test_remote_read_verifies_contents_and_hash_chain(self):
         ledger = one_event()
+        raw = json.dumps(ledger).encode("utf-8")
+        blob_sha = hashlib.sha1(
+            b"blob " + str(len(raw)).encode("ascii") + bytes([0]) + raw
+        ).hexdigest()
         response = {"type": "file", "path": "state/company-ledger.json",
-                    "encoding": "base64", "sha": "a"*40,
-                    "content": base64.b64encode(json.dumps(ledger).encode("utf-8")).decode("ascii")}
+                    "encoding": "base64", "sha": blob_sha, "size": len(raw),
+                    "content": base64.b64encode(raw).decode("ascii")}
         client = GithubCheckpointStore(transport=Transport(response))
         data = client.read()
         self.assertEqual(data["ledger"], ledger)
-        self.assertEqual(data["remote_git_blob_sha"], "a"*40)
+        self.assertEqual(data["remote_git_blob_sha"], blob_sha)
 
     def test_default_remote_write_blocked_before_transport(self):
         transport = Transport({"commit": {"sha": "b"*40}})
