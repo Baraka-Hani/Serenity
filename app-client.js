@@ -47,6 +47,15 @@
       const query = new URLSearchParams(options);
       return request(`/api/map/trips?${query}`, { cache: 'no-store' });
     },
+    async visitedPlaces(offset = 0) {
+      return request(`/api/map/visits?${new URLSearchParams({ offset })}`, { cache: 'no-store' });
+    },
+    async saveVisitedPlace(location, visitedOn = '', note = '') {
+      return request('/api/map/visits', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location, visited_on: visitedOn, note }) });
+    },
+    async removeVisitedPlace(id) {
+      return request(`/api/map/visits/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    },
     async renameFeed(feed, name) {
       return (await request(`/api/feeds/${feed}/name`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })).name;
     },

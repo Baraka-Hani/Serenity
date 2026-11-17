@@ -1,4 +1,4 @@
-const CACHE_NAME = 'serenity-shell-v12-people-chat';
+const CACHE_NAME = 'serenity-shell-v13-travel-world';
 const APP_PAGES = new Set([
   '/map.html',
   '/app.html',
@@ -19,6 +19,7 @@ const SHELL_ASSETS = [
   '/account-discovery.css',
   '/map.html',
   '/map-core.js',
+  '/map-world.js',
   '/travel-map.js',
   '/travel-map.css',
   '/destination-picker.js',
