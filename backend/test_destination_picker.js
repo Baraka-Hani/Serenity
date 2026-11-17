@@ -23,6 +23,9 @@ async function runDestinationPickerTests(source) {
   const searchInput = [...picker.element.nodes.entries()].find(([selector]) => selector.endsWith('-search'))[1];
   searchInput.value = 'Lisbon'; await field('[data-search]').onclick();
   assert(requests.length === 1 && requests[0].includes('q=Lisbon'), 'Search must be explicit and go through the local API');
+  const searchUrl = new URL(requests[0], 'https://first-party.invalid');
+  assert(typeof requests[0] === 'string' && requests[0].startsWith('/') && !requests[0].startsWith('//'), 'Search must use a relative first-party path, not an absolute or protocol-relative URL');
+  assert(searchUrl.origin === 'https://first-party.invalid' && searchUrl.pathname === '/api/places/search' && searchUrl.searchParams.get('q') === 'Lisbon' && [...searchUrl.searchParams.keys()].join() === 'q', 'Search must call only the first-party /api/places/search route with the encoded query');
   field('[data-results]').children[0].onclick();
   assert(picker.value.provider === 'photon' && picker.destination === 'Lisbon, Portugal', 'A place must be explicitly selected to become a pinned destination');
   field('[data-clear]').onclick();
