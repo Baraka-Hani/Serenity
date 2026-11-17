@@ -165,7 +165,15 @@ def get(handler, db):
     parsed = urlparse(handler.path)
     query = parse_qs(parsed.query)
     if parsed.path == '/api/map/config':
-        return handler.respond(200, {'tile_url': TILE_URL, 'attribution': html.escape(os.environ.get('SERENITY_MAP_ATTRIBUTION', '© OpenStreetMap contributors'))})
+        return handler.respond(200, {
+            'tile_url': TILE_URL,
+            'attribution': html.escape(os.environ.get('SERENITY_MAP_ATTRIBUTION', '© OpenStreetMap contributors')),
+            'imagery_url': os.environ.get('SERENITY_MAP_IMAGERY_URL', 'https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg'),
+            'imagery_attribution': html.escape(os.environ['SERENITY_MAP_IMAGERY_ATTRIBUTION']) if 'SERENITY_MAP_IMAGERY_ATTRIBUTION' in os.environ else 'EOxCloudless <a href="https://cloudless.eox.at">2016</a> by <a href="https://maps.eox.at">EOX IT Services GmbH</a> (Contains modified Copernicus Sentinel data 2016)',
+            'terrain_url': os.environ.get('SERENITY_MAP_TERRAIN_URL', 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'),
+            'terrain_attribution': html.escape(os.environ['SERENITY_MAP_TERRAIN_ATTRIBUTION']) if 'SERENITY_MAP_TERRAIN_ATTRIBUTION' in os.environ else '<a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Mapzen terrain · elevation sources</a>',
+            'buildings_url': os.environ.get('SERENITY_MAP_BUILDINGS_URL', 'https://tiles.openfreemap.org/planet'),
+        })
     if parsed.path == '/api/map/trips':
         try:
             with db() as connection:
