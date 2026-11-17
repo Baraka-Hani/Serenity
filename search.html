@@ -3,13 +3,17 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,interactive-widget=resizes-content">
   <meta name="theme-color" content="#f2eee4"><meta name="description" content="Private travel conversations with the people behind the videos on Serenity.">
-  <title>Chat — Serenity</title>
-  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="messages.css"><link rel="stylesheet" href="account-discovery.css">
+  <title>Conversations · Engage — Serenity</title>
+  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="app-shell.css"><link rel="stylesheet" href="messages.css"><link rel="stylesheet" href="engage.css"><link rel="stylesheet" href="account-discovery.css">
 </head>
 <body>
-  <header class="topbar messages-shell"><a class="brand" href="app.html#home-feed" aria-label="Serenity Home feed"><img src="serenity-logo.svg" alt=""><span>serenity</span></a><a href="account.html" id="messagesAccount">Your account ↗</a></header>
+  <header class="app-header messages-shell"><a class="app-brand" href="home.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt="">serenity</a><a href="account.html" id="messagesAccount">Profile ↗</a></header>
   <main class="messages-shell">
-    <div class="messages-heading"><div><span class="eyebrow">From “where is this?” to being there</span><h1>Chat<span>.</span></h1></div><p>Ask the person behind the video.<br>Make that place your next stop.</p></div>
+    <h1 class="engage-title">Engage</h1>
+    <nav class="engage-tabs" aria-label="Engage">
+      <a href="engage.html">Generated</a>
+      <a href="search.html" aria-current="page">Conversations</a>
+    </nav>
     <p id="messagesStatus" class="messages-status" role="status" aria-live="polite">Opening your inbox…</p>
     <section id="messagesGate" class="messages-gate" hidden><span class="eyebrow">Your conversations, in one place</span><h2>A question is the start of a journey.</h2><p>Sign in to message a creator, ask about a trip, and pick up your conversations on any device connected to this server.</p><a id="messagesSignin" class="primary" href="auth.html?next=messages">Sign in or create an account ↗</a></section>
     <section id="messenger" class="messenger" hidden aria-label="Private messaging">

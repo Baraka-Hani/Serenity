@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
+  <title>Clip Studio — Serenity</title>
+  <link rel="manifest" href="manifest.webmanifest"><link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="trip-sidebar.css">
+  <link rel="stylesheet" href="app-shell.css"><link rel="stylesheet" href="studio.css"><link rel="stylesheet" href="studio-import.css"><link rel="stylesheet" href="studio-publication.css"><link rel="stylesheet" href="destination-picker.css">
+</head>
+<body>
+  <header class="app-header shell"><a href="account.html">‹ Profile</a></header>
+  <main class="shell">
+    <section class="studio-gate" id="studioGate" hidden>
+      <h1>Clip Studio</h1>
+      <a class="app-button app-button--primary" href="auth.html?next=studio">Sign in to post ↗</a>
+    </section>
+    <p id="studioLoadStatus" class="message" role="status">Opening Clip Studio…</p>
+    <section id="feeds" class="clip-studio" hidden>
+      <div class="feed-head">
+        <h1>Clip Studio</h1>
+        <p>Create a trip, add its details, and upload videos together. Each trip keeps its description and clips in one place.</p>
+      </div>
+      <form id="createFeedForm" class="trip-create">
+        <div class="trip-create-heading">
+          <strong>Start a trip</strong>
+          <span>Name it, tell its story, and add your first videos.</span>
+        </div>
+        <div class="trip-create-fields">
+          <label>Trip name<input name="name" maxlength="60" placeholder="e.g. Summer in Kyoto" required></label>
+          <label>Destination<input name="destination" maxlength="120" placeholder="Where are you going?"></label>
+          <label class="wide">The experience<textarea name="summary" maxlength="1000" rows="3" placeholder="What makes this journey special?"></textarea></label>
+          <label class="wide trip-upload-label">
+            Add videos now<input name="videos" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v" multiple>
+            <small>Up to 500 clips per trip · 50 MB each</small>
+          </label>
+        </div>
+        <button class="upload" type="submit">Create trip and save videos</button>
+      </form>
+      <p id="studioStatus" class="message" role="status"></p>
+      <div class="feeds" id="feedCards"></div>
+    </section>
+  </main>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="studio-publication.js"></script><script src="map-core.js"></script><script src="destination-picker.js"></script><script src="app-studio.js"></script><script src="studio-grouping.js"></script><script src="studio-video-analysis.js"></script><script src="studio-import.js"></script><script src="trip-sidebar.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
+</body>
+</html>

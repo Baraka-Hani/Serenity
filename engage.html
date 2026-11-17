@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
+  <title>Engage — Serenity</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="app-shell.css"><link rel="stylesheet" href="engage.css"><link rel="stylesheet" href="liquid-toolbar.css">
+</head>
+<body>
+  <header class="app-header app-shell">
+    <a class="app-brand" href="home.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt="">serenity</a>
+  </header>
+  <main class="app-shell">
+    <h1 class="engage-title">Engage</h1>
+    <nav class="engage-tabs" aria-label="Engage">
+      <a href="engage.html" aria-current="page">Generated</a>
+      <a href="search.html">Conversations</a>
+    </nav>
+    <section class="generated-library" aria-labelledby="gamesTitle">
+      <div class="generated-heading">
+        <div>
+          <h2 id="gamesTitle">Games</h2>
+          <p>Save a shared game from Gemini and open it again from this browser.</p>
+        </div>
+        <button class="app-button app-button--primary" id="addGame" type="button" aria-controls="gameForm" aria-expanded="false" disabled>＋ Add game</button>
+      </div>
+      <form class="game-form" id="gameForm" hidden>
+        <label>Name<input name="title" maxlength="80" required></label>
+        <label>Shared game link<input name="url" type="url" placeholder="https://" maxlength="2048" required></label>
+        <div class="game-form-actions">
+          <button class="app-button app-button--primary" type="submit">Save game</button>
+          <button class="app-button" id="cancelGame" type="button">Cancel</button>
+        </div>
+      </form>
+      <p class="game-status" id="gameStatus" role="status">Opening your saved games…</p>
+      <p class="game-empty" id="gameEmpty" hidden>No games saved yet.</p>
+      <ul class="game-list" id="gameList" aria-label="Saved games"></ul>
+    </section>
+  </main>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="engage.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
+</body>
+</html>

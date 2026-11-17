@@ -17,7 +17,7 @@
   list.setAttribute('aria-label', 'Individual trips');
   let rows = [];
   const foot = document.createElement('div'); foot.className = 'trip-sidebar__foot';
-  const footLink = document.createElement('a'); footLink.href = 'app.html#feeds'; footLink.textContent = 'Manage trips in Clip Studio ↗';
+  const footLink = document.createElement('a'); footLink.href = 'studio.html'; footLink.textContent = 'Manage trips in Clip Studio ↗';
   foot.append('Trips with published videos appear here. ', footLink);
   sidebar.append(head, list, foot);
   const toggle = document.createElement('button');
@@ -46,7 +46,7 @@
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && sidebar.classList.contains('is-open')) { setOpen(false); toggle.focus(); } });
   mobile.addEventListener?.('change', () => setOpen(!mobile.matches));
   function isClipStudioPage() {
-    return location.pathname.split('/').pop() === 'app.html' && location.hash === '#feeds';
+    return location.pathname.split('/').pop() === 'studio.html';
   }
   function updateRoute() {
     const enabled = isClipStudioPage();
@@ -67,7 +67,7 @@
       const user = await window.RoamApp.me();
       if (!user) {
         foot.replaceChildren('Sign in to see your saved trips. ');
-        const signIn = document.createElement('a'); signIn.href = 'auth.html'; signIn.textContent = 'Sign in ↗'; foot.append(signIn);
+        const signIn = document.createElement('a'); signIn.href = 'auth.html?next=studio'; signIn.textContent = 'Sign in ↗'; foot.append(signIn);
         return;
       }
       const [names, clips] = await Promise.all([window.RoamApp.feeds(), window.RoamApp.clips()]);

@@ -211,7 +211,7 @@
       const empty = document.createElement('p');
       empty.className = 'account-empty';
       empty.textContent = signedInUser
-        ? 'Videos you save from the Home feed will be collected here.'
+        ? 'Videos you save from Feed will be collected here.'
         : 'Sign in to save videos and see them here.';
       gallery.append(empty);
       return;

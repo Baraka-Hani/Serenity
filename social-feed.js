@@ -140,7 +140,7 @@
         if (!videos.length) {
           card._destroyHub?.();
           card.remove();
-          status.textContent = 'Trip removed from the Home feed. Your saved clip is still private in Account.';
+          status.textContent = 'Trip removed from Feed. Your saved clip is still private in Clip Studio.';
           return;
         }
         selectedPost = videos[Math.min(index, videos.length - 1)];
@@ -226,7 +226,7 @@
       offset += result.posts.length;
       hasMore = result.has_more;
       more.hidden = !result.has_more;
-      status.textContent = result.posts.length ? '' : append ? 'You’re all caught up.' : 'No trips have been published yet. Create one in Clip Studio to start the Home feed.';
+      status.textContent = result.posts.length ? '' : append ? 'You’re all caught up.' : 'No trips have been published yet. To share one, choose Post on your profile.';
     } catch (error) {
       if (current !== requestNumber) return;
       status.textContent = error.message;

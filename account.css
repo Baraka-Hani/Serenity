@@ -3,6 +3,8 @@
 body{margin:0;background:var(--paper,#f2eee4);color:var(--ink,#171713);font-family:Manrope,system-ui,sans-serif}
 .account-shell{width:min(1120px,calc(100% - 40px));margin:0 auto;padding:24px 0 110px}
 .account-heading{display:flex;align-items:center;justify-content:space-between;padding:0 0 36px;border-bottom:1px solid color-mix(in srgb,var(--ink),transparent 86%)}
+.account-heading__actions { display: flex; align-items: center; gap: 8px; }
+.account-heading__actions .save-theme { min-height: 44px; background: var(--ink); color: var(--paper); border-color: var(--ink); gap: 4px; }
 .brand{display:flex;align-items:center;gap:8px;color:var(--ink);font-weight:800;text-decoration:none}
 .brand img{width:30px;height:30px;object-fit:contain}
 .settings-trigger,.drawer-close{border:1px solid color-mix(in srgb,var(--ink),transparent 82%);border-radius:999px;background:transparent;color:var(--ink);font:inherit;cursor:pointer}

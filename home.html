@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
+  <meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Serenity">
+  <title>Home — Serenity</title>
+  <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="serenity-icon-192.png">
+  <link rel="stylesheet" href="app-shell.css"><link rel="stylesheet" href="home.css"><link rel="stylesheet" href="liquid-toolbar.css">
+</head>
+<body>
+  <header class="app-header app-shell">
+    <a class="app-brand" href="home.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt="">serenity</a>
+    <button class="app-button" id="installAppButton" type="button" hidden>Install app</button>
+  </header>
+  <main class="app-shell">
+    <p class="install-status" id="installStatus" role="status"></p>
+    <section class="home-intro" aria-labelledby="homeTitle">
+      <h1 id="homeTitle">Find your next trip.</h1>
+      <p>Watch travel stories from the Serenity community, find the places on the map, or ask a creator about their trip.</p>
+      <a class="app-button app-button--primary" href="app.html#home-feed">Watch the feed ↗</a>
+    </section>
+    <nav class="home-links" aria-label="Explore Serenity">
+      <a href="map.html"><strong>Map <span aria-hidden="true">↗</span></strong><span>Explore destinations shared by travellers.</span></a>
+      <a href="engage.html"><strong>Engage <span aria-hidden="true">↗</span></strong><span>Open your games and conversations.</span></a>
+      <a href="account.html"><strong>Profile <span aria-hidden="true">↗</span></strong><span>Post a trip or revisit your saved videos.</span></a>
+    </nav>
+  </main>
+  <script src="shared-theme.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
+</body>
+</html>
