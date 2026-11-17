@@ -18,6 +18,10 @@ python3 -m company.cli agents
 python3 -m company.cli departments
 ```
 
+The separate offline control-plane CLI (quota ledger, event bus, shift
+simulation, gate checks) is `python3 -m company.ops_cli`, for example
+`python3 -m company.ops_cli verify-gates`. It does not replace `company.cli`.
+
 Default database is the ignored file
 `backend/data/serenity_company.sqlite3`. Keep it private and backed up.
 The local database is not yet a remotely accessible cloud source of truth.
