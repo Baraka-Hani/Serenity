@@ -7,7 +7,41 @@
     return data;
   }
 
+  let configPromise = null;
+
   window.RoamApp = {
+    // Server mode (guest preview, Google sign-in). Asked once per page; a failure
+    // falls back to the normal app so pages never get stuck waiting on it.
+    config() {
+      configPromise ||= request('/api/auth/config', { cache: 'no-store' })
+        .catch(() => ({ guest_preview: false, google_client_id: null }));
+      return configPromise;
+    },
+    async guestPreview() { return Boolean((await this.config()).guest_preview); },
+    // A short message that floats above the page, with an optional link.
+    notify(text, link) {
+      let toast = document.querySelector('#serenityToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'serenityToast';
+        toast.className = 'serenity-toast';
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+        document.body.append(toast);
+      }
+      const message = document.createElement('span');
+      message.textContent = text;
+      toast.replaceChildren(message);
+      if (link) {
+        const action = document.createElement('a');
+        action.href = link.href;
+        action.textContent = link.label;
+        toast.append(action);
+      }
+      toast.classList.add('is-visible');
+      clearTimeout(toast._hide);
+      toast._hide = setTimeout(() => toast.classList.remove('is-visible'), link ? 6000 : 4000);
+    },
     messageUrl(publicId, postId) {
       const query = new URLSearchParams({ to: publicId });
       if (postId) query.set('post', postId);
@@ -116,4 +150,7 @@
       .then(theme => { if (theme?.theme) window.RoamTheme.apply(theme.theme, true); })
       .catch(error => console.warn('Could not restore the account colour scheme:', error));
   }
+  window.RoamApp.config().then(config => {
+    document.documentElement.classList.toggle('guest-preview', Boolean(config.guest_preview));
+  });
 }());

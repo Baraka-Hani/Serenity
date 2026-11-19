@@ -163,6 +163,8 @@
   const title = document.querySelector('#quizClipTitle');
   const creator = document.querySelector('#quizClipCreator');
   const story = document.querySelector('#quizClipStory');
+  const place = document.querySelector('#quizClipPlace');
+  const spoiler = document.querySelector('#quizClipSpoiler');
   const status = document.querySelector('#quizStatus');
   const cards = document.querySelector('#quizCards');
   const modes = [
@@ -280,6 +282,7 @@
         replay.addEventListener('click', () => startChallenge(mode, area));
         feedback.append(heading, explanation);
         panel.append(feedback, replay);
+        spoiler.open = true;
         replay.focus();
       });
       options.append(option);
@@ -333,9 +336,12 @@
       tip: value(trip.tip) || value(post.tip),
       creator: value(context.creator?.name) || value(post.author_name) || 'Serenity creator'
     };
-    title.textContent = selected.destination || 'Published travel video';
-    creator.textContent = `Shared by ${selected.creator}`;
+    // The destination and story are quiz answers, so they stay folded away until asked for.
+    title.textContent = `Where did ${selected.creator} go?`;
+    creator.textContent = 'Watch the clip, then play a challenge below.';
+    place.textContent = selected.destination ? `⌁ ${selected.destination}` : 'No destination was shared with this video.';
     story.textContent = selected.caption || 'No trip story was added to this video.';
+    spoiler.open = false;
     video.pause();
     video.src = window.RoamApp.postVideoUrl(selected.id);
     video.onerror = () => {
@@ -346,14 +352,27 @@
     renderGames();
   }
 
+  // One group per trip, with its clips numbered, instead of a list of identical names.
   function populatePicker() {
     const selectedId = picker.value;
     picker.replaceChildren();
+    const trips = new Map();
     for (const post of posts) {
-      const option = document.createElement('option');
-      option.value = post.id;
-      option.textContent = `${value(post.destination) || 'Travel video'} · ${value(post.author_name) || 'Serenity creator'}`;
-      picker.append(option);
+      const key = post.feed_id === undefined || post.feed_id === null ? `post:${post.id}` : `feed:${post.feed_id}`;
+      if (!trips.has(key)) trips.set(key, { label: `${value(post.feed_name) || value(post.destination) || 'Travel video'} · ${value(post.author_name) || 'Serenity creator'}`, clips: [] });
+      trips.get(key).clips.push(post);
+    }
+    for (const trip of trips.values()) {
+      const group = document.createElement('optgroup');
+      group.label = trip.label;
+      trip.clips.forEach((post, index) => {
+        const option = document.createElement('option');
+        option.value = post.id;
+        option.textContent = trip.clips.length > 1 ? `Clip ${index + 1} of ${trip.clips.length}` : 'Trip video';
+        option.label = `${trip.label} — ${option.textContent}`;
+        group.append(option);
+      });
+      picker.append(group);
     }
     picker.value = selectedId;
     picker.disabled = posts.length === 0;
@@ -419,6 +438,15 @@
       posts = result.posts.filter(post => typeof post?.id === 'string' && post.id);
       hasMorePosts = Boolean(result.has_more);
       nextOffset = result.posts.length;
+      // Wrong answers come from other trips, so gather a few before the first quiz.
+      for (let page = 0; page < 3 && hasMorePosts && new Set(posts.map(post => value(post.destination).toLocaleLowerCase())).size < 4; page++) {
+        const extra = await window.RoamApp.posts({ sort: 'recent', offset: nextOffset });
+        if (!Array.isArray(extra.posts)) break;
+        const known = new Set(posts.map(post => post.id));
+        posts.push(...extra.posts.filter(post => typeof post?.id === 'string' && post.id && !known.has(post.id)));
+        nextOffset += extra.posts.length;
+        hasMorePosts = Boolean(extra.has_more);
+      }
       if (!posts.length) {
         picker.replaceChildren();
         picker.disabled = true;

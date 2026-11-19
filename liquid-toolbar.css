@@ -118,3 +118,14 @@ body.has-liquid-toolbar { padding-bottom: calc(112px + env(safe-area-inset-botto
   .liquid-toolbar__link { transition: none; }
   .liquid-toolbar__link.is-current::before { animation: none; left: 25%; }
 }
+
+/* The current tab always sits on a pale pill, so its label is always dark ink, even on the dark Feed toolbar. */
+.liquid-toolbar__link.is-current { color: #171713; }
+/* The highlighted tab already says where you are: keep "Now viewing" for screen readers, drop the visual repeat. */
+.liquid-toolbar__meta { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* Shared floating notice (window.RoamApp.notify). */
+.serenity-toast { position: fixed; z-index: 1000; left: 50%; top: max(16px, env(safe-area-inset-top)); display: flex; box-sizing: border-box; width: max-content; align-items: center; gap: 12px; max-width: min(520px, calc(100vw - 28px)); padding: 11px 12px 11px 16px; border: 1px solid #ffffff2e; border-radius: 16px; background: #171713eb; color: #f6f2ea; box-shadow: 0 14px 40px #0005; font: 600 13px/1.4 Manrope, system-ui, sans-serif; opacity: 0; pointer-events: none; transform: translate(-50%, -12px); transition: opacity .2s, transform .2s; backdrop-filter: blur(14px); }
+.serenity-toast.is-visible { opacity: 1; pointer-events: auto; transform: translate(-50%, 0); }
+.serenity-toast a { flex: none; padding: 7px 12px; border-radius: 99px; background: var(--accent, #ff6945); color: #171713; font-weight: 800; text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { .serenity-toast { transition: none; } }

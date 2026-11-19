@@ -9,6 +9,7 @@ services:
       ROAM_DATA_DIR: /data
       ROAM_PUBLIC_ORIGIN: ${ROAM_PUBLIC_ORIGIN:?Set ROAM_PUBLIC_ORIGIN to the public HTTPS origin}
       ROAM_GOOGLE_CLIENT_ID: ${ROAM_GOOGLE_CLIENT_ID:-}
+      ROAM_GUEST_PREVIEW: ${ROAM_GUEST_PREVIEW:-}
     ports:
       - "127.0.0.1:8765:8765"
     volumes:

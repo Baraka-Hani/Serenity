@@ -16,3 +16,17 @@
 @media(max-width:760px){.map-topbar{height:64px;padding:0 17px;gap:10px}.map-brand{font-size:21px}.map-brand-divider{margin:0 3px}.map-page-name{font-size:11px}.map-header-link{font-size:10px}.map-experience{height:auto;min-height:0;display:flex;flex-direction:column;padding-bottom:130px}.map-stage{order:-1;height:54dvh;min-height:340px;border-bottom:1px solid var(--map-border)}.map-explore{border-right:0;padding:25px 23px;overflow:visible}.map-intro h1{font-size:32px}.map-intro h1 br,.map-intro p br{display:none}.map-intro p{margin-bottom:20px}.map-travel-stat{padding:14px 17px}.map-stage-heading{top:17px;left:15px;right:66px}.map-view-controls{top:132px;right:17px}.map-scene-controls{bottom:80px;gap:2px}.map-stage-bottom{bottom:27px}.map-control{padding:8px}.map-stage .maplibregl-ctrl-top-right{top:7px;right:7px}.map-detail{top:12px;right:65px;width:calc(100% - 80px);max-height:calc(100% - 94px)}.map-detail>video{aspect-ratio:16/9;max-height:155px}.map-detail h2{font-size:20px}.map-notice{top:61px;left:15px;right:66px;font-size:10px}.map-place-list{max-height:340px;overflow:auto}.map-privacy{font-size:10px}.map-terrain-preview,.map-scene-settings{font-size:9px}.map-footer-copy{font-size:11px}.map-stage-bottom .map-scene-settings{max-width:195px}.map-explore .map-record-button{padding:14px}.map-visit-dialog{padding:25px}.map-view-switch button,.map-search input{font-size:13px}}
 @media(max-width:760px){.map-stage-bottom{bottom:60px}.map-scene-controls{bottom:112px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.world-aircraft,.world-bird{display:none!important}}
+
+/* Warm paper and contour lines carry the app's tactile travel-journal language into the globe. */
+:root{--paper:#f2eee4;--ink:#171713;--accent:#ff6945;--map-border:#e4ddd0;--map-muted:#746f65;--glass-accent:#ff6945;--glass-ink:#171713}
+.map-topbar,.map-explore{background-color:var(--paper)}
+.map-explore{background-image:repeating-radial-gradient(ellipse at 5% 7%,transparent 0 30px,#17171308 31px,#17171308 32px,transparent 33px 61px),linear-gradient(135deg,#fff7 0,transparent 52%)}
+.map-stage{background:radial-gradient(ellipse at 50% 48%,#e0e5dc 0,#f2eee4 72%)}
+.map-stage::after{position:absolute;inset:0;z-index:1;pointer-events:none;content:"";opacity:.34;background-image:repeating-radial-gradient(ellipse at 56% 48%,transparent 0 42px,#f2eee456 43px,#f2eee456 44px,transparent 45px 74px),repeating-radial-gradient(ellipse at 9% 85%,transparent 0 56px,#17171314 57px,#17171314 58px,transparent 59px 92px);mix-blend-mode:soft-light}
+.map-stage-heading,.map-view-controls,.map-scene-controls,.map-stage-bottom,.map-notice{z-index:2}
+.map-world-badge,.map-view-controls,.map-scene-controls,.map-scene-settings,.map-detail,.map-visit-dialog{background-color:#f2eee4f2;border-color:#17171320}
+.map-view-controls button[aria-pressed=true],.map-control:hover,.map-control[aria-pressed=true],.liquid-toolbar__link.is-current{background-color:#bcd7b1!important}
+.map-travel-stat,.map-record-button,.map-place-button.is-selected,.map-journal-heading .map-add{background-color:#f6f1e7}
+.map-place-icon,.world-pin{border-color:#f2eee4}
+.travel-map .maplibregl-ctrl-group{background:#f2eee4f2}
+@media(max-width:760px){.map-stage::after{opacity:.24}}

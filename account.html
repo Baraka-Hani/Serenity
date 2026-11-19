@@ -10,7 +10,7 @@
     <header class="account-heading">
       <a class="brand" href="home.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt=""><span>serenity</span></a>
       <div class="account-heading__actions">
-        <a class="save-theme" href="studio.html"><span aria-hidden="true">＋</span> Post</a>
+        <a class="save-theme" id="postButton" href="studio.html"><span aria-hidden="true">＋</span> Post</a>
         <button class="settings-trigger" id="openSettings" type="button" aria-haspopup="dialog" aria-controls="settingsDrawer" aria-expanded="false">Settings <span aria-hidden="true">☷</span></button>
       </div>
     </header>
@@ -26,7 +26,10 @@
         </div>
         <div class="profile-actions">
           <a class="action-link" id="publicProfileLink" href="auth.html?next=account" hidden>View public profile ↗</a>
-          <a class="action-link" id="identityAuthLink" href="auth.html?next=account">Sign in or create an account ↗</a>
+          <a class="action-link action-link--primary" id="identityAuthLink" href="auth.html?next=account">Sign in or create an account ↗</a>
+          <a class="action-link" id="guestFeedLink" href="app.html#home-feed" hidden>Watch the Feed ↗</a>
+          <a class="action-link" id="guestMapLink" href="map.html" hidden>Explore the map ↗</a>
+          <a class="action-link" id="guestEngageLink" href="engage.html" hidden>Play Engage ↗</a>
           <button class="action-link" id="signoutButton" type="button" hidden>Sign out</button>
           <button class="action-link" id="signoutAllButton" type="button" hidden title="Signs you out on every phone, tablet and computer">Sign out everywhere</button>
         </div>

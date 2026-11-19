@@ -156,10 +156,10 @@
         if (item === video) progress.value = Number.isFinite(item.duration) && item.duration ? String(item.currentTime / item.duration * 100) : '0';
       });
       item.addEventListener('play', () => {
-        if (item === video) { play.textContent = 'Pause'; playCenter.textContent = 'Ⅱ'; playCenter.setAttribute('aria-label', 'Pause trip video'); }
+        if (item === video) { play.textContent = 'Pause'; playCenter.textContent = 'Ⅱ'; playCenter.setAttribute('aria-label', 'Pause trip video'); media.classList.add('is-playing'); }
       });
       item.addEventListener('pause', () => {
-        if (item === video) { play.textContent = 'Play'; playCenter.textContent = '▶'; playCenter.setAttribute('aria-label', 'Play trip video'); }
+        if (item === video) { play.textContent = 'Play'; playCenter.textContent = '▶'; playCenter.setAttribute('aria-label', 'Play trip video'); media.classList.remove('is-playing'); }
       });
       item.addEventListener('error', () => {
         if (item !== video || media.querySelector('.hub-video-error')) return;
@@ -192,6 +192,7 @@
       });
       onSlideChange(tripPosts[index]);
       requestAnimationFrame(() => { slideTrack.style.transition = ''; });
+      media.classList.toggle('is-playing', !video.paused);
       updatePlayback();
     }
     previous.onclick = () => selectVideo(index - 1);
@@ -200,6 +201,9 @@
     playCenter.onclick = play.onclick;
     sound.onclick = () => { soundOn = !soundOn; sound.setAttribute('aria-label', soundOn ? 'Mute video' : 'Enable video sound'); updatePlayback(); };
     media.append(header, body, controls, carouselControls, playCenter, progress, comments);
+    // The media box clips its slides. Focusing a button inside it (Like, Save…) must
+    // never scroll it: that would leave the clip strip half a slide out of place.
+    media.addEventListener('scroll', () => { if (media.scrollLeft || media.scrollTop) media.scrollTo(0, 0); });
     center.append(media);
     viewport.append(...panes);
     root.append(navigation, viewport);

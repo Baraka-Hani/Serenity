@@ -36,6 +36,13 @@
     if (validPost(current.get('post'))) next.set('post', current.get('post'));
     $('#messagesSignin').href = `auth.html?${next}`;
     $('#messagesAccount').href = `auth.html?${next}`; $('#messagesAccount').textContent = 'Sign in ↗';
+    window.RoamApp.guestPreview().then(guest => {
+      if (!guest) return;
+      $('#messagesGateCopy').textContent = 'Messaging creators is switched off in this guest preview. Watch their trips in Feed, or play the Engage games instead.';
+      $('#messagesSignin').href = 'app.html#home-feed'; $('#messagesSignin').textContent = 'Watch the Feed ↗';
+      $('#messagesAccount').href = 'account.html'; $('#messagesAccount').textContent = 'Profile ↗';
+      $('#messagesStatus').textContent = '';
+    });
   }
   function saveDraft() {
     if (peer) drafts.set(peer.public_id, { body: $('#messageBody').value, context });

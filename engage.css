@@ -260,3 +260,12 @@
   .engage-quiz { padding: 16px; }
   .engage-quiz__featured { grid-template-columns: 1fr; }
 }
+
+/* Quiz answers stay folded away until the player asks for them or answers. */
+.engage-quiz__spoiler { margin-top: 14px; border-top: 1px solid color-mix(in srgb, var(--ink, #171713), transparent 86%); padding-top: 12px; }
+.engage-quiz__spoiler summary { cursor: pointer; font-weight: 700; font-size: 14px; list-style: none; }
+.engage-quiz__spoiler summary::-webkit-details-marker { display: none; }
+.engage-quiz__spoiler summary::before { content: "▸ "; color: var(--accent, #ff6945); }
+.engage-quiz__spoiler[open] summary::before { content: "▾ "; }
+.engage-quiz__spoiler summary span { font-weight: 500; opacity: .6; }
+.engage-quiz__spoiler-place { font-weight: 700; }

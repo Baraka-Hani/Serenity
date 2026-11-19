@@ -213,6 +213,12 @@
     if (data.user) return showUser(data.user);
     showAuth();
     return request('/api/auth/config').then(config => {
+      if (config.guest_preview) {
+        $('#authPanel').classList.add('hidden');
+        $('#guestPanel').classList.remove('hidden');
+        document.title = 'Explore without an account — Serenity';
+        return;
+      }
       passwordMax = config.password_max || passwordMax;
       $('#password').maxLength = passwordMax;
       startGoogle(config.google_client_id);
