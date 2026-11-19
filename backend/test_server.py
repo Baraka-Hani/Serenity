@@ -203,6 +203,34 @@ class BackendFlow(unittest.TestCase):
         with patch.dict(os.environ, {"ROAM_GOOGLE_CLIENT_ID": "test-client.apps.googleusercontent.com"}), patch("google_auth.fetch_tokeninfo", return_value=claims):
             return self.call("/api/auth/google", "POST", payload, client=client)
 
+    def test_guest_preview_allows_browsing_and_refuses_every_change(self):
+        self.assertEqual(self.call("/api/register", "POST", {"name": "Before Preview", "email": "before-preview@example.test", "password": "tripPass123"})[0], 200)
+        with patch.object(server, "GUEST_PREVIEW", True), patch.dict(os.environ, {"ROAM_GOOGLE_CLIENT_ID": "abc.apps.googleusercontent.com"}):
+            config = self.call("/api/auth/config")[1]
+            self.assertTrue(config["guest_preview"])
+            self.assertIsNone(config["google_client_id"])
+            self.assertIn("guest preview", config["guest_message"])
+            for path, method, payload in (("/api/register", "POST", {"name": "Guest", "email": "guest@example.test", "password": "tripPass123"}),
+                                          ("/api/login", "POST", {"email": "before-preview@example.test", "password": "tripPass123"}),
+                                          ("/api/auth/google", "POST", {"credential": "a.b.c-long-enough-credential"}),
+                                          ("/api/theme", "PUT", {"accent": "#112233"}),
+                                          ("/api/feeds/1", "DELETE", None)):
+                status, data = self.call(path, method, payload, client=self.new_client())
+                self.assertEqual(status, 403, path)
+                self.assertTrue(data["guest_preview"], path)
+            self.assertEqual(self.call("/api/posts")[0], 200)
+            self.assertEqual(self.call("/api/health")[0], 200)
+            self.assertIsNone(self.call("/api/me", client=self.new_client())[1]["user"])
+        with server.db() as connection:
+            self.assertIsNone(connection.execute("SELECT 1 FROM users WHERE email='guest@example.test'").fetchone())
+        self.assertFalse(self.call("/api/auth/config")[1]["guest_preview"])
+
+    def test_guest_preview_setting_is_read_from_the_environment(self):
+        for value, expected in (("1", "True"), ("true", "True"), ("on", "True"), ("", "False"), ("0", "False")):
+            result = subprocess.run([sys.executable, "-c", "import server; print(server.GUEST_PREVIEW)"], cwd=Path(__file__).resolve().parent,
+                                    env=dict(os.environ, ROAM_GUEST_PREVIEW=value), check=True, capture_output=True, text=True)
+            self.assertEqual(result.stdout.strip(), expected, value)
+
     def test_session_cookie_is_long_lived_lax_and_works_on_several_devices(self):
         response = self.raw("/api/register", "POST", {"name": "Roamer", "email": "roamer@example.test", "password": "tripPass123"})
         cookie = response.headers["Set-Cookie"]
@@ -546,7 +574,8 @@ class BackendFlow(unittest.TestCase):
         studio_page = self.call("/studio.html")[1].decode()
         generated = self.call("/engage.html")[1].decode()
         chat = self.call("/search.html")[1].decode()
-        self.assertIn('href="home.html">Open app ↗', landing)
+        self.assertIn('<a class="pill" href="app.html#home-feed">Open app</a>', landing)
+        self.assertIn('href="map.html">Explore the map</a>', landing)
         self.assertNotIn('liquid-toolbar.js', landing)
         self.assertIn('src="social-feed.js"', feed)
         self.assertIn('id="postList"', feed)
@@ -640,7 +669,7 @@ class BackendFlow(unittest.TestCase):
         toolbar = self.call('/liquid-toolbar.js')[1].decode()
         self.assertIn("link.setAttribute('aria-label', destination.label)", toolbar)
         self.assertEqual(re.findall(r"key: '([^']+)'", toolbar), ['home', 'feed', 'map', 'engage', 'profile'])
-        self.assertIn("label: 'Engage', icon: '🎮', href: 'engage.html'", toolbar)
+        self.assertIn("label: 'Engage', icon: '✦', href: 'engage.html'", toolbar)
         self.assertIn("page === 'engage.html' || page === 'search.html'", toolbar)
         self.assertIn("'profile.html', 'studio.html'", toolbar)
         sidebar = self.call('/trip-sidebar.js')[1].decode()
@@ -656,7 +685,7 @@ class BackendFlow(unittest.TestCase):
         self.assertIn('src="messages.js"', chat)
         self.assertNotIn('src="trip-sidebar.js"', chat)
         service_worker = self.call('/service-worker.js')[1].decode()
-        self.assertIn('serenity-shell-v15-sign-in', service_worker)
+        self.assertIn('serenity-shell-v17-live-polish', service_worker)
         for asset in ('messages.css', 'messages-client.js', 'messages.js'):
             self.assertIn(f"'/{asset}'", worker)
         self.assertIn("toggle.setAttribute('aria-controls', sidebar.id)", sidebar)

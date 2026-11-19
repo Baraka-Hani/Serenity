@@ -376,9 +376,26 @@
       $('#signoutButton').hidden = !signedInUser;
       $('#signoutAllButton').hidden = !signedInUser;
       if (!signedInUser) {
-        $('#profileName').textContent = 'Your account';
-        $('#profileUsername').textContent = 'Sign in to see your profile';
-        status.textContent = 'Sign in to view your published trips and manage your profile.';
+        const guest = await window.RoamApp.guestPreview();
+        // No account yet: explain what an account is for rather than showing 0 / 0 / 0.
+        document.querySelector('.profile-stat-list').hidden = true;
+        $('#profileAvatar').textContent = '◎';
+        if (guest) {
+          $('#profileName').textContent = 'You’re exploring as a guest';
+          $('#profileUsername').textContent = 'This preview is open to everyone.';
+          $('#profileBio').textContent = 'Watch published trips, explore the map and play the Engage games. Accounts, posting and saving are switched off here.';
+          identityAuthLink.hidden = true;
+          $('#postButton').hidden = true;
+          for (const id of ['#guestFeedLink', '#guestMapLink', '#guestEngageLink']) $(id).hidden = false;
+          $('#published-trips').hidden = true;
+          $('#saved-videos').hidden = true;
+          status.textContent = '';
+        } else {
+          $('#profileName').textContent = 'Make Serenity yours';
+          $('#profileUsername').textContent = 'Sign in to post trips, save videos and message creators.';
+          $('#profileBio').textContent = 'Use Google or your email address. You stay signed in on each device you use.';
+          status.textContent = '';
+        }
       } else {
         $('#profileName').textContent = signedInUser.name;
         $('#profileUsername').textContent = `@${signedInUser.username}`;

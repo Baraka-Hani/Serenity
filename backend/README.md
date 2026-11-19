@@ -56,6 +56,16 @@ Serenity offers two ways to sign in: **Continue with Google** and **email addres
 - **Passwords** need 8–128 characters and are stored as salted PBKDF2-SHA256 hashes. After 8 wrong passwords for one email from one address within 15 minutes, sign-in pauses for that pair (`429`). These counters are in memory and reset when the server restarts. There is no password reset yet: it needs an email-sending service, which this backend does not have.
 - **Google accounts** are matched by Google's stable account ID. A first Google sign-in creates an account from the verified Google email and name. If an email/password account already uses that email, Serenity asks for its password once before connecting Google: sign-up emails are not verified, so this stops someone from pre-registering another person's address. Accounts created with Google have no password, and the email form tells their owners to use Google.
 
+### Guest preview (public pitch mode)
+
+Set `ROAM_GUEST_PREVIEW=1` to run a public preview that anyone can open without an account. Visitors can watch published trips, explore the map and play the Engage games. The server refuses every change: sign-up, sign-in, posting, uploads, likes, saves, comments and messages all get `403` with `"guest_preview": true`. `GET /api/auth/config` reports `guest_preview`, and the pages respond to it. The sign-in page becomes an "Explore without an account" panel, Profile, Clip Studio and Conversations explain what's switched off, and the Feed hides **Ask creator**. Leave the setting out to run the normal app with sign-in.
+
+```bash
+ROAM_GUEST_PREVIEW=1 python3 backend/server.py
+```
+
+Seed the preview's sample trips *before* turning guest preview on, since the preview can't accept new content.
+
 ### Turning on Google sign-in
 
 Google sign-in stays off (the button shows a short note) until the server has an OAuth client ID. Setting this up is an owner task, and it costs nothing:

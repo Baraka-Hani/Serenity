@@ -41,6 +41,10 @@ MAX_CLIPS_PER_FEED = 500
 SESSION_AGE = 90 * 24 * 60 * 60  # stay signed in for 90 days after the last visit
 SESSION_RENEW_AFTER = 24 * 60 * 60  # slide the expiry forward at most once a day
 PASSWORD_MIN, PASSWORD_MAX = 8, 128
+# Public "pitch preview": anyone can watch, explore the map and play Engage,
+# but every change (accounts, posting, likes, messages, uploads) is refused.
+GUEST_PREVIEW = os.environ.get("ROAM_GUEST_PREVIEW", "").strip().lower() in {"1", "true", "yes", "on"}
+GUEST_PREVIEW_MESSAGE = "This is a guest preview. Watch videos, explore the map and try the games. Accounts, posting and uploads are switched off."
 LOGIN_WINDOW, LOGIN_MAX_FAILURES = 15 * 60, 8
 _login_failures = {}
 _login_lock = threading.Lock()
@@ -307,6 +311,12 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(401, {"error": "Sign in to continue."})
         return user
 
+    def guest_preview_blocks_write(self):
+        if GUEST_PREVIEW:
+            self.respond(403, {"error": GUEST_PREVIEW_MESSAGE, "guest_preview": True})
+            return True
+        return False
+
     def same_origin(self):
         if not self.valid_host(): return False
         origin = self.headers.get("Origin")
@@ -377,7 +387,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == visited_locations.PATH:
             return visited_locations.get(self, db)
         if path == "/api/auth/config":
-            return self.respond(200, {"google_client_id": google_auth.client_id() or None, "password_min": PASSWORD_MIN, "password_max": PASSWORD_MAX})
+            return self.respond(200, {"google_client_id": None if GUEST_PREVIEW else google_auth.client_id() or None, "password_min": PASSWORD_MIN, "password_max": PASSWORD_MAX, "guest_preview": GUEST_PREVIEW, "guest_message": GUEST_PREVIEW_MESSAGE if GUEST_PREVIEW else None})
         if path == "/api/me":
             user = self.user()
             return self.respond(200, {"user": dict(user) if user else None})
@@ -491,6 +501,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         if not self.same_origin(): return
+        if self.guest_preview_blocks_write(): return
         path = urlparse(self.path).path
         if path.startswith('/api/messages/'):
             return messaging.post(self, db)
@@ -613,6 +624,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_PUT(self):
         if not self.same_origin(): return
+        if self.guest_preview_blocks_write(): return
         path = urlparse(self.path).path
         if path == visited_locations.PATH:
             return visited_locations.put(self, db)
@@ -721,6 +733,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         if not self.same_origin(): return
+        if self.guest_preview_blocks_write(): return
         visit_match = visited_locations.VISIT_PATH.fullmatch(urlparse(self.path).path)
         if visit_match:
             return visited_locations.delete(self, db, int(visit_match.group(1)))

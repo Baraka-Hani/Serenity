@@ -1,4 +1,4 @@
-const CACHE_NAME = 'serenity-shell-v15-sign-in';
+const CACHE_NAME = 'serenity-shell-v17-live-polish';
 const APP_PAGES = new Set([
   '/home.html',
   '/engage.html',

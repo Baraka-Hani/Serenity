@@ -10,8 +10,13 @@
   <header class="app-header shell"><a href="account.html">‹ Profile</a></header>
   <main class="shell">
     <section class="studio-gate" id="studioGate" hidden>
+      <span class="eyebrow">Post a trip</span>
       <h1>Clip Studio</h1>
-      <a class="app-button app-button--primary" href="auth.html?next=studio">Sign in to post ↗</a>
+      <p id="studioGateCopy">Turn your travel clips into a trip people can watch, find on the map and visit. Sign in to create trips, pin destinations and publish videos.</p>
+      <div class="studio-gate__actions">
+        <a class="app-button app-button--primary" id="studioGateSignIn" href="auth.html?next=studio">Sign in to post ↗</a>
+        <a class="app-button" href="app.html#home-feed">Watch the Feed</a>
+      </div>
     </section>
     <p id="studioLoadStatus" class="message" role="status">Opening Clip Studio…</p>
     <section id="feeds" class="clip-studio" hidden>

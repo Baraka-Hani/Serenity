@@ -26,3 +26,9 @@ body.has-trip-sidebar.sidebar-collapsed > .app-header { padding-left: 46px; }
 .studio-gallery-media::after,.studio-clip-media::after{content:"";position:absolute;inset:0;z-index:1;border-radius:inherit;background:linear-gradient(135deg,#ffffff26 0%,#ffffff0a 24%,transparent 48%);box-shadow:inset 0 1px 0 #ffffffa8,inset 1px 0 0 #ffffff40,inset -1px 0 0 #ffffff20;pointer-events:none}
 .studio-clip-media video{display:block;width:100%;margin:0}
 @media(max-width:480px){.studio-gallery-media{border-radius:14px 14px 0 0}}
+/* Signed-out / guest Clip Studio: explain what it is instead of an empty page. */
+.studio-gate { max-width: 620px; padding-block: 48px 24px; }
+.studio-gate .eyebrow { font: 500 11px 'DM Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.studio-gate h1 { margin: 12px 0 14px; }
+.studio-gate p { margin: 0 0 26px; font-size: 16px; line-height: 1.65; color: color-mix(in srgb, var(--ink), transparent 32%); }
+.studio-gate__actions { display: flex; flex-wrap: wrap; gap: 10px; }

@@ -17,7 +17,14 @@
     if (content !== undefined) node.textContent = content;
     return node;
   }
-  function signInMessage() { status.textContent = 'Sign in to like, save, comment, or share a trip.'; }
+  async function signInMessage() {
+    if (await window.RoamApp.guestPreview()) {
+      window.RoamApp.notify('Likes, saves and comments are switched off in this guest preview.');
+      return;
+    }
+    const next = `${location.pathname.split('/').pop() || 'app.html'}${location.hash}`;
+    window.RoamApp.notify('Sign in to like, save or comment.', { href: `auth.html?next=${encodeURIComponent(next)}`, label: 'Sign in' });
+  }
   function dateLabel(value) {
     return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(value * 1000));
   }
@@ -87,11 +94,12 @@
       card.dataset.postId = nextPost.id;
       date.textContent = dateLabel(nextPost.created_at);
       place.textContent = `⌁ ${nextPost.destination}`;
+      place.title = nextPost.destination;
       caption.textContent = nextPost.caption;
       tip.replaceChildren();
       tip.hidden = !nextPost.tip;
       if (nextPost.tip) tip.append(element('strong', '', 'Travel tip'), document.createTextNode(nextPost.tip));
-      like.textContent = `♡  ${nextPost.likes_count} likes`;
+      like.textContent = `♡  ${nextPost.likes_count} ${nextPost.likes_count === 1 ? 'like' : 'likes'}`;
       like.classList.toggle('is-active', Boolean(nextPost.liked));
       like.setAttribute('aria-pressed', String(Boolean(nextPost.liked)));
       like.setAttribute('aria-label', `${nextPost.liked ? 'Unlike' : 'Like'} post by ${post.author_name}`);
@@ -99,7 +107,7 @@
       save.classList.toggle('is-active', Boolean(nextPost.saved));
       save.setAttribute('aria-pressed', String(Boolean(nextPost.saved)));
       save.setAttribute('aria-label', `${nextPost.saved ? 'Unsave' : 'Save'} post by ${post.author_name}`);
-      comment.textContent = `◌  ${nextPost.comments_count} comments`;
+      comment.textContent = `◌  ${nextPost.comments_count} ${nextPost.comments_count === 1 ? 'comment' : 'comments'}`;
       comments.setAttribute('aria-label', `Comments on ${nextPost.destination}`);
       remove.hidden = !nextPost.is_mine;
       ask.hidden = Boolean(nextPost.is_mine);
@@ -126,7 +134,7 @@
         const target = selectedPost;
         const result = await window.RoamApp.togglePostAction(target.id, kind);
         update(result, target);
-      } catch (error) { status.textContent = error.message; }
+      } catch (error) { window.RoamApp.notify(error.message); }
       finally { button.disabled = false; }
     }
     actions.append(like, save, comment, ask, remove);
@@ -187,7 +195,7 @@
         if (commentsList.firstChild?.tagName === 'P') commentsList.replaceChildren();
         commentsList.append(renderComment(result));
         selectedPost.comments_count++;
-        comment.textContent = `◌  ${selectedPost.comments_count} comments`;
+        comment.textContent = `◌  ${selectedPost.comments_count} ${selectedPost.comments_count === 1 ? 'comment' : 'comments'}`;
         commentInput.value = '';
       } catch (error) { status.textContent = error.message; }
     };

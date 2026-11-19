@@ -35,10 +35,14 @@
           <video id="quizVideo" controls playsinline preload="metadata" aria-label="Selected published travel video"></video>
         </div>
         <div class="engage-quiz__clip-details">
-          <p class="engage-quiz__eyebrow">Featured trip</p>
+          <p class="engage-quiz__eyebrow">Mystery trip</p>
           <h3 id="quizClipTitle"></h3>
           <p id="quizClipCreator"></p>
-          <p id="quizClipStory"></p>
+          <details class="engage-quiz__spoiler" id="quizClipSpoiler">
+            <summary>Show the trip details <span>(spoilers)</span></summary>
+            <p class="engage-quiz__spoiler-place" id="quizClipPlace"></p>
+            <p id="quizClipStory"></p>
+          </details>
         </div>
       </div>
       <p class="engage-quiz__status" id="quizStatus" role="status" aria-live="polite">Loading recent published videos…</p>

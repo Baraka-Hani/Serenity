@@ -4,7 +4,7 @@
     { key: 'home', label: 'Home', icon: '⌂', href: 'home.html' },
     { key: 'feed', label: 'Feed', icon: '▤', href: 'app.html#home-feed' },
     { key: 'map', label: 'Map', icon: '⌖', href: 'map.html' },
-    { key: 'engage', label: 'Engage', icon: '🎮', href: 'engage.html' },
+    { key: 'engage', label: 'Engage', icon: '✦', href: 'engage.html' },
     { key: 'profile', label: 'Profile', icon: '◎', href: 'account.html' }
   ];
   const toolbar = document.createElement('nav');

@@ -39,8 +39,8 @@
     return {
       version: 8,
       projection: { type: 'globe' },
-      sky: { 'sky-color': '#ffffff', 'horizon-color': '#e4edf1', 'fog-color': '#eef2f3', 'atmosphere-blend': 0.7 },
-      light: { anchor: 'viewport', color: '#fff8ee', intensity: 0.35, position: [1.5, 210, 40] },
+      sky: { 'sky-color': '#f2eee4', 'horizon-color': '#dce4d8', 'fog-color': '#f2eee4', 'atmosphere-blend': 0.7 },
+      light: { anchor: 'viewport', color: '#fff7e8', intensity: 0.35, position: [1.5, 210, 40] },
       sources: {
         imagery: { type: 'raster', tiles: [config.imagery_url], tileSize: 256, maxzoom: 14, attribution: config.imagery_attribution },
         streets: { type: 'raster', tiles: [config.tile_url], tileSize: 256, maxzoom: 19, attribution: config.attribution },
@@ -48,8 +48,8 @@
         buildings: { type: 'vector', url: config.buildings_url }
       },
       layers: [
-        { id: 'earth', type: 'background', paint: { 'background-color': '#dce9ee' } },
-        { id: 'imagery', type: 'raster', source: 'imagery', paint: { 'raster-fade-duration': 300 } },
+        { id: 'earth', type: 'background', paint: { 'background-color': '#e5e0d4' } },
+        { id: 'imagery', type: 'raster', source: 'imagery', paint: { 'raster-fade-duration': 300, 'raster-saturation': -0.12, 'raster-brightness-max': 0.96 } },
         { id: 'streets', type: 'raster', source: 'streets', layout: { visibility: 'none' } },
         { id: 'buildings', type: 'fill-extrusion', source: 'buildings', 'source-layer': 'building', minzoom: 14,
           paint: { 'fill-extrusion-color': '#e4dfd6', 'fill-extrusion-opacity': 0.85,

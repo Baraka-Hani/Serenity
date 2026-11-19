@@ -444,6 +444,10 @@
     user = account;
     $('#studioLoadStatus').hidden = true;
     if (!user) {
+      if (await window.RoamApp.guestPreview()) {
+        $('#studioGateCopy').textContent = 'Posting is switched off in this guest preview. You can still watch every published trip, explore the map and play Engage.';
+        $('#studioGateSignIn').hidden = true;
+      }
       $('#studioGate').hidden = false;
       return;
     }
