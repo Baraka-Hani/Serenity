@@ -30,6 +30,7 @@ const SHELL_ASSETS = [
   '/account-discovery.css',
   '/map.html',
   '/map-core.js',
+  '/map-world.js',
   '/travel-map.js',
   '/travel-map.css',
   '/destination-picker.js',

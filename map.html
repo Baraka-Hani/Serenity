@@ -2,18 +2,57 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f2eee4"><meta name="description" content="Find published travel videos on the map. Watch a trip, find its destination, and go experience it.">
+  <meta name="theme-color" content="#ffffff"><meta name="description" content="Discover trips on a 3D globe and keep a private journal of the places you have visited.">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Map — Serenity</title>
+  <title>Your world — Serenity</title>
   <link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="travel-map.css">
 </head>
 <body>
-  <header class="map-topbar"><a href="home.html" class="map-brand" aria-label="Serenity home"><img src="serenity-logo.svg" alt="">serenity</a><span>Watch it. Find it. Go there.</span><a href="account.html">Your profile ↗</a></header>
+  <header class="map-topbar">
+    <a href="home.html" class="map-brand" aria-label="Serenity home"><img src="serenity-logo.svg" alt="">serenity<span class="map-brand-divider"></span><span class="map-page-name">Your world</span></a>
+    <span class="map-header-note">A little more of the world. A little more of you.</span>
+    <a href="studio.html" class="map-header-link">Share a journey <span aria-hidden="true">↗</span></a>
+  </header>
   <main class="map-experience">
-    <div id="travelMap" class="travel-map" aria-label="Map of published travel trips"></div>
-    <section class="map-explore" aria-label="Find trips on the map"><span class="map-eyebrow">The world, through their lens</span><h1>Find your<br>next somewhere.</h1><form id="mapSearch" role="search"><label class="map-sr-only" for="mapQuery">Search published trips and destinations</label><input id="mapQuery" maxlength="120" type="search" placeholder="Search trips or destinations"><button type="submit" aria-label="Find published trips">↗</button></form><div class="map-filter-actions"><button id="mapWorld" type="button">Explore worldwide</button><button id="mapRefresh" type="button">Search this area</button></div><p id="mapStatus" role="status" aria-live="polite">Loading published journeys…</p><div id="mapTrips" class="map-trip-list"></div><p class="map-privacy">Published destinations, not live locations. Pins are chosen by creators, not verified GPS tracks.</p></section>
-    <section id="mapDetail" class="map-detail" aria-label="Selected trip" hidden></section>
+    <section class="map-explore" aria-label="Explore and record your travels">
+      <div class="map-intro"><span class="map-eyebrow"><span class="map-small-orbit" aria-hidden="true">◎</span> A life of discovering</span><h1>The world is <br>still full of firsts.</h1><p>Find a new somewhere. <br>Remember everywhere you’ve been.</p></div>
+      <button id="mapJournalShortcut" type="button" class="map-travel-stat"><span class="map-stat-icon" aria-hidden="true">⌖</span><span><strong id="mapVisitCount">—</strong><span id="mapVisitLabel">places visited</span></span><span class="map-stat-arrow" aria-hidden="true">↗</span></button>
+      <div class="map-view-switch" aria-label="Places to display"><button id="mapExploreTab" type="button" aria-pressed="true">Discover trips</button><button id="mapVisitedTab" type="button" aria-pressed="false">My places</button></div>
+      <div id="mapDiscoverPanel">
+        <form id="mapSearch" class="map-search" role="search"><span aria-hidden="true">⌕</span><label class="map-sr-only" for="mapQuery">Search published trips and destinations</label><input id="mapQuery" maxlength="120" type="search" placeholder="A place, a journey…"><button type="submit" aria-label="Search published trips">↗</button></form>
+        <div class="map-filter-actions"><button id="mapWorld" type="button">Worldwide</button><button id="mapRefresh" type="button" disabled>Search this area</button></div>
+        <p id="mapStatus" class="map-status" role="status" aria-live="polite">Finding published journeys…</p><div id="mapTrips" class="map-place-list"></div>
+        <p class="map-privacy">Discover destinations shared by travellers. Pins are chosen by creators.</p>
+      </div>
+      <div id="mapJournalPanel" hidden>
+        <div class="map-journal-heading"><div><h2>Your collection of places</h2><p>Little pins. Lasting memories.</p></div><button id="mapAddVisit" type="button" class="map-add" aria-label="Add a visited place">+</button></div>
+        <p id="mapJournalStatus" class="map-status" role="status" aria-live="polite"></p><div id="mapVisits" class="map-place-list"></div>
+        <button id="mapMoreVisits" type="button" class="map-text-button" hidden>Load more places</button><a id="mapSignIn" class="map-sign-in" href="auth.html" hidden>Sign in to start your travel journal ↗</a>
+        <p class="map-privacy">Only you can see your saved places, dates, and notes. Add places yourself; your location is never tracked.</p>
+      </div>
+      <button id="mapRecordPlace" type="button" class="map-record-button"><span aria-hidden="true">+</span> Add a place I’ve visited</button><p class="map-footer-copy">Go slowly. Look around. Make a memory.</p>
+    </section>
+    <section class="map-stage" aria-label="Your interactive world">
+      <div id="travelMap" class="travel-map"></div>
+      <div class="map-stage-heading"><span class="map-world-badge"><span aria-hidden="true"></span> One world. Endless stories.</span><button id="mapRetry" type="button" class="map-control" hidden>Reload 3D map</button></div>
+      <div id="mapNotice" class="map-notice" role="status" hidden></div>
+      <div class="map-view-controls" aria-label="Map appearance"><button id="mapSatellite" type="button" aria-pressed="true" disabled>Satellite</button><button id="mapStreets" type="button" aria-pressed="false" disabled>Streets</button></div>
+      <div class="map-scene-controls" aria-label="World controls"><button id="mapSpin" class="map-control" type="button" aria-pressed="false" disabled>↻ <span>Spin</span></button><button id="mapRotateLeft" class="map-control" type="button" aria-label="Rotate left 30 degrees" disabled>↶</button><button id="mapRotateRight" class="map-control" type="button" aria-label="Rotate right 30 degrees" disabled>↷</button><button id="mapTilt" class="map-control" type="button" disabled>Tilt</button><button id="mapReset" class="map-control" type="button" disabled>◎ <span>Globe</span></button></div>
+      <div class="map-stage-bottom"><div class="map-interaction-hint">Drag to explore <span>·</span> Right-drag or use two fingers to rotate and tilt</div><button id="mapAlps" class="map-terrain-preview" type="button" disabled>Meet the mountains <span aria-hidden="true">↗</span></button><details class="map-scene-settings"><summary>Scene settings</summary><label><input id="mapAmbient" type="checkbox" checked> Birds &amp; planes</label><p>Ambient animations. Birds appear as you zoom in.</p><p>Real elevation at natural scale. Building heights vary in detail. Satellite imagery: 2016.</p><span id="mapMotionNotice" hidden>Animations are paused by your reduced-motion setting.</span></details></div>
+      <section id="mapDetail" class="map-detail" aria-label="Selected place" tabindex="-1" hidden></section>
+    </section>
   </main>
-  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="map-core.js"></script><script src="travel-map.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
+  <dialog id="mapVisitDialog" class="map-visit-dialog" aria-labelledby="mapVisitTitle">
+    <button id="mapVisitClose" class="map-dialog-close" type="button" aria-label="Close add place">×</button><span class="map-eyebrow">Another memory, on the map</span><h2 id="mapVisitTitle">Where have you been?</h2><p>Keep a little piece of the journey. Just for you.</p>
+    <div id="mapVisitAuth" hidden><p>Sign in to save places to your account.</p><a href="auth.html" class="map-primary-link">Sign in ↗</a></div>
+    <form id="mapVisitForm">
+      <label for="mapPlaceQuery">Find a city or landmark</label><div class="map-search"><input id="mapPlaceQuery" type="search" maxlength="120" placeholder="e.g. Banff, Canada"><button id="mapPlaceSearch" type="button" aria-label="Search for a public place">↗</button></div><div id="mapPlaceResults" class="map-place-results"></div>
+      <button id="mapDropPin" type="button" class="map-text-button" disabled>Or drop a pin on the map ↗</button>
+      <fieldset class="map-coordinate-fields"><legend>Chosen place / enter coordinates</legend><label for="mapPlaceLabel">Place name</label><input id="mapPlaceLabel" maxlength="240" required placeholder="Give this place a name"><div class="map-coordinate-row"><label for="mapPlaceLat">Latitude<input id="mapPlaceLat" type="number" min="-90" max="90" step="any" required placeholder="51.1784"></label><label for="mapPlaceLng">Longitude<input id="mapPlaceLng" type="number" min="-180" max="180" step="any" required placeholder="-115.5708"></label></div></fieldset>
+      <label for="mapVisitedOn">Date visited <span class="map-optional">(optional)</span></label><input id="mapVisitedOn" type="date"><label for="mapVisitNote">A memory to keep <span class="map-optional">(optional)</span></label><textarea id="mapVisitNote" maxlength="1000" rows="2" placeholder="The view, the people, that little café…"></textarea>
+      <p id="mapVisitStatus" class="map-status" role="status" aria-live="polite">Choose a search result, drop a pin, or enter a name and coordinates.</p><button id="mapVisitSave" type="submit" class="map-record-button">Save visited place</button>
+    </form>
+  </dialog>
+  <script src="app-client.js"></script><script src="map-core.js"></script><script src="map-world.js"></script><script src="travel-map.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
 </body>
 </html>

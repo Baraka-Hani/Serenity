@@ -10,19 +10,70 @@ Pins on published trips are public, as explained beside the field. Editing the d
 
 Dates and highlights are retired from trip forms and `/api/feeds/ID/details` responses. New writes ignore those legacy fields, and new posts no longer append them. SQLite's old columns and existing historical caption text are retained for backwards compatibility/data preservation; no old caption is automatically rewritten or personal data erased. A trip now consists of a name, an experience/story, an optional destination pin, and videos. Private planning notes remain separate from published travel information.
 
-## Viewing and visiting
+## Your 3D world and private travel journal
 
-Map can be browsed without an account. Pan/zoom, search published trip/place names, choose a marker or accessible trip-list button, watch its public preview, open the trip's videos, and open **Get directions**. Nearby markers cluster visually; trips at the same point remain individually selectable in the list. A maximum of 200 trips is returned per request; zoom or search to narrow large result sets. Trip pages and Feed travel panel also link to the saved destination and directions. Directions open Google Maps URLs with only the selected destination coordinates; no origin or user GPS is collected by Serenity and no Maps API key is needed.
+The map feed uses a white interface with restrained warm accents. MapLibre GL JS
+5.15.0 renders a globe that can be dragged, rotated, tilted, spun, and zoomed into
+real terrain. Library CSS and JavaScript are version-pinned with SHA-384
+integrity. The Clip Studio destination picker continues using Leaflet; the React
+prototype is unchanged.
+
+The default satellite layer is **EOxCloudless 2016** (the CC BY 4.0 vintage),
+not recent/live imagery. Elevation uses Mapzen Terrarium tiles from AWS Open
+Data at natural scale (1×). OpenFreeMap's OpenMapTiles building footprints render
+as extrusions from zoom 14; available heights vary and missing heights use a
+3 m illustration. This is terrain and building visualization, not photogrammetry,
+surveying, or a navigation-grade height model. Streets can be selected separately.
+The mountain preview demonstrates terrain in the Swiss Alps. Globe framing adapts
+to the available viewport.
+
+Birds and planes are optional, geographically anchored SVG animations. Aircraft
+follow illustrative great-circle routes; birds appear at close zoom. They are
+ambient artwork, not actual aircraft or wildlife observations or altitude models.
+Animations stop in hidden tabs and respect reduced motion. Users can also turn
+them off in Scene settings. Spin is explicit and stops when the user interacts.
+
+**My places** is separate from public posts. Signed-in users explicitly add a
+visited destination from a public trip, a place-search result, a clicked pin, or
+manual name/coordinates. A visit may include a date and up to 1,000 characters
+of private notes. History persists in SQLite per account, without localStorage,
+and never appears in map discovery or public profiles. Saving a place does not
+publish anything. Removing a saved place updates its count without deleting trips.
+
+The counter represents distinct **saved coordinate cells**, rounded to four
+decimal places (about 11 m north/south), not countries or independently verified
+visits. Duplicate saves retain the first saved name, date, and note and do not
+inflate the count. Pins on opposite sides of the antimeridian and longitude
+variants at a pole share identity. Adjacent cells can still represent different
+pins within the same named city. History loads in pages of 100, while the count
+always covers all saved places.
+
+Private details, drafts and markers are cleared if the account changes or cannot
+be verified; stale asynchronous responses cannot revive a prior account's data.
+If WebGL, library loading, or map providers fail, public trip lists, previews,
+directions, journal history, and manual coordinate entry still work. Offline
+terrain and imagery are not supplied.
+
+## Viewing public destinations
+
+Map can be browsed without an account. Pan/zoom, search published trip/place names, choose a marker or accessible trip-list button, watch its public preview, open the trip's videos, and open **Get directions**. Trips at the same point remain individually selectable in the list. A maximum of 200 trips is returned per request; zoom and choose **Search this area**, or search to narrow large result sets. Trip pages and the Feed travel panel also link to the saved destination and directions. Directions open Google Maps URLs with only the selected destination coordinates; no origin or user GPS is collected by Serenity and no Maps API key is needed.
 
 ## APIs and modules
 
 - `GET /api/map/trips`: public pinned trips. Optional `bbox=west,south,east,north`, `q`, and `trip` filters. Supports bounds crossing the antimeridian. Reads public captions only, never private story edits or notes. Returns `has_more` when more than 200 matches exist.
 - `GET /api/map/config`: configurable tile URL and attribution.
+- `GET /api/map/visits?offset=0`: authenticated owner's private history (100 per page), total count, and `has_more`.
+- `PUT /api/map/visits`: authenticated, same-origin idempotent save with `{location,visited_on?,note?}`; creates a new place or returns the existing one unchanged.
+- `DELETE /api/map/visits/ID`: authenticated, same-origin owner-only removal. Another account's IDs return 404.
 - `GET /api/places/search?q=...`: sign-in required, explicit Photon search. No autocomplete or batch geocoding.
 - `PUT /api/feeds/ID/details`: owner-only atomic story and destination update. `location` is either `null` (remove), or `{lat,lng,label,provider,source,place_id}`. Omitting it preserves an existing pin for old clients. Coordinates must be finite, numeric, and in range; labels are limited to 240 characters. The canonical destination text follows the selected pin.
 - Collection imports accept the same `location` object on each group and create it in the same transaction as that trip.
 
-Code is isolated in `backend/trip_locations.py`, `map-core.js`, `destination-picker.js/.css`, and `travel-map.js/.css`; the map page is `map.html`. The shared map runtime loads Leaflet 1.9.4 with the official integrity hashes. Place search is proxied through the local backend, so the provider does not receive account cookies, videos, or user IDs.
+Code is isolated in `backend/trip_locations.py`, `backend/visited_locations.py`,
+`map-world.js`, `map-core.js`, `destination-picker.js/.css`, and `travel-map.js/.css`;
+the map page is `map.html`. The shared destination-picker runtime loads Leaflet
+1.9.4 with the official integrity hashes. Place search is proxied through the local
+backend, so the provider does not receive account cookies, videos, or user IDs.
 
 ## No-cost local testing and service limits
 
@@ -30,9 +81,45 @@ The default integration requires no account, API key, subscription, or paid API.
 
 Map tiles are requested only for the visible interactive map, use normal browser HTTP caching, carry the browser referrer, and display OpenStreetMap attribution. They are never bulk downloaded, precached by the app service worker, or offered offline. Do not add offline city downloads or automated tile scans against the community tile server.
 
-To switch providers without changing application code, configure `SERENITY_MAP_TILE_URL` and `SERENITY_MAP_ATTRIBUTION` on the server. `SERENITY_PHOTON_URL` can point to a compatible HTTPS Photon instance. The default is `https://photon.komoot.io/api/`. An invalid/unconfigured search endpoint fails safely. A public, larger-scale deployment must choose appropriately licensed tile and geocoding capacity or self-host them, review current provider policies, and coordinate rate limits across processes. No public deployment or billable resource is created by this change. The public Nominatim API is not used.
+To switch providers without changing application code, configure
+`SERENITY_MAP_TILE_URL` and `SERENITY_MAP_ATTRIBUTION` for Streets. The globe also
+accepts `SERENITY_MAP_IMAGERY_URL` / `SERENITY_MAP_IMAGERY_ATTRIBUTION`,
+`SERENITY_MAP_TERRAIN_URL` / `SERENITY_MAP_TERRAIN_ATTRIBUTION` (256 px Terrarium,
+maximum source zoom 15), and `SERENITY_MAP_BUILDINGS_URL` (OpenMapTiles TileJSON).
+Default imagery is 256 px XYZ through zoom 14; preserve that source contract or
+adjust `map-world.js` when changing providers. Provide accurate attribution for
+custom sources. Never silently substitute later, commercially licensed EOX vintages.
+
+`SERENITY_PHOTON_URL` can point to a compatible HTTPS Photon instance. The default
+is `https://photon.komoot.io/api/`. An invalid/unconfigured search endpoint fails
+safely. A public, larger-scale deployment must choose appropriately licensed tile
+and geocoding capacity or self-host them, review current provider policies, and
+coordinate rate limits across processes. Defaults require no account, token,
+paid API, or new infrastructure; public endpoints have no availability guarantee.
+No public deployment or billable resource is created by this change. The public
+Nominatim API is not used.
+
+Provider references checked for this implementation:
+[MapLibre terrain](https://maplibre.org/maplibre-gl-js/docs/examples/3d-terrain/),
+[Mapzen elevation](https://registry.opendata.aws/terrain-tiles/),
+[EOX maps](https://maps.eox.at/),
+[EOX vintage licensing](https://cloudless.eox.at/documentation/faq), and
+[OpenFreeMap](https://openfreemap.org/quick_start/).
 
 ## Verification
+
+`python3 backend/test_server.py` also verifies private history ownership,
+unauthenticated and cross-origin rejection, concurrent duplicate saves, count
+accuracy, validation, restart persistence, paging and antimeridian/pole identity.
+
+`node backend/test_travel_map_browser.js` is an optional Playwright regression
+check against a running local app. All APIs are intercepted with synthetic data,
+and service workers are blocked; it never reads/writes real account data. It
+checks WebGL fallback links and saving from trips, mobile preview visibility,
+clearing private details/drafts on account changes or identity failure, retained
+outage notices, and isolation of delayed save responses. `SERENITY_TEST_URL`
+defaults to `http://127.0.0.1:8765`; optional `SERENITY_PLAYWRIGHT_MODULE` and
+`SERENITY_BROWSER_PATH` select an existing Playwright installation/browser.
 
 `python3 backend/test_server.py` includes map storage, import pin persistence, authorization, public/private filtering, missing locations, invalid/NaN coordinates, bounds validation and antimeridian queries, removed trip fields, provider parsing, cached searches, rate limiting, and upstream failure fallback. Feed interaction tests check the new visit/map panel alongside the existing swipe/keyboard/playback behavior. Browser QA uses a separate temporary database with clearly labelled sample footage; it does not pin or publish any real user trip.
 
