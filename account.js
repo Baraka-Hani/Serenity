@@ -374,6 +374,7 @@
       signedInUser = await window.RoamApp.me();
       identityAuthLink.hidden = Boolean(signedInUser);
       $('#signoutButton').hidden = !signedInUser;
+      $('#signoutAllButton').hidden = !signedInUser;
       if (!signedInUser) {
         $('#profileName').textContent = 'Your account';
         $('#profileUsername').textContent = 'Sign in to see your profile';
@@ -442,6 +443,19 @@
       location.assign('auth.html');
     } catch (error) {
       status.textContent = `Could not sign out: ${error.message}`;
+      button.disabled = false;
+    }
+  });
+
+  $('#signoutAllButton').addEventListener('click', async event => {
+    const button = event.currentTarget;
+    if (!window.confirm('Sign out of Serenity on all your devices?')) return;
+    button.disabled = true;
+    try {
+      await window.RoamApp.logoutEverywhere();
+      location.assign('auth.html');
+    } catch (error) {
+      status.textContent = `Could not sign out everywhere: ${error.message}`;
       button.disabled = false;
     }
   });

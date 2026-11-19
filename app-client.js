@@ -18,6 +18,7 @@
     },
     async me() { return (await request('/api/me')).user; },
     async logout() { return request('/api/logout', { method: 'POST' }); },
+    async logoutEverywhere() { return request('/api/logout-all', { method: 'POST' }); },
     async saveProfile(profile) {
       return (await request('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(profile) })).user;
     },

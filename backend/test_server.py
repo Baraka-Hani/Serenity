@@ -172,12 +172,119 @@ class BackendFlow(unittest.TestCase):
         self.assertEqual(self.call(f"/api/clips/{clip_id}", "DELETE")[0], 200)
 
     def test_new_password_length_boundaries(self):
-        for length in (7, 17):
+        for length in (7, 129):
             status, _ = self.call("/api/register", "POST", {"name": "Boundary", "email": f"length{length}@example.test", "password": "p" * length})
             self.assertEqual(status, 400)
-        for length in (8, 16):
+        for length in (8, 16, 64, 128):
             status, _ = self.call("/api/register", "POST", {"name": "Boundary", "email": f"length{length}@example.test", "password": "p" * length})
             self.assertEqual(status, 200)
+        self.assertEqual(self.call("/api/login", "POST", {"email": "length64@example.test", "password": "p" * 64})[0], 200)
+
+    def raw(self, path, method="GET", payload=None, client=None):
+        headers = {"Content-Type": "application/json"}
+        if method != "GET": headers["Origin"] = self.base
+        request = urllib.request.Request(self.base + path, data=json.dumps(payload).encode() if payload is not None else None, method=method, headers=headers)
+        try:
+            return (client or self.client).open(request)
+        except urllib.error.HTTPError as error:
+            return error
+
+    def new_client(self):
+        return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+    def google_claims(self, sub, email, name="Google Traveller", **overrides):
+        claims = {"aud": "test-client.apps.googleusercontent.com", "iss": "https://accounts.google.com", "exp": str(int(__import__("time").time()) + 600), "email_verified": "true", "sub": sub, "email": email, "name": name}
+        claims.update(overrides)
+        return claims
+
+    def google(self, claims, client=None, password=None):
+        payload = {"credential": "header.payload.signature-for-tests"}
+        if password is not None: payload["password"] = password
+        with patch.dict(os.environ, {"ROAM_GOOGLE_CLIENT_ID": "test-client.apps.googleusercontent.com"}), patch("google_auth.fetch_tokeninfo", return_value=claims):
+            return self.call("/api/auth/google", "POST", payload, client=client)
+
+    def test_session_cookie_is_long_lived_lax_and_works_on_several_devices(self):
+        response = self.raw("/api/register", "POST", {"name": "Roamer", "email": "roamer@example.test", "password": "tripPass123"})
+        cookie = response.headers["Set-Cookie"]
+        self.assertIn("HttpOnly", cookie)
+        self.assertIn("SameSite=Lax", cookie)
+        self.assertIn(f"Max-Age={90 * 24 * 60 * 60}", cookie)
+        phone, laptop = self.new_client(), self.new_client()
+        for device in (phone, laptop):
+            self.assertEqual(self.call("/api/login", "POST", {"email": "roamer@example.test", "password": "tripPass123"}, client=device)[0], 200)
+        self.assertEqual(self.call("/api/me", client=phone)[1]["user"]["email"], "roamer@example.test")
+        self.assertEqual(self.call("/api/logout", "POST", client=phone)[0], 200)
+        self.assertIsNone(self.call("/api/me", client=phone)[1]["user"])
+        self.assertEqual(self.call("/api/me", client=laptop)[1]["user"]["name"], "Roamer")
+        self.assertEqual(self.call("/api/logout-all", "POST", client=laptop)[0], 200)
+        self.assertIsNone(self.call("/api/me")[1]["user"])
+        self.assertIsNone(self.call("/api/me", client=laptop)[1]["user"])
+
+    def test_active_sessions_slide_forward(self):
+        self.call("/api/register", "POST", {"name": "Slider", "email": "slider@example.test", "password": "tripPass123"})
+        with server.db() as connection:
+            connection.execute("UPDATE sessions SET expires_at=? WHERE user_id=(SELECT id FROM users WHERE email='slider@example.test')", (int(__import__("time").time()) + 60,))
+        response = self.raw("/api/me")
+        self.assertIn("roam_session=", response.headers.get("Set-Cookie", ""))
+        with server.db() as connection:
+            expires = connection.execute("SELECT expires_at FROM sessions WHERE user_id=(SELECT id FROM users WHERE email='slider@example.test')").fetchone()[0]
+        self.assertGreater(expires, __import__("time").time() + 89 * 24 * 60 * 60)
+        self.assertNotIn("Set-Cookie", self.raw("/api/me").headers)
+
+    def test_repeated_wrong_passwords_are_throttled(self):
+        self.call("/api/register", "POST", {"name": "Locked", "email": "locked@example.test", "password": "tripPass123"})
+        attacker = self.new_client()
+        for _ in range(server.LOGIN_MAX_FAILURES):
+            self.assertEqual(self.call("/api/login", "POST", {"email": "locked@example.test", "password": "wrong-pass"}, client=attacker)[0], 401)
+        self.assertEqual(self.call("/api/login", "POST", {"email": "locked@example.test", "password": "tripPass123"}, client=attacker)[0], 429)
+        server._login_failures.clear()
+        self.assertEqual(self.call("/api/login", "POST", {"email": "locked@example.test", "password": "tripPass123"}, client=attacker)[0], 200)
+
+    def test_auth_config_reports_google_only_when_configured(self):
+        with patch.dict(os.environ, {"ROAM_GOOGLE_CLIENT_ID": ""}):
+            self.assertIsNone(self.call("/api/auth/config")[1]["google_client_id"])
+            status, data = self.call("/api/auth/google", "POST", {"credential": "a.b.c-long-enough-credential"})
+            self.assertEqual(status, 401)
+            self.assertIn("not set up", data["error"])
+        with patch.dict(os.environ, {"ROAM_GOOGLE_CLIENT_ID": "abc.apps.googleusercontent.com"}):
+            self.assertEqual(self.call("/api/auth/config")[1]["google_client_id"], "abc.apps.googleusercontent.com")
+
+    def test_google_sign_in_creates_then_reuses_account(self):
+        status, data = self.google(self.google_claims("google-sub-1", "New.Google@Example.test", "Gia Google"))
+        self.assertEqual(status, 200)
+        self.assertEqual(data["user"]["email"], "new.google@example.test")
+        self.assertEqual(data["user"]["name"], "Gia Google")
+        self.assertEqual(self.call("/api/me")[1]["user"]["username"], "gia_google")
+        self.assertEqual(len(self.call("/api/feeds")[1]["feeds"]), 5)
+        status, again = self.google(self.google_claims("google-sub-1", "new.google@example.test"), client=self.new_client())
+        self.assertEqual((status, again["user"]["id"]), (200, data["user"]["id"]))
+        status, refused = self.call("/api/login", "POST", {"email": "new.google@example.test", "password": ""}, client=self.new_client())
+        self.assertEqual(status, 401)
+        self.assertTrue(refused["google_only"])
+
+    def test_google_token_checks(self):
+        for bad in ({"aud": "someone-else"}, {"iss": "https://evil.example"}, {"exp": "1"}, {"email_verified": "false"}):
+            status, data = self.google(self.google_claims("google-sub-bad", "bad@example.test", **bad), client=self.new_client())
+            self.assertEqual(status, 401, bad)
+        with patch.dict(os.environ, {"ROAM_GOOGLE_CLIENT_ID": "test-client.apps.googleusercontent.com"}):
+            self.assertEqual(self.call("/api/auth/google", "POST", {"credential": "not-a-jwt"})[0], 401)
+        with server.db() as connection:
+            self.assertIsNone(connection.execute("SELECT 1 FROM users WHERE email='bad@example.test'").fetchone())
+
+    def test_google_links_existing_password_account_only_with_its_password(self):
+        self.call("/api/register", "POST", {"name": "Both Ways", "email": "both@example.test", "password": "tripPass123"}, client=self.new_client())
+        device = self.new_client()
+        status, data = self.google(self.google_claims("google-sub-both", "both@example.test"), client=device)
+        self.assertEqual(status, 409)
+        self.assertTrue(data["link_required"])
+        self.assertIsNone(self.call("/api/me", client=device)[1]["user"])
+        self.assertEqual(self.google(self.google_claims("google-sub-both", "both@example.test"), client=device, password="wrongPass1")[0], 401)
+        status, linked = self.google(self.google_claims("google-sub-both", "both@example.test"), client=device, password="tripPass123")
+        self.assertEqual(status, 200)
+        self.assertEqual(linked["user"]["name"], "Both Ways")
+        self.assertEqual(self.google(self.google_claims("google-sub-both", "both@example.test"), client=self.new_client())[0], 200)
+        self.assertEqual(self.call("/api/login", "POST", {"email": "both@example.test", "password": "tripPass123"}, client=self.new_client())[0], 200)
+        self.assertEqual(self.google(self.google_claims("google-sub-other", "both@example.test"), client=self.new_client())[0], 409)
 
     def test_collection_import_is_private_idempotent_and_supports_large_groups(self):
         self.call('/api/register', 'POST', {'name': 'Importer', 'email': 'importer@example.test', 'password': 'tripPass123'})
@@ -513,7 +620,7 @@ class BackendFlow(unittest.TestCase):
         self.assertIn('id="profileForm"', account)
         self.assertIn('id="publicProfileLink"', account)
         auth_client = self.call('/auth-client.js')[1].decode()
-        self.assertIn("next.get('next') === 'studio' ? 'studio.html' : 'account.html'", auth_client)
+        self.assertIn("studio: 'studio.html'", auth_client)
         self.assertIn("next.get('next') === 'messages'", auth_client)
         self.assertIn("location.replace(`search.html${conversation.size", auth_client)
         account_client = self.call('/account.js')[1].decode()
@@ -549,7 +656,7 @@ class BackendFlow(unittest.TestCase):
         self.assertIn('src="messages.js"', chat)
         self.assertNotIn('src="trip-sidebar.js"', chat)
         service_worker = self.call('/service-worker.js')[1].decode()
-        self.assertIn('serenity-shell-v14-engage-quiz', service_worker)
+        self.assertIn('serenity-shell-v15-sign-in', service_worker)
         for asset in ('messages.css', 'messages-client.js', 'messages.js'):
             self.assertIn(f"'/{asset}'", worker)
         self.assertIn("toggle.setAttribute('aria-controls', sidebar.id)", sidebar)
