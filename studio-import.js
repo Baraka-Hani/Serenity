@@ -12,7 +12,7 @@
     <p class="auto-privacy">Vision runs on this device. The first use downloads a large model; video frames aren’t sent to an AI service. Videos upload to your account only when you save.</p>
     <p id="autoStatus" class="auto-status" role="status" aria-live="polite">Your collection will be grouped by visual themes, not guessed cities or travel dates.</p><progress id="autoProgress" max="1" value="0" hidden aria-label="Collection progress"></progress>
     <div class="auto-collection-actions" id="autoActions" hidden><button type="button" id="autoAnalyse">Find my trips</button><button type="button" id="autoManual" hidden>Group without vision</button><button type="button" id="autoCancel" hidden>Stop</button><button type="button" id="autoClear">Clear collection</button></div>
-    <section id="autoReview" class="auto-review" hidden aria-label="Review suggested trips"><div class="auto-review-heading"><div><span class="eyebrow">Your suggested trips</span><h3>A little order. All your moments.</h3><p>Review the groups, rename trips, and move any clip. Similar-looking places may be different journeys.</p></div><button type="button" id="autoNewGroup">＋ New group</button></div><div id="autoGroups"></div><details class="auto-clip-editor"><summary>Review and move individual videos</summary><div id="autoClipRows"></div></details><p class="auto-save-note">Ready to share? Post these videos and their trip stories directly to the public Home feed, or save privately for later. A missing destination is labelled “Location not specified.” You can change visibility from any trip preview. Keep this tab open until saving finishes.</p><div class="auto-save-actions"><button type="button" id="autoPublishSave">Post trips to Home feed</button><button type="button" id="autoSave">Save privately</button></div></section>`;
+    <section id="autoReview" class="auto-review" hidden aria-label="Review suggested trips"><div class="auto-review-heading"><div><span class="eyebrow">Your suggested trips</span><h3>A little order. All your moments.</h3><p>Review the groups, rename trips, and move any clip. Similar-looking places may be different journeys.</p></div><button type="button" id="autoNewGroup">＋ New group</button></div><div id="autoGroups"></div><details class="auto-clip-editor"><summary>Review and move individual videos</summary><div id="autoClipRows"></div></details><p class="auto-save-note">Ready to share? Post these videos and their trip stories directly to the public feed, or save privately for later. A missing destination is labelled “Location not specified.” You can change visibility from any trip preview. Keep this tab open until saving finishes.</p><div class="auto-save-actions"><button type="button" id="autoPublishSave">Post trips to Feed</button><button type="button" id="autoSave">Save privately</button></div></section>`;
   manual.before(shell);
   const manualWrap = document.createElement('details'); manualWrap.className = 'auto-manual-create';
   const summary = document.createElement('summary'); summary.textContent = 'Prefer to build a trip yourself?';
@@ -42,7 +42,7 @@
   function reset() {
     records = []; groups = []; feedMap = null; batchKey = crypto.randomUUID(); savingStarted = false; done = false;
     $('autoReview').hidden = true; $('autoActions').hidden = true; $('autoProgress').hidden = true;
-    publicationChoice = null; $('autoManual').hidden = true; $('autoSave').textContent = 'Save privately'; $('autoPublishSave').textContent = 'Post trips to Home feed';
+    publicationChoice = null; $('autoManual').hidden = true; $('autoSave').textContent = 'Save privately'; $('autoPublishSave').textContent = 'Post trips to Feed';
     $('autoGroups').replaceChildren(); $('autoClipRows').replaceChildren(); buttonState();
     destinationPickers.forEach(picker => picker.destroy()); destinationPickers = [];
   }
@@ -214,12 +214,12 @@
         if (stopRequested) break;
         const feed = feedMap.find(feed => feed.key === group.key);
         const members = selected.filter(record => record.groupKey === group.key);
-        status(`Posting ${group.name} to Home feed…`);
+        status(`Posting ${group.name} to Feed…`);
         await window.RoamApp.setTripVisibility(feed.id, 'public', members.map(record => record.savedId));
       }
       done = !stopRequested; const count = selected.filter(record => record.savedId).length;
-      status(done ? `${count} ${count === 1 ? 'video' : 'videos'} saved across ${activeGroups.length} ${activeGroups.length === 1 ? 'trip' : 'trips'}${publish ? ' and published to Home feed' : ', privately'}. Your journeys are ready below.` : `Paused. ${count} ${count === 1 ? 'video' : 'videos'} saved. Resume to finish the collection.`);
-      progress(count, selected.length); actionButton.textContent = done ? publish ? '✓ Posted to Home feed' : '✓ Trips saved privately' : publish ? 'Resume posting' : 'Resume saving';
+      status(done ? `${count} ${count === 1 ? 'video' : 'videos'} saved across ${activeGroups.length} ${activeGroups.length === 1 ? 'trip' : 'trips'}${publish ? ' and published to Feed' : ', privately'}. Your journeys are ready below.` : `Paused. ${count} ${count === 1 ? 'video' : 'videos'} saved. Resume to finish the collection.`);
+      progress(count, selected.length); actionButton.textContent = done ? publish ? '✓ Posted to Feed' : '✓ Trips saved privately' : publish ? 'Resume posting' : 'Resume saving';
     } catch (error) { status(`Saving or posting stopped: ${error.message} Saved videos are safe. Retry to finish; check the preview badges for their current visibility.`); actionButton.textContent = publish ? 'Retry saving and posting' : 'Retry unfinished uploads'; }
     finally { busy = false; buttonState(); window.dispatchEvent(new Event('serenity:studio-imported')); window.dispatchEvent(new Event('serenity:trip-updated')); }
   }

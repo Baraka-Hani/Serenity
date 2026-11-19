@@ -7,7 +7,7 @@
   const $ = selector => document.querySelector(selector);
   const layout = $('#feedLayout');
   const studioLink = $('#tripDetailsForm').nextElementSibling;
-  studioLink.href = 'app.html#feeds';
+  studioLink.href = 'studio.html';
   studioLink.textContent = 'Edit this trip in Clip Studio ↗';
   $('#chatTitle').textContent = 'Private notes';
   document.querySelector('.panel.chat .panel-head small').textContent = 'ONLY YOU CAN SEE THESE';
@@ -78,7 +78,7 @@
     }
     form.querySelector('[type="submit"]').hidden = true;
     const editLink = form.nextElementSibling;
-    editLink.href = 'app.html#feeds';
+    editLink.href = 'studio.html';
     editLink.textContent = 'Edit this trip in Clip Studio ↗';
   }
   async function refresh() {

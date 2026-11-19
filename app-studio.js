@@ -56,7 +56,7 @@
     if (clip.is_published) {
       const published = document.createElement('span');
       published.className = 'studio-published-label';
-      published.textContent = 'On Home feed';
+      published.textContent = 'On Feed';
       actions.append(published, remove);
     } else {
       const privateClip = document.createElement('span');
@@ -296,7 +296,7 @@
     const publishExisting = document.createElement('button');
     publishExisting.type = 'button';
     publishExisting.className = 'studio-publish-trip';
-    publishExisting.textContent = 'Publish saved videos to Home feed';
+    publishExisting.textContent = 'Publish saved videos to Feed';
     publishExisting.hidden = !tripClips.some(clip => !clip.is_published);
     publishExisting.onclick = async () => {
       publishExisting.disabled = true;
@@ -311,7 +311,7 @@
         const publishedCount = (await window.RoamApp.setTripVisibility(id, 'public')).changed;
         await loadStudio();
         window.dispatchEvent(new Event('serenity:trip-updated'));
-        setStatus(`${publishedCount} ${publishedCount === 1 ? 'video' : 'videos'} from ${values.name} published to the Home feed.`);
+        setStatus(`${publishedCount} ${publishedCount === 1 ? 'video' : 'videos'} from ${values.name} published to Feed.`);
       } catch (error) {
         await loadStudio();
         setStatus(`Trip was not fully published: ${error.message}`);
@@ -434,39 +434,27 @@
     }
   };
 
-  $('#accountLink').textContent = 'Sign in ↗';
   window.addEventListener('serenity:studio-imported', loadStudio);
   const storyInput = form.elements.namedItem('summary');
   storyInput.required = false;
   form.querySelector('.trip-create-heading span').textContent = 'Pin the place, describe the experience, and publish the videos that inspire someone to go.';
   form.querySelector('[type="submit"]').textContent = 'Create and publish trip';
-  $('.clip-studio > .feed-head p').textContent = 'Create your trip and publish its videos in one step. Published trips appear in the shared Home feed for everyone.';
-  const homeFeedLink = document.querySelector('.social-share-link');
-  if (homeFeedLink) { homeFeedLink.href = '#feeds'; homeFeedLink.textContent = 'Create a trip ↗'; }
-  const heroCopy = document.querySelector('.social-hero p');
-  if (heroCopy) heroCopy.textContent = 'Watch a place, find it on the map, and make it your next trip.';
-  const feedHeading = document.querySelector('.social-stream-head h2');
-  if (feedHeading) feedHeading.textContent = 'Watch it. Go there.';
-  const socialRail = document.querySelector('.social-rail');
-  if (socialRail) socialRail.hidden = true;
+  $('.clip-studio > .feed-head p').textContent = 'Create your trip and publish its videos in one step. Published trips appear in Feed.';
   window.RoamApp.me().then(async account => {
     user = account;
+    $('#studioLoadStatus').hidden = true;
     if (!user) {
-      cards.replaceChildren();
-      const empty = document.createElement('p');
-      empty.className = 'studio-empty';
-      empty.textContent = 'Sign in to create trips and upload videos.';
-      cards.append(empty);
-      setStatus('Sign in to start creating trips.');
+      $('#studioGate').hidden = false;
       return;
     }
-    $('#accountLink').textContent = `${user.name} ↗`;
-    $('#accountLink').href = 'account.html';
-    setStatus(`Welcome to Clip Studio, ${user.name}. Create a trip and add its videos here.`);
+    $('#feeds').hidden = false;
     await loadStudio();
-  }).catch(error => setStatus(`Could not connect to Clip Studio: ${error.message}`));
+  }).catch(error => {
+    $('#studioLoadStatus').hidden = false;
+    $('#studioLoadStatus').textContent = `Could not connect to Clip Studio: ${error.message}`;
+  });
   } catch (error) {
-    document.querySelector('#studioStatus').textContent = `Clip Studio could not start: ${error.message}. Refresh to retry.`;
+    document.querySelector('#studioLoadStatus').textContent = `Clip Studio could not start: ${error.message}. Refresh to retry.`;
     console.error('Clip Studio initialization failed:', error);
   }
 })();

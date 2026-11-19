@@ -35,7 +35,7 @@
     } else {
       const trip = document.createElement('span');
       trip.className = 'published-card__trip';
-      trip.textContent = 'Home feed';
+      trip.textContent = 'Feed';
       top.append(trip);
     }
     const caption = document.createElement('p');
@@ -85,11 +85,11 @@
         status.textContent = 'Your published videos will appear here.';
         const emptyCard = document.createElement('div');
         emptyCard.className = 'published-empty';
-        emptyCard.append('No videos published yet. Add videos to a trip in Clip Studio, then share them from the Home feed. ', Object.assign(document.createElement('a'), { href: 'app.html#feeds', textContent: 'Open Clip Studio ↗' }));
+        emptyCard.append('No videos published yet. Add videos to a trip in Clip Studio, then share them from Feed. ', Object.assign(document.createElement('a'), { href: 'studio.html', textContent: 'Open Clip Studio ↗' }));
         grid.append(emptyCard);
         return;
       }
-      status.textContent = 'Only videos published to the Home feed are shown here.';
+      status.textContent = 'Only videos published to Feed are shown here.';
       grid.append(...posts.map(renderPost));
     } catch (error) {
       count.textContent = 'Unavailable';

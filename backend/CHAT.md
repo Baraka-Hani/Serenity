@@ -1,17 +1,17 @@
 # Chat and account discovery
 
-Open [Chat](http://127.0.0.1:8765/search.html) and sign in. The shared toolbar stays **Home feed → Chat → Map → Clip Studio → Account**.
+Open **Engage → Conversations** and sign in. The inbox is served at `/search.html`.
 
 ## What works
 
 - **Find people** shows accounts with public trips. Search by display name, @username, or a destination in a published post. Search can also find a new account with no public posts by its name or username. Emails are never searchable or returned.
-- Open a public profile or choose **Message** on a directory card. **Ask creator** on a Home feed video or trip page opens a private composer linked to that particular video; public comments stay separate.
+- Open a public profile or choose **Message** on a directory card. **Ask creator** on a Feed video or trip page opens a private composer linked to that particular video; public comments stay separate.
 - One conversation per account pair, persisted messages, unread counts, inbox filtering, earlier-message pagination, blocking/unblocking, and draft preservation while switching conversations in the same tab.
 - Messages refresh every six seconds while this page is visible; Refresh checks immediately. This is not push notification delivery or background messaging. There are no automated replies from test accounts.
 - Video references re-check publication. A hidden or deleted video is unavailable through the messaging API. A trip's private notes, emails, GPS metadata, and unpublished clips never become message attachments.
 - Signing out or changing accounts requires reauthentication. Messages and drafts are not saved in browser local storage or service-worker caches. Drafts are intentionally lost when leaving/reloading the page.
 
-`backend/messaging.py` owns conversation authorization, receipts, read positions, blocking, and send limits. `backend/account_discovery.py` owns the directory. `messages-client.js` is the API boundary; `messages.js` and `account-discovery.js` own their respective UIs. Only small links are shared with Home feed and profiles.
+`backend/messaging.py` owns conversation authorization, receipts, read positions, blocking, and send limits. `backend/account_discovery.py` owns the directory. `messages-client.js` is the API boundary; `messages.js` and `account-discovery.js` own their respective UIs. Only small links are shared with Feed and profiles.
 
 ## Local test accounts and supplied videos
 

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
+  <title>Engage — Serenity</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="app-shell.css"><link rel="stylesheet" href="engage.css"><link rel="stylesheet" href="liquid-toolbar.css">
+</head>
+<body>
+  <header class="app-header app-shell">
+    <a class="app-brand" href="home.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt="">serenity</a>
+  </header>
+  <main class="app-shell">
+    <h1 class="engage-title">Engage</h1>
+    <nav class="engage-tabs" aria-label="Engage">
+      <a href="engage.html" aria-current="page">Generated</a>
+      <a href="search.html">Conversations</a>
+    </nav>
+    <section class="engage-quiz" id="engageQuiz" aria-labelledby="quizTitle">
+      <div class="engage-quiz__intro">
+        <p class="engage-quiz__eyebrow">Serenity mini-games</p>
+        <h2 id="quizTitle">Play the trip behind the video</h2>
+        <p>Pick a published clip and challenge yourself with its destination, creator tip, and trip story.</p>
+        <p class="engage-quiz__note">Quizzes use details creators published with their videos—not private trip notes or visual analysis.</p>
+      </div>
+      <div class="engage-quiz__picker">
+        <label for="quizClip">Choose a published video</label>
+        <select id="quizClip" disabled aria-describedby="quizStatus">
+          <option value="">Loading published videos…</option>
+        </select>
+        <button class="app-button engage-quiz__more" id="quizLoadMore" type="button" aria-controls="quizClip" hidden>Load more videos</button>
+      </div>
+      <div class="engage-quiz__featured" id="quizFeatured" hidden>
+        <div class="engage-quiz__video">
+          <video id="quizVideo" controls playsinline preload="metadata" aria-label="Selected published travel video"></video>
+        </div>
+        <div class="engage-quiz__clip-details">
+          <p class="engage-quiz__eyebrow">Featured trip</p>
+          <h3 id="quizClipTitle"></h3>
+          <p id="quizClipCreator"></p>
+          <p id="quizClipStory"></p>
+        </div>
+      </div>
+      <p class="engage-quiz__status" id="quizStatus" role="status" aria-live="polite">Loading recent published videos…</p>
+      <div class="engage-quiz__cards" id="quizCards"></div>
+    </section>
+    <section class="generated-library" aria-labelledby="gamesTitle">
+      <div class="generated-heading">
+        <div>
+          <h2 id="gamesTitle">Saved shared games</h2>
+          <p>Keep HTTPS games shared with you and reopen them from this browser.</p>
+        </div>
+        <button class="app-button app-button--primary" id="addGame" type="button" aria-controls="gameForm" aria-expanded="false" disabled>＋ Add game</button>
+      </div>
+      <form class="game-form" id="gameForm" hidden>
+        <label>Name<input name="title" maxlength="80" required></label>
+        <label>Shared game link<input name="url" type="url" placeholder="https://" maxlength="2048" required></label>
+        <div class="game-form-actions">
+          <button class="app-button app-button--primary" type="submit">Save game</button>
+          <button class="app-button" id="cancelGame" type="button">Cancel</button>
+        </div>
+      </form>
+      <p class="game-status" id="gameStatus" role="status">Opening your saved games…</p>
+      <p class="game-empty" id="gameEmpty" hidden>No games saved yet.</p>
+      <ul class="game-list" id="gameList" aria-label="Saved games"></ul>
+    </section>
+  </main>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="engage.js"></script><script src="liquid-toolbar.js"></script><script src="app-pwa.js"></script>
+</body>
+</html>

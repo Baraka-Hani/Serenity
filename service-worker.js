@@ -1,5 +1,8 @@
-const CACHE_NAME = 'serenity-shell-v13-travel-world';
+const CACHE_NAME = 'serenity-shell-v14-engage-quiz';
 const APP_PAGES = new Set([
+  '/home.html',
+  '/engage.html',
+  '/studio.html',
   '/map.html',
   '/app.html',
   '/auth.html',
@@ -15,6 +18,14 @@ const APP_PAGES = new Set([
   '/tile-05.html'
 ]);
 const SHELL_ASSETS = [
+  '/home.html',
+  '/home.css',
+  '/app-shell.css',
+  '/engage.html',
+  '/engage.css',
+  '/engage.js',
+  '/studio.html',
+  '/studio.css',
   '/account-discovery.js',
   '/account-discovery.css',
   '/map.html',
@@ -55,7 +66,6 @@ const SHELL_ASSETS = [
   '/social-feed.css',
   '/feed-hub.js',
   '/feed-hub.css',
-  '/header-feed-picker.js',
   '/liquid-toolbar.js',
   '/liquid-toolbar.css',
   '/trip-sidebar.js',

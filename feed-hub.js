@@ -57,13 +57,6 @@
     updatePlayback();
   }, { root: list, threshold: [0, .6] });
   document.addEventListener('visibilitychange', updatePlayback);
-  function route() {
-    document.body.dataset.appView = location.hash === '#feeds' ? 'studio' : 'home';
-    updateToolbarMode();
-    updatePlayback();
-  }
-  window.addEventListener('hashchange', route);
-  route();
 
   function create(post, card, media, header, body, comments, tripPosts = [post], onSlideChange = () => {}) {
     let videos = [...media.querySelectorAll('video')];
@@ -107,19 +100,19 @@
     const searchInput = el('input', 'hub-search__input');
     searchInput.type = 'search';
     searchInput.placeholder = 'Search this feed';
-    searchInput.setAttribute('aria-label', 'Search trips, destinations, and creators in the Home feed');
+    searchInput.setAttribute('aria-label', 'Search trips, destinations, and creators in Feed');
     const searchButton = button('', 'hub-search__button');
-    searchButton.setAttribute('aria-label', 'Search Home feed');
+    searchButton.setAttribute('aria-label', 'Search Feed');
     searchButton.setAttribute('aria-expanded', 'false');
     searchButton.setAttribute('aria-controls', `hub-search-${post.id}`);
     searchInput.id = `hub-search-${post.id}`;
-    searchButton.title = 'Search Home feed';
+    searchButton.title = 'Search Feed';
     searchButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 4.5 4.5"/></svg>';
     search.append(searchInput, searchButton);
     searchButton.onclick = () => {
       const open = navigation.classList.toggle('is-search-open');
       searchButton.setAttribute('aria-expanded', String(open));
-      searchButton.setAttribute('aria-label', open ? 'Close Home feed search' : 'Search Home feed');
+      searchButton.setAttribute('aria-label', open ? 'Close Feed search' : 'Search Feed');
       searchInput.hidden = !open;
       if (open) searchInput.focus();
       else {
@@ -294,6 +287,9 @@
       const question = button('Ask the creator a question', 'hub-primary');
       question.hidden = Boolean((tripPosts[index] || post).is_mine);
       question.onclick = () => { location.assign(window.RoamApp.messageUrl(context.creator.public_id, context.post_id)); };
+      const games = el('a', 'hub-profile-link', '🎮  Open games in Engage ↗');
+      games.href = `engage.html?post=${encodeURIComponent((tripPosts[index] || post).id)}`;
+      visit.append(games);
       travel.replaceChildren(backButton(), location, summary, visit, question);
     }
     function renderCreator(context) {

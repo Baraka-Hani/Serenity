@@ -3,7 +3,7 @@
   "name": "Serenity — Travel stories",
   "short_name": "Serenity",
   "description": "Share travel clips, stories, and trip ideas with the Serenity community.",
-  "start_url": "/app.html#home-feed",
+  "start_url": "/home.html",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
