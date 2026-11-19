@@ -9,6 +9,7 @@ import os
 import re
 import secrets
 import sqlite3
+import threading
 import time
 from http import cookies
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -22,6 +23,7 @@ import trip_locations
 import visited_locations
 import messaging
 import account_discovery
+import google_auth
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = Path(os.environ.get("ROAM_DATA_DIR", Path(__file__).resolve().parent / "data"))
@@ -36,7 +38,12 @@ if PUBLIC_ORIGIN and (urlparse(PUBLIC_ORIGIN).scheme != "https" or not urlparse(
     raise ValueError("ROAM_PUBLIC_ORIGIN must be an HTTPS origin without a path.")
 MAX_VIDEO = 50 * 1024 * 1024
 MAX_CLIPS_PER_FEED = 500
-SESSION_AGE = 14 * 24 * 60 * 60
+SESSION_AGE = 90 * 24 * 60 * 60  # stay signed in for 90 days after the last visit
+SESSION_RENEW_AFTER = 24 * 60 * 60  # slide the expiry forward at most once a day
+PASSWORD_MIN, PASSWORD_MAX = 8, 128
+LOGIN_WINDOW, LOGIN_MAX_FAILURES = 15 * 60, 8
+_login_failures = {}
+_login_lock = threading.Lock()
 STATIC = {"/": "test.html", "/test.html": "test.html", "/app.html": "app.html", "/feed.html": "feed.html", "/my-clips.html": "my-clips.html", "/my-clips.css": "my-clips.css", "/my-clips.js": "my-clips.js", "/account.html": "account.html", "/account.css": "account.css", "/account.js": "account.js", "/profile.html": "profile.html", "/profile.css": "profile.css", "/profile.js": "profile.js", "/auth.html": "auth.html", "/search.html": "search.html", "/serenity-logo.svg": "serenity-logo.svg", "/serenity-icon-192.png": "serenity-icon-192.png", "/serenity-icon-512.png": "serenity-icon-512.png", "/shared-theme.js": "shared-theme.js", "/auth-client.js": "auth-client.js", "/app-client.js": "app-client.js", "/app-studio.js": "app-studio.js", "/social-feed.js": "social-feed.js", "/social-feed.css": "social-feed.css", "/header-feed-picker.js": "header-feed-picker.js", "/liquid-toolbar.css": "liquid-toolbar.css", "/liquid-toolbar.js": "liquid-toolbar.js", "/trip-sidebar.css": "trip-sidebar.css", "/trip-sidebar.js": "trip-sidebar.js", "/feed-view.css": "feed-view.css", "/feed-view.js": "feed-view.js", **{f"/tile-{number:02}.html": f"tile-{number:02}.html" for number in range(1, 6)}}
 STATIC.update({f'/{name}': name for name in ('home.html', 'home.css', 'app-shell.css', 'engage.html', 'engage.css', 'engage.js', 'studio.html', 'studio.css')})
 STATIC.update({"/manifest.webmanifest": "manifest.webmanifest", "/service-worker.js": "service-worker.js", "/app-pwa.js": "app-pwa.js"})
@@ -122,6 +129,14 @@ def init():
             connection.execute("ALTER TABLE users ADD COLUMN username TEXT")
         if "bio" not in user_columns:
             connection.execute("ALTER TABLE users ADD COLUMN bio TEXT NOT NULL DEFAULT ''")
+        if "google_sub" not in user_columns:
+            connection.execute("ALTER TABLE users ADD COLUMN google_sub TEXT")
+        connection.execute("CREATE UNIQUE INDEX IF NOT EXISTS users_google_sub ON users(google_sub) WHERE google_sub IS NOT NULL")
+        session_columns = {row[1] for row in connection.execute("PRAGMA table_info(sessions)")}
+        if "created_at" not in session_columns:
+            connection.execute("ALTER TABLE sessions ADD COLUMN created_at INTEGER NOT NULL DEFAULT 0")
+        connection.execute("CREATE INDEX IF NOT EXISTS sessions_by_user ON sessions(user_id)")
+        connection.execute("DELETE FROM sessions WHERE expires_at<=?", (int(time.time()),))
         existing_users = connection.execute("SELECT id, name, username, public_id FROM users ORDER BY id").fetchall()
         for existing in existing_users:
             public_id = existing["public_id"] or secrets.token_hex(8)
@@ -166,6 +181,57 @@ def hash_password(password, salt):
     return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 310000)
 
 
+USER_FIELDS = ("id", "public_id", "username", "email", "name", "bio")
+
+
+def create_user(connection, email, name, password=None, google_sub=None):
+    """Insert a new account. Accounts made with Google have no usable password."""
+    base = username_base(name)
+    username = base
+    suffix = 2
+    while connection.execute("SELECT 1 FROM users WHERE username=? COLLATE NOCASE", (username,)).fetchone():
+        username = f"{base[:20-len(str(suffix))]}{suffix}"
+        suffix += 1
+    public_id = secrets.token_hex(8)
+    salt = secrets.token_bytes(16)
+    password_hash = hash_password(password, salt) if password is not None else b""
+    cursor = connection.execute("INSERT INTO users(email,name,salt,password_hash,created_at,public_id,username,bio,google_sub) VALUES (?,?,?,?,?,?,?,?,?)", (email, name, salt, password_hash, int(time.time()), public_id, username, "", google_sub))
+    user = {"id": cursor.lastrowid, "public_id": public_id, "username": username, "email": email, "name": name, "bio": ""}
+    for feed_number in range(1, 6):
+        connection.execute("INSERT INTO user_feeds(user_id,name,created_at) VALUES (?,?,?)", (user["id"], f"Feed {feed_number:02d}", int(time.time())))
+    return user
+
+
+def password_matches(user, password):
+    if not user["password_hash"] or len(password) > PASSWORD_MAX:
+        return False
+    return hmac.compare_digest(hash_password(password, user["salt"]), user["password_hash"])
+
+
+def login_blocked(key):
+    now = time.time()
+    with _login_lock:
+        recent = [moment for moment in _login_failures.get(key, []) if now - moment < LOGIN_WINDOW]
+        if recent: _login_failures[key] = recent
+        else: _login_failures.pop(key, None)
+        return len(recent) >= LOGIN_MAX_FAILURES
+
+
+def record_login_failure(key):
+    with _login_lock:
+        _login_failures.setdefault(key, []).append(time.time())
+
+
+def clear_login_failures(key):
+    with _login_lock:
+        _login_failures.pop(key, None)
+
+
+def session_cookie(token, max_age):
+    cookie = f"roam_session={token}; HttpOnly; SameSite=Lax; Path=/; Max-Age={max_age}"
+    return cookie + "; Secure" if PUBLIC_ORIGIN else cookie
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "Serenity/1.0"
 
@@ -187,6 +253,10 @@ class Handler(BaseHTTPRequestHandler):
             "Cache-Control": "no-store",
             "X-Content-Type-Options": "nosniff"
         }
+        refreshed = getattr(self, "_refreshed_cookie", None)
+        if refreshed and "Set-Cookie" not in (extra_headers or {}):
+            headers["Set-Cookie"] = refreshed
+        self._refreshed_cookie = None
         headers.update(extra_headers or {})
         for name, value in headers.items():
             self.send_header(name, value)
@@ -219,9 +289,17 @@ class Handler(BaseHTTPRequestHandler):
         except (KeyError, cookies.CookieError):
             return None
         digest = hashlib.sha256(token.encode()).hexdigest()
+        now = int(time.time())
         with db() as connection:
-            return connection.execute("""SELECT users.id, users.public_id, users.username, users.email, users.name, users.bio FROM sessions
-                JOIN users ON users.id=sessions.user_id WHERE token_hash=? AND expires_at>?""", (digest, int(time.time()))).fetchone()
+            user = connection.execute("""SELECT users.id, users.public_id, users.username, users.email, users.name, users.bio, sessions.expires_at FROM sessions
+                JOIN users ON users.id=sessions.user_id WHERE token_hash=? AND expires_at>?""", (digest, now)).fetchone()
+            if user and user["expires_at"] < now + SESSION_AGE - SESSION_RENEW_AFTER:
+                # Keep active travellers signed in: slide the 90-day window forward.
+                connection.execute("UPDATE sessions SET expires_at=? WHERE token_hash=?", (now + SESSION_AGE, digest))
+                self._refreshed_cookie = session_cookie(token, SESSION_AGE)
+        if not user:
+            return None
+        return {key: user[key] for key in USER_FIELDS}
 
     def require_user(self):
         user = self.user()
@@ -242,10 +320,48 @@ class Handler(BaseHTTPRequestHandler):
         token = secrets.token_urlsafe(32)
         digest = hashlib.sha256(token.encode()).hexdigest()
         with db() as connection:
-            connection.execute("INSERT INTO sessions VALUES (?, ?, ?)", (digest, user["id"], int(time.time()) + SESSION_AGE))
-        cookie = f"roam_session={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={SESSION_AGE}"
-        if PUBLIC_ORIGIN: cookie += "; Secure"
-        self.respond(200, {"user": dict(user)}, {"Set-Cookie": cookie})
+            connection.execute("INSERT INTO sessions(token_hash,user_id,expires_at,created_at) VALUES (?, ?, ?, ?)", (digest, user["id"], int(time.time()) + SESSION_AGE, int(time.time())))
+        self.respond(200, {"user": {key: user[key] for key in USER_FIELDS}}, {"Set-Cookie": session_cookie(token, SESSION_AGE)})
+
+    def session_digest(self):
+        jar = cookies.SimpleCookie()
+        try:
+            jar.load(self.headers.get("Cookie", ""))
+            return hashlib.sha256(jar["roam_session"].value.encode()).hexdigest()
+        except (KeyError, cookies.CookieError):
+            return None
+
+    def google_sign_in(self):
+        data = self.json_body()
+        try:
+            profile = google_auth.verify(data.get("credential"))
+        except google_auth.GoogleAuthError as error:
+            return self.respond(401, {"error": str(error)})
+        with db() as connection:
+            user = connection.execute("SELECT * FROM users WHERE google_sub=?", (profile["sub"],)).fetchone()
+            if not user:
+                existing = connection.execute("SELECT * FROM users WHERE email=?", (profile["email"],)).fetchone()
+                if existing and existing["google_sub"]:
+                    return self.respond(409, {"error": "This email is already connected to a different Google account."})
+                if existing and existing["password_hash"]:
+                    # Emails are not verified at sign-up, so prove ownership of the existing
+                    # Serenity account once before connecting Google to it.
+                    password = str(data.get("password", ""))
+                    if not password:
+                        return self.respond(409, {"error": "You already have a Serenity account with this email. Enter its password once to connect Google.", "link_required": True, "email": profile["email"]})
+                    key = f"{self.client_address[0]}|{profile['email']}"
+                    if login_blocked(key):
+                        return self.respond(429, {"error": "Too many attempts. Wait 15 minutes, then try again."})
+                    if not password_matches(existing, password):
+                        record_login_failure(key)
+                        return self.respond(401, {"error": "That password is incorrect.", "link_required": True, "email": profile["email"]})
+                    clear_login_failures(key)
+                if existing:
+                    connection.execute("UPDATE users SET google_sub=? WHERE id=?", (profile["sub"], existing["id"]))
+                    user = existing
+                else:
+                    user = create_user(connection, profile["email"], profile["name"], google_sub=profile["sub"])
+        return self.session({key: user[key] for key in USER_FIELDS})
 
     def do_GET(self):
         if not self.valid_host(): return
@@ -260,6 +376,8 @@ class Handler(BaseHTTPRequestHandler):
             return trip_locations.get(self, db)
         if path == visited_locations.PATH:
             return visited_locations.get(self, db)
+        if path == "/api/auth/config":
+            return self.respond(200, {"google_client_id": google_auth.client_id() or None, "password_min": PASSWORD_MIN, "password_max": PASSWORD_MAX})
         if path == "/api/me":
             user = self.user()
             return self.respond(200, {"user": dict(user) if user else None})
@@ -387,41 +505,42 @@ class Handler(BaseHTTPRequestHandler):
                 email = str(data.get("email", "")).strip().lower()
                 name = str(data.get("name", "")).strip()
                 password = str(data.get("password", ""))
-                if not EMAIL.fullmatch(email) or len(email) > 254 or not 1 <= len(name) <= 80 or not 8 <= len(password) <= 16:
-                    raise ValueError("Enter a name, valid email, and password of 8 to 16 characters.")
-                salt = secrets.token_bytes(16)
+                if not EMAIL.fullmatch(email) or len(email) > 254 or not 1 <= len(name) <= 80 or not PASSWORD_MIN <= len(password) <= PASSWORD_MAX:
+                    raise ValueError(f"Enter a name, valid email, and a password of at least {PASSWORD_MIN} characters.")
                 try:
                     with db() as connection:
-                        base = username_base(name)
-                        username = base
-                        suffix = 2
-                        while connection.execute("SELECT 1 FROM users WHERE username=? COLLATE NOCASE", (username,)).fetchone():
-                            username = f"{base[:20-len(str(suffix))]}{suffix}"
-                            suffix += 1
-                        public_id = secrets.token_hex(8)
-                        cursor = connection.execute("INSERT INTO users(email,name,salt,password_hash,created_at,public_id,username,bio) VALUES (?,?,?,?,?,?,?,?)", (email, name, salt, hash_password(password,salt), int(time.time()), public_id, username, ""))
-                        user = {"id": cursor.lastrowid, "public_id": public_id, "username": username, "email": email, "name": name, "bio": ""}
-                        for feed_number in range(1, 6):
-                            connection.execute("INSERT INTO user_feeds(user_id,name,created_at) VALUES (?,?,?)", (user["id"], f"Feed {feed_number:02d}", int(time.time())))
+                        user = create_user(connection, email, name, password=password)
                 except sqlite3.IntegrityError:
-                    return self.respond(409, {"error": "An account with this email already exists."})
+                    return self.respond(409, {"error": "An account with this email already exists. Sign in instead."})
                 return self.session(user)
             if path == "/api/login":
                 data = self.json_body()
                 email = str(data.get("email", "")).strip().lower()
                 password = str(data.get("password", ""))
+                key = f"{self.client_address[0]}|{email}"
+                if login_blocked(key):
+                    return self.respond(429, {"error": "Too many sign-in attempts. Wait 15 minutes, then try again."})
                 with db() as connection:
                     user = connection.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
-                if not user or not hmac.compare_digest(hash_password(password,user["salt"]),user["password_hash"]):
+                if user and not user["password_hash"] and user["google_sub"]:
+                    return self.respond(401, {"error": "This account signs in with Google. Use Continue with Google.", "google_only": True})
+                if not user or not password_matches(user, password):
+                    record_login_failure(key)
                     return self.respond(401, {"error": "Email or password is incorrect."})
-                return self.session({key: user[key] for key in ("id", "public_id", "username", "email", "name", "bio")})
+                clear_login_failures(key)
+                return self.session({key: user[key] for key in USER_FIELDS})
+            if path == "/api/auth/google":
+                return self.google_sign_in()
             if path == "/api/logout":
-                jar = cookies.SimpleCookie()
-                jar.load(self.headers.get("Cookie", ""))
-                if "roam_session" in jar:
-                    digest = hashlib.sha256(jar["roam_session"].value.encode()).hexdigest()
+                digest = self.session_digest()
+                if digest:
                     with db() as connection: connection.execute("DELETE FROM sessions WHERE token_hash=?", (digest,))
-                return self.respond(200, {"ok": True}, {"Set-Cookie": "roam_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0" + ("; Secure" if PUBLIC_ORIGIN else "")})
+                return self.respond(200, {"ok": True}, {"Set-Cookie": session_cookie("", 0)})
+            if path == "/api/logout-all":
+                user = self.require_user()
+                if not user: return
+                with db() as connection: connection.execute("DELETE FROM sessions WHERE user_id=?", (user["id"],))
+                return self.respond(200, {"ok": True}, {"Set-Cookie": session_cookie("", 0)})
             if path == "/api/feeds":
                 user = self.require_user()
                 if not user: return

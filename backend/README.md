@@ -20,7 +20,7 @@ Select **＋ Post** on your Profile to open **Clip Studio** at `/studio.html`. T
 
 Selecting **Profile** shows your profile, your published-trip gallery, and saved public videos; sign in to load and manage those galleries. Remove saved videos from the Profile page. The settings drawer contains identity, colour-scheme, and device-local autoplay settings. Manage trips and unpublished videos together in **Clip Studio**. Each account has a unique username and stable public ID. Share the public profile link to show that user’s publicly published trips. Email, theme, trip notes, and unpublished videos remain private. Instagram and TikTok accounts are not connected or imported; the profile currently uses Serenity account data.
 
-Account records, unique usernames and public IDs, session hashes, themes, named trips/feeds, up to 500 video clips per feed, trip details, and private trip notes are stored in `backend/data/`. Public profiles use fresh, uncached responses and never fall back to saved listings: making a video private must remove it from subsequent profile requests. Videos are stored as files in the private uploads directory, while the database records ownership and publication. Users can create as many named trips as they need in Clip Studio. Every trip has its own `feed.html?feed=ID` page; owners can view their saved private clips there, while visitors see only published posts. Each clip is limited to 50 MB. This directory is gitignored. Back it up to preserve accounts and media. Passwords are stored as salted PBKDF2-SHA256 hashes; login uses an HTTP-only, same-site session cookie. The server only binds to your computer's loopback address.
+Account records, unique usernames and public IDs, session hashes, themes, named trips/feeds, up to 500 video clips per feed, trip details, and private trip notes are stored in `backend/data/`. Public profiles use fresh, uncached responses and never fall back to saved listings: making a video private must remove it from subsequent profile requests. Videos are stored as files in the private uploads directory, while the database records ownership and publication. Users can create as many named trips as they need in Clip Studio. Every trip has its own `feed.html?feed=ID` page; owners can view their saved private clips there, while visitors see only published posts. Each clip is limited to 50 MB. This directory is gitignored. Back it up to preserve accounts and media. Passwords are stored as salted PBKDF2-SHA256 hashes; login uses an HTTP-only, same-site session cookie (see **Signing in** below). The server only binds to your computer's loopback address.
 
 In **Clip Studio**, choose videos, choose a folder, or drop a folder containing up to 500 videos (50 MB each). **Find my trips** samples three frames per video, sequentially, and uses on-device CLIP zero-shot image classification to suggest visual-theme groups. Nested folders remain separate; no cities, GPS coordinates, or travel dates are inferred. Ambiguous scenes go into **Needs a closer look**. Review thumbnails, rename groups, merge groups, create a group, or move/exclude individual videos before saving. Exact duplicates within the selected collection are excluded using SHA-256. They are not compared with previous collections. Browser-supported MP4, MOV, WebM, and M4V files are accepted; codec support still depends on the browser. Undecodable files are listed rather than assigned invented themes.
 
@@ -46,9 +46,31 @@ Run `python3 backend/test_server.py` for account/privacy/API integration tests. 
 
 Collection code is isolated in `studio-import.js` (UI/save workflow), `studio-video-analysis.js` (bounded decoding/fingerprints/worker client), `studio-vision-worker.js` (model inference), `studio-grouping.js` (pure grouping rules), `studio-import.css`, and `backend/studio_import.py` (private import persistence). Run `node backend/test_studio_grouping.js` for dependency-free grouping checks. Backend tests cover private imports, ownership, batches larger than the previous six-clip limit, manifest conflicts, Unicode filenames, and sequential/concurrent retry safety. Safari was exercised end-to-end against an isolated temporary database: choose a folder containing two identical MP4s, infer Gardens & wildlife from three flower frames, exclude the duplicate, rename the group, save one private trip, open its feed, and play its saved video. Large-device performance and other browser/codec combinations still need broader testing.
 
-New account passwords must be 8–16 characters. Existing accounts with longer passwords can still sign in.
+## Signing in
 
-This is a **local development backend**. Its profile links work on this machine, but it is not reachable by friends on other devices and accounts are not shared across computers. Do not expose port 8765 directly to the internet. Public hosting needs HTTPS, an appropriate storage and backup plan, and deployment-specific security work before profile links can be shared externally. Google, Apple, Microsoft, GitHub, and ChatGPT sign-in remain unavailable until provider credentials or partner access are configured.
+Serenity offers two ways to sign in: **Continue with Google** and **email address + password**. Both lead to the same kind of account, and one person can use either.
+
+- **Stay signed in.** Each device keeps its sign-in for 90 days after its last visit; using the app slides that window forward (at most once a day). The cookie is HTTP-only and `SameSite=Lax`, so opening a Serenity link from email or chat keeps you signed in. State-changing requests are still protected by the server's exact `Origin` check.
+- **Any number of devices.** Every sign-in creates its own session. Signing out on one device leaves the others signed in; **Profile → Sign out everywhere** (`POST /api/logout-all`) ends them all.
+- **Back where you were.** Every “Sign in ↗” link in the app returns you to the page you came from after signing in (`auth.html?next=` also accepts `messages`, `studio`, `account`, `clips`, `map`, `home`, `feed`, or a same-site path).
+- **Passwords** need 8–128 characters and are stored as salted PBKDF2-SHA256 hashes. After 8 wrong passwords for one email from one address within 15 minutes, sign-in pauses for that pair (`429`). These counters are in memory and reset when the server restarts. There is no password reset yet: it needs an email-sending service, which this backend does not have.
+- **Google accounts** are matched by Google's stable account ID. A first Google sign-in creates an account from the verified Google email and name. If an email/password account already uses that email, Serenity asks for its password once before connecting Google: sign-up emails are not verified, so this stops someone from pre-registering another person's address. Accounts created with Google have no password, and the email form tells their owners to use Google.
+
+### Turning on Google sign-in
+
+Google sign-in stays off (the button shows a short note) until the server has an OAuth client ID. Setting this up is an owner task, and it costs nothing:
+
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create or choose a project, configure the **OAuth consent screen** (External, app name *Serenity*, your support email), then **Create credentials → OAuth client ID → Web application**.
+2. Under **Authorized JavaScript origins**, add every address people use to open Serenity, for example `http://localhost`, `http://localhost:8765` and your HTTPS domain. Google does not accept `127.0.0.1`, so open the local app at **http://localhost:8765/** when testing Google. No redirect URI is needed: the button uses a popup.
+3. Start the server with the client ID (it is public, not a secret):
+
+```bash
+ROAM_GOOGLE_CLIENT_ID=1234567890-abc.apps.googleusercontent.com python3 backend/server.py
+```
+
+The browser loads Google Identity Services from `accounts.google.com`. The server confirms each Google ID token with `https://oauth2.googleapis.com/tokeninfo` and checks its audience, issuer, expiry and verified email. That check needs the server to have outbound internet access; no client secret, extra Python package or paid API is used. `GET /api/auth/config` tells the page whether Google is enabled.
+
+This is a **local development backend**. Its profile links work on this machine, but it is not reachable by friends on other devices and accounts are not shared across computers. Do not expose port 8765 directly to the internet. Public hosting needs HTTPS, an appropriate storage and backup plan, and deployment-specific security work before profile links can be shared externally. To sign in from your phone and other computers, use the Docker deployment below; Google sign-in there also needs that HTTPS domain listed as an authorized JavaScript origin.
 
 ## Portable Docker deployment
 
@@ -57,8 +79,10 @@ For a shared multi-device install, deploy this Python backend on a host with Doc
 Configure the host's HTTPS reverse proxy to forward the domain to `127.0.0.1:8765`, then start Serenity from the project directory with that domain:
 
 ```bash
-ROAM_PUBLIC_ORIGIN=https://serenity.example.com docker compose up --build -d
+ROAM_PUBLIC_ORIGIN=https://serenity.example.com ROAM_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com docker compose up --build -d
 ```
+
+Leave out `ROAM_GOOGLE_CLIENT_ID` to offer email sign-in only.
 
 Replace the example domain with the actual public HTTPS origin. Compose deliberately publishes the backend only on host loopback; do not expose port 8765 directly to the internet. The backend sets secure session cookies for the configured HTTPS origin. Sign in to this one deployment from each device; account ownership, trip details, published status, and video files are read from the same server-side database and volume. Source updates preserve data when the named volume is retained.
 
