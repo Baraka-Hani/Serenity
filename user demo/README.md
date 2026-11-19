@@ -8,10 +8,13 @@ Or, after downloading or cloning the repository, **double-click `app.html`** in 
 
 `app.html` is a single, self-contained page with sample data. It needs no server, account, or internet connection (apart from web fonts).
 
-- **Home feed** — browse travel stories, filter by type, like, save, and comment.
-- **Clip Studio** — create a trip, attach videos from your device, and publish it to the feed and map.
+The toolbar matches the real app: **Home · Feed · Map · Engage · Profile**.
+
+- **Home** — the most-loved trips, each with a shortcut into Engage.
+- **Feed** — browse travel stories, filter by type, like, save, and comment. **🎮 Quiz** on any post opens that trip in Engage.
 - **Map** — see every published trip as a pin and open its story.
-- **Chat** — message the travellers behind the trips (replies are automatic).
+- **Engage** — **Games** has three quizzes about the selected trip (Destination Detective, Creator Tip-Off, Trip Story Match). **Conversations** lets you message the travellers behind the trips (replies are automatic).
+- **Profile** — your published and saved trips. **＋ Post** opens **Clip Studio**, where you create a trip, attach videos from your device, and publish it.
 
 Nothing is uploaded or saved: videos you add stay in your browser and everything resets when you reload the page. The people and trips are fictional.
 
