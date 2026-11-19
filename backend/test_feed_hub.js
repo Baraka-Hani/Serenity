@@ -109,8 +109,8 @@ async function runFeedHubTests(source) {
   assert(first.viewport.children[0].textContent.includes('Kyoto'), 'Travel details must use the current post context');
   assert(first.viewport.children[0].textContent.includes('Experience this place'), 'Travel details must focus on visiting the destination');
   assert(first.viewport.children[0].textContent.includes('Explore the travel map'), 'Unpinned trips must offer map discovery without inventing coordinates');
-  const games = first.viewport.children[0].querySelectorAll('a').find(link => link.href === 'engage.html');
-  assert(games, 'The games link must open Engage directly');
+  const games = first.viewport.children[0].querySelectorAll('a').find(link => link.href === 'engage.html?post=one');
+  assert(games, 'The games link must open Engage with the current published video');
   swipe(first, -120); swipe(first, -120);
   assert(first.viewport.scrollLeft === 800, 'Left swipe from video must open creator history on the right');
   const related = first.viewport.children[2].querySelector('.hub-related-trip');

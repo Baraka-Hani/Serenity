@@ -288,7 +288,7 @@
       question.hidden = Boolean((tripPosts[index] || post).is_mine);
       question.onclick = () => { location.assign(window.RoamApp.messageUrl(context.creator.public_id, context.post_id)); };
       const games = el('a', 'hub-profile-link', '🎮  Open games in Engage ↗');
-      games.href = 'engage.html';
+      games.href = `engage.html?post=${encodeURIComponent((tripPosts[index] || post).id)}`;
       visit.append(games);
       travel.replaceChildren(backButton(), location, summary, visit, question);
     }

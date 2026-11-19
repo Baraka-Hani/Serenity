@@ -1,4 +1,4 @@
-const CACHE_NAME = 'serenity-shell-v13-engage-profile';
+const CACHE_NAME = 'serenity-shell-v14-engage-quiz';
 const APP_PAGES = new Set([
   '/home.html',
   '/engage.html',
