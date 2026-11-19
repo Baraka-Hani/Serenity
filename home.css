@@ -1,0 +1,33 @@
+.home-intro {
+  padding-block: clamp(48px, 10vw, 110px) clamp(32px, 6vw, 64px);
+}
+.home-intro h1 {
+  max-width: 11ch;
+  margin: 0;
+  font-size: clamp(48px, 9vw, 102px);
+  line-height: .95;
+  letter-spacing: -.075em;
+}
+.home-intro p {
+  max-width: 42ch;
+  margin: 22px 0;
+  color: var(--app-subtle);
+  line-height: 1.6;
+}
+.home-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+}
+.home-links a {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--app-line);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--soft), var(--paper) 80%);
+  text-decoration: none;
+}
+.home-links strong { display: flex; justify-content: space-between; gap: 12px; font-size: 19px; }
+.home-links a > span, .install-status { color: var(--app-subtle); font-size: 14px; line-height: 1.45; }
+.install-status:empty { display: none; }

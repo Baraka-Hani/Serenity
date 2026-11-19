@@ -1,0 +1,78 @@
+.engage-title {
+  margin: clamp(24px, 5vw, 48px) 0 14px;
+  font-size: clamp(42px, 7vw, 76px);
+  letter-spacing: -.065em;
+  line-height: 1;
+}
+.engage-tabs {
+  display: flex;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 20px;
+  padding: 4px;
+  border: 1px solid var(--app-line);
+  border-radius: 99px;
+}
+.engage-tabs a {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  padding: 7px 15px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.engage-tabs [aria-current="page"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.generated-library {
+  max-width: 760px;
+  padding: clamp(16px, 4vw, 32px);
+  border: 1px solid var(--app-line);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--soft), var(--paper) 88%);
+}
+.generated-heading, .game-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.generated-heading h2 { margin: 0; font-size: 25px; letter-spacing: -.035em; }
+.generated-heading p { margin: 5px 0 0; }
+.generated-heading p, .game-empty, .game-status, .game-host {
+  color: var(--app-subtle);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.game-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+  background: var(--paper);
+}
+.game-form label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+.game-form input {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--app-line);
+  border-radius: 8px;
+  background: var(--paper);
+  font-size: 16px;
+}
+.game-form-actions, .game-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.game-empty, .game-row { border-top: 1px solid var(--app-line); padding-top: 14px; }
+.game-empty { margin: 18px 0 0; }
+.game-status:empty { display: none; }
+.game-list { display: grid; gap: 12px; list-style: none; margin: 16px 0 0; padding: 0; }
+.game-list:empty { display: none; }
+.game-row > div:first-child { min-width: 0; overflow-wrap: anywhere; }
+.game-title, .game-host { display: block; }

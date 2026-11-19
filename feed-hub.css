@@ -1,5 +1,4 @@
-/* Home feed is a three-way video viewer. Clip Studio retains its own layout. */
-body[data-app-view="home"] #feeds,body[data-app-view="studio"] #home-feed,body[data-app-view="home"]>footer { display:none; }
+/* Feed is a three-way video viewer. */
 body[data-app-view="home"] { --home-header-height:clamp(56px,8vh,78px); --home-toolbar-safe-space:108px; height:100dvh; overflow:hidden; }
 body[data-app-view="home"].home-toolbar-icons { --home-toolbar-safe-space:82px; }
 body[data-app-view="home"].has-liquid-toolbar { padding-bottom:0; }

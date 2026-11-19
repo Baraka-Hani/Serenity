@@ -55,7 +55,7 @@
       location.replace(`search.html${conversation.size ? `?${conversation}` : ''}`);
       return;
     }
-    location.replace('account.html');
+    location.replace(next.get('next') === 'studio' ? 'studio.html' : 'account.html');
   }
 
   function showAuth() {

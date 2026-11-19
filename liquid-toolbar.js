@@ -1,15 +1,12 @@
 /* Shared page navigation; swipe horizontally on the toolbar to switch pages. */
 (() => {
   const destinations = [
-    { key: 'home', label: 'Home feed', icon: '⌂', href: 'app.html#home-feed' },
-    { key: 'chat', label: 'Chat', icon: '◌', href: 'search.html' },
+    { key: 'home', label: 'Home', icon: '⌂', href: 'home.html' },
+    { key: 'feed', label: 'Feed', icon: '▤', href: 'app.html#home-feed' },
     { key: 'map', label: 'Map', icon: '⌖', href: 'map.html' },
-    { key: 'trips', label: 'Clip Studio', icon: '◈', href: 'app.html#feeds' },
-    { key: 'account', label: 'Account', icon: '◎', href: 'account.html' }
+    { key: 'engage', label: 'Engage', icon: '🎮', href: 'engage.html' },
+    { key: 'profile', label: 'Profile', icon: '◎', href: 'account.html' }
   ];
-  document.querySelectorAll('a[href="app.html"]').forEach(link => {
-    if (/home feed/i.test(link.textContent)) link.href = 'app.html#home-feed';
-  });
   const toolbar = document.createElement('nav');
   toolbar.className = 'liquid-toolbar';
   toolbar.setAttribute('aria-label', 'Page toolbar');
@@ -45,12 +42,10 @@
   function currentKey() {
     const page = location.pathname.split('/').pop() || 'test.html';
     if (page === 'auth.html') return null;
-    if (page === 'account.html') return 'account';
-    if (page === 'my-clips.html') return 'account';
-    if (page === 'search.html') return 'chat';
+    if (['account.html', 'profile.html', 'studio.html', 'my-clips.html'].includes(page)) return 'profile';
+    if (page === 'engage.html' || page === 'search.html') return 'engage';
     if (page === 'map.html') return 'map';
-    if (page === 'feed.html' || /^tile-0[1-5]\.html$/.test(page)) return 'trips';
-    if (page === 'app.html') return location.hash === '#feeds' ? 'trips' : 'home';
+    if (page === 'app.html' || page === 'feed.html' || /^tile-0[1-5]\.html$/.test(page)) return 'feed';
     return 'home';
   }
   function updateCurrent() {
@@ -63,7 +58,7 @@
       if (active) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
     }
-    current.textContent = `Now viewing · ${destination?.label || 'Account'}`;
+    current.textContent = `Now viewing · ${destination?.label || 'Profile'}`;
     const active = track.querySelector('.is-current');
     if (active) track.scrollLeft += active.getBoundingClientRect().left - track.getBoundingClientRect().left - (track.clientWidth - active.clientWidth) / 2;
     return index < 0 ? 1 : index;

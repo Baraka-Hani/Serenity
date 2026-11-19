@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
-  <meta name="description" content="Your Serenity profile and published travel videos."><title>Account — Serenity</title>
+  <meta name="description" content="Your Serenity profile and published travel videos."><title>Profile — Serenity</title>
   <link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="account.css">
 </head>
 <body>
   <main class="account-shell" id="accountMain">
     <header class="account-heading">
-      <a class="brand" href="app.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt=""><span>serenity</span></a>
-      <button class="settings-trigger" id="openSettings" type="button" aria-haspopup="dialog" aria-controls="settingsDrawer" aria-expanded="false">Settings <span aria-hidden="true">☷</span></button>
+      <a class="brand" href="home.html" aria-label="Serenity home"><img src="serenity-logo.svg" alt=""><span>serenity</span></a>
+      <div class="account-heading__actions">
+        <a class="save-theme" href="studio.html"><span aria-hidden="true">＋</span> Post</a>
+        <button class="settings-trigger" id="openSettings" type="button" aria-haspopup="dialog" aria-controls="settingsDrawer" aria-expanded="false">Settings <span aria-hidden="true">☷</span></button>
+      </div>
     </header>
     <section class="profile-overview" aria-labelledby="profileName">
       <div class="profile-avatar" id="profileAvatar" aria-hidden="true">S</div>
@@ -23,7 +26,6 @@
         </div>
         <div class="profile-actions">
           <a class="action-link" id="publicProfileLink" href="auth.html?next=account" hidden>View public profile ↗</a>
-          <a class="save-theme" href="app.html#feeds">Open Clip Studio ↗</a>
           <a class="action-link" id="identityAuthLink" href="auth.html?next=account">Sign in or create an account ↗</a>
           <button class="action-link" id="signoutButton" type="button" hidden>Sign out</button>
         </div>
@@ -35,7 +37,7 @@
       <div class="account-trip-grid" id="accountTrips" aria-live="polite"></div>
     </section>
     <section class="published-section saved-section" id="saved-videos" aria-labelledby="savedTitle">
-      <div class="section-heading"><div><span class="eyebrow">BOOKMARKED FOR LATER</span><h2 id="savedTitle">Saved videos</h2></div><span class="gallery-note">Videos you saved from the Home feed</span></div>
+      <div class="section-heading"><div><span class="eyebrow">BOOKMARKED FOR LATER</span><h2 id="savedTitle">Saved videos</h2></div><span class="gallery-note">Videos you saved from Feed</span></div>
       <p class="account-status" id="savedStatus" role="status" aria-live="polite"></p>
       <div class="account-trip-grid" id="savedTrips" aria-live="polite"></div>
       <button class="saved-more" id="savedMore" type="button" hidden>Load more saved videos</button>
