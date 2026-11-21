@@ -1,6 +1,6 @@
 # Travel discovery maps
 
-Serenity is a watch → find the place → travel there product, not a live friend-location service. `/map.html` is a fifth toolbar destination. It displays only trips that have both a saved destination pin and at least one public video. Private trips, private clips, unpublished notes, emails, and unpinned legacy destinations never appear in its API. There is no device geolocation, live tracking, EXIF extraction, or automatic inference of cities from videos.
+Serenity is a watch → find the place → travel there product, not a live friend-location service. `/map.html` is a fifth toolbar destination. It displays only trips that have both a saved destination pin and at least one public video. Private trips, private clips, unpublished notes, emails, and unpinned legacy destinations never appear in its API. There is no device geolocation or live tracking. Video location metadata is read only when the app owner runs the local, opt-in tool described in **Pins from video location data** below.
 
 ## Creator workflow
 
@@ -9,6 +9,25 @@ Clip Studio's manual form, saved-trip editor, and categorized collection review 
 Pins on published trips are public, as explained beside the field. Editing the destination of an already-public trip changes its map location and published destination labels. Removing its pin removes the trip from Map but does not unpublish its Feed videos. Making all videos private removes the trip from Map; its saved private pin is retained for the owner. Existing published trips without coordinates remain on Feed until the creator chooses **Add destination pin for Map** on their preview.
 
 Dates and highlights are retired from trip forms and `/api/feeds/ID/details` responses. New writes ignore those legacy fields, and new posts no longer append them. SQLite's old columns and existing historical caption text are retained for backwards compatibility/data preservation; no old caption is automatically rewritten or personal data erased. A trip now consists of a name, an experience/story, an optional destination pin, and videos. Private planning notes remain separate from published travel information.
+
+## Pins from video location data
+
+Phones record where a video was filmed (ISO 6709, e.g. `+35.0116+135.7681/`). The owner can turn that into
+Map pins for existing trips with a local command; it never runs inside the web app or on upload:
+
+```bash
+python3 backend/video_locations.py
+python3 backend/video_locations.py --source-root '/path/to/Photos Library.photoslibrary/originals'
+python3 backend/video_locations.py --apply
+```
+
+- The first command is a dry run: it lists, per trip, how many clips carry GPS and the proposed pin. Nothing is written.
+- `--source-root` also reads the original files of demo clips created by `seed_demo.py`, in case conversion dropped the metadata.
+- `--apply` saves pins only for trips without one (creator pins are kept unless `--replace`) after a private SQLite backup.
+- One pin per trip: the clip location closest to all the others, so one stray clip cannot move it. Trips whose clips span more than 50 km are flagged.
+- Coordinates are rounded to `--precision` decimals (default 2, about 1 km) so an exact spot such as a home is never published. Labels read "Filmed near 35.01°N, 135.77°E" unless `--reverse-geocode` is given, which sends the rounded coordinates to the configured Photon server to name the place.
+- These pins are stored with source `video`. Map and the Feed travel panel describe them as approximate spots from the videos' location data. Clients cannot mark their own pins as `video`; moving such a pin in Clip Studio turns it into an ordinary creator pin.
+- As with every pin, it appears on Map only while the trip has public videos.
 
 ## Your 3D world and private travel journal
 

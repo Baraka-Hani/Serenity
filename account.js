@@ -159,22 +159,6 @@
   }, { threshold: [0, .5] });
   document.addEventListener('visibilitychange', updatePlayback);
 
-  function renderTrips(profile) {
-    const gallery = $('#accountTrips');
-    clearGallery(gallery);
-    gallery.replaceChildren();
-    if (!profile.trips.length) {
-      const empty = document.createElement('p');
-      empty.className = 'account-empty';
-      empty.textContent = 'Your public trips will appear here after you publish videos in Clip Studio.';
-      gallery.append(empty);
-      return;
-    }
-    const cards = profile.trips.map(renderTrip);
-    gallery.append(...cards);
-    cards.forEach(card => galleryObserver.observe(card));
-  }
-
   function clearGallery(gallery) {
     for (const card of gallery.children) {
       galleryObserver.unobserve(card);
@@ -391,6 +375,7 @@
           $('#saved-videos').hidden = true;
           status.textContent = '';
         } else {
+          $('#published-trips').hidden = true;
           $('#profileName').textContent = 'Make Serenity yours';
           $('#profileUsername').textContent = 'Sign in to post trips, save videos and message creators.';
           $('#profileBio').textContent = 'Use Google or your email address. You stay signed in on each device you use.';
@@ -410,15 +395,17 @@
         $('#publicProfileLink').href = profileUrl;
         $('#publicProfileSettingsLink').href = profileUrl;
         $('#publicProfileLink').hidden = false;
-        const result = await window.RoamApp.publicProfile(signedInUser.public_id);
-        const profile = result.profile;
-        $('#tripCount').textContent = profile.trip_count;
-        $('#videoCount').textContent = profile.video_count;
-        renderTrips(profile);
+        // Clip Studio on the profile: live, private and all videos as tiles (owner only).
+        window.SerenityProfileStudio.mount($('#accountTrips'), {
+          initialFilter: new URLSearchParams(location.search).get('show'),
+          onCounts: counts => {
+            $('#tripCount').textContent = counts.trips;
+            $('#videoCount').textContent = counts.live;
+            $('#privateCount').textContent = counts.private;
+          }
+        });
         await loadSavedVideos();
-        status.textContent = result.stale
-          ? 'Showing your saved published trips; Serenity could not refresh them right now.'
-          : '';
+        status.textContent = '';
       }
       if (!signedInUser) renderSavedTrips();
       const savedTheme = signedInUser ? await window.RoamApp.theme() : null;

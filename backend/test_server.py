@@ -654,7 +654,16 @@ class BackendFlow(unittest.TestCase):
         self.assertIn("location.replace(`search.html${conversation.size", auth_client)
         account_client = self.call('/account.js')[1].decode()
         self.assertIn('window.RoamApp.saveTheme(theme)', account_client)
-        self.assertIn('window.RoamApp.publicProfile(signedInUser.public_id)', account_client)
+        # The owner's profile carries Clip Studio: live, private and all videos as tiles.
+        self.assertIn("window.SerenityProfileStudio.mount($('#accountTrips')", account_client)
+        self.assertIn('src="studio-publication.js"></script><script src="profile-studio.js"', account)
+        self.assertIn('id="privateCount"', account)
+        profile_studio = self.call('/profile-studio.js')[1].decode()
+        self.assertIn("{ key: 'live', label: 'Live'", profile_studio)
+        self.assertIn('window.RoamApp.videoUrl(clip.id)', profile_studio)
+        self.assertEqual(self.call('/profile-studio.css')[0], 200)
+        # The public profile must never load owner-only private clip tiles.
+        self.assertNotIn('profile-studio', self.call('/profile.html')[1].decode())
         self.assertIn("window.RoamApp.posts({ sort: 'saved', offset: savedOffset })", account_client)
         self.assertIn("window.RoamApp.togglePostAction(post.id, 'save')", account_client)
         self.assertIn('window.RoamApp.postVideoUrl(post.id)', account_client)
@@ -685,7 +694,7 @@ class BackendFlow(unittest.TestCase):
         self.assertIn('src="messages.js"', chat)
         self.assertNotIn('src="trip-sidebar.js"', chat)
         service_worker = self.call('/service-worker.js')[1].decode()
-        self.assertIn('serenity-shell-v17-live-polish', service_worker)
+        self.assertIn('serenity-shell-v18-profile-studio', service_worker)
         for asset in ('messages.css', 'messages-client.js', 'messages.js'):
             self.assertIn(f"'/{asset}'", worker)
         self.assertIn("toggle.setAttribute('aria-controls', sidebar.id)", sidebar)

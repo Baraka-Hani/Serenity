@@ -45,7 +45,8 @@ def normalize(value):
     if not isinstance(label, str) or not 1 <= len(label.strip()) <= 240:
         raise ValueError('Give the destination a place name (up to 240 characters).')
     provider, source, place_id = value.get('provider', 'manual'), value.get('source', 'pin'), value.get('place_id', '')
-    if provider not in ('manual', 'photon') or source not in ('pin', 'place') or not isinstance(place_id, str) or len(place_id) > 120:
+    # 'video' marks a pin read from the clips' own GPS metadata (backend/video_locations.py).
+    if provider not in ('manual', 'photon') or source not in ('pin', 'place', 'video') or not isinstance(place_id, str) or len(place_id) > 120:
         raise ValueError('Invalid destination reference.')
     return {'lat': round(value['lat'], 7), 'lng': round(value['lng'], 7), 'label': label.strip(),
             'provider': provider, 'source': source, 'place_id': place_id}
@@ -56,7 +57,13 @@ def location(connection, feed_id):
     return dict(row) if row else None
 
 
-def save(connection, user_id, feed_id, value):
+def save(connection, user_id, feed_id, value, trusted=False):
+    if value and value['source'] == 'video' and not trusted:
+        # Clients may resend an unchanged video-metadata pin (e.g. re-saving trip details),
+        # but cannot claim a moved or new pin came from video GPS.
+        current = connection.execute('SELECT lat,lng,source FROM trip_locations WHERE feed_id=? AND user_id=?', (feed_id, user_id)).fetchone()
+        if not current or current['source'] != 'video' or (current['lat'], current['lng']) != (value['lat'], value['lng']):
+            value = {**value, 'source': 'pin'}
     if value is None:
         connection.execute('DELETE FROM trip_locations WHERE feed_id=? AND user_id=?', (feed_id, user_id))
     else:

@@ -24,7 +24,8 @@ ACCOUNTS = [
     ('demo_noor', 'Noor · Demo', 'Green hills and scenic viewpoints.'),
     ('demo_kai', 'Kai · Demo', 'Quiet water, shoreline walks, and little escapes.'),
 ]
-# These are visual collections, not verified geographical trips. No GPS is read or published.
+# These are visual collections, not verified geographical trips. Seeding reads no GPS; the owner can
+# opt in to Map pins from the videos' own location metadata with backend/video_locations.py.
 GROUPS = [
     ('wildlife-park', 'demo_avery', 'Wildlife encounters', 'Wildlife setting · destination unconfirmed', list(range(1, 8))),
     ('shore', 'demo_maya', 'Ocean-side moments', 'Coast · destination unconfirmed', [8, 9]),

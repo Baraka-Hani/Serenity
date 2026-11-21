@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f2eee4">
   <meta name="description" content="Your Serenity profile and published travel videos."><title>Profile — Serenity</title>
-  <link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="account.css">
+  <link rel="stylesheet" href="liquid-toolbar.css"><link rel="stylesheet" href="account.css"><link rel="stylesheet" href="studio-publication.css"><link rel="stylesheet" href="profile-studio.css">
 </head>
 <body>
   <main class="account-shell" id="accountMain">
@@ -22,7 +22,7 @@
         <p id="profileUsername">@traveller</p>
         <p id="profileBio" class="profile-bio">Your published trips, together in one place.</p>
         <div class="profile-stat-list" aria-label="Profile statistics">
-          <span><strong id="tripCount">0</strong> trips</span><span><strong id="videoCount">0</strong> videos</span><span><strong id="savedVideoCount">0</strong> saved</span>
+          <span><strong id="tripCount">0</strong> trips</span><span><strong id="videoCount">0</strong> live</span><span><strong id="privateCount">0</strong> private</span><span><strong id="savedVideoCount">0</strong> saved</span>
         </div>
         <div class="profile-actions">
           <a class="action-link" id="publicProfileLink" href="auth.html?next=account" hidden>View public profile ↗</a>
@@ -37,8 +37,8 @@
     </section>
     <p id="accountStatus" class="account-status" role="status" aria-live="polite">Checking your account…</p>
     <section class="published-section" id="published-trips" aria-labelledby="publishedTitle">
-      <div class="section-heading"><div><span class="eyebrow">YOUR PUBLISHED VIDEOS</span><h2 id="publishedTitle">Your trips</h2></div><span class="gallery-note">Published stories, grouped by trip</span></div>
-      <div class="account-trip-grid" id="accountTrips" aria-live="polite"></div>
+      <div class="section-heading"><div><span class="eyebrow">YOUR CLIP STUDIO</span><h2 id="publishedTitle">Your videos</h2></div><span class="gallery-note">Live videos are on Feed. Private videos are only visible to you.</span></div>
+      <div class="profile-studio" id="accountTrips"></div>
     </section>
     <section class="published-section saved-section" id="saved-videos" aria-labelledby="savedTitle">
       <div class="section-heading"><div><span class="eyebrow">BOOKMARKED FOR LATER</span><h2 id="savedTitle">Saved videos</h2></div><span class="gallery-note">Videos you saved from Feed</span></div>
@@ -86,6 +86,6 @@
       <p class="section-copy" id="preferenceStatus" role="status" aria-live="polite">Autoplay is on for this device.</p>
     </section>
   </aside>
-  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="account.js"></script><script src="liquid-toolbar.js"></script>
+  <script src="shared-theme.js"></script><script src="app-client.js"></script><script src="studio-publication.js"></script><script src="profile-studio.js"></script><script src="account.js"></script><script src="liquid-toolbar.js"></script>
 </body>
 </html>
