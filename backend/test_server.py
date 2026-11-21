@@ -696,6 +696,55 @@ class BackendFlow(unittest.TestCase):
         self.assertIn('left: 14px;', sidebar_css)
         self.assertIn('transform: translateX(var(--trip-sidebar-width));', sidebar_css)
 
+    def test_video_streaming_supports_ranges_and_keep_alive(self):
+        import http.client
+        import video_stream
+        self.assertEqual(self.call("/api/register", "POST", {"name": "Stream", "email": "stream@example.test", "password": "tripPass123"})[0], 200)
+        size = video_stream.OPEN_RANGE_CHUNK * 2 + 123
+        payload = bytes(index % 251 for index in range(size))
+        status, clip = self.call("/api/clips", "POST", payload, "video/quicktime", {"X-Filename": "phone.mov"})
+        self.assertEqual(status, 201)
+        cookie = "; ".join(f"{item.name}={item.value}" for handler in self.client.handlers
+                           if isinstance(handler, urllib.request.HTTPCookieProcessor) for item in handler.cookiejar)
+        path = f"/api/clips/{clip['clip']['id']}/video"
+        connection = http.client.HTTPConnection("127.0.0.1", server.PORT, timeout=10)
+        def get(range_header=None, extra=None):
+            headers = {"Cookie": cookie, **({"Range": range_header} if range_header else {}), **(extra or {})}
+            connection.request("GET", path, headers=headers)
+            response = connection.getresponse()
+            return response, response.read()
+        # Open-ended ranges get a bounded chunk so paused players release the connection.
+        response, body = get("bytes=0-")
+        self.assertEqual(response.status, 206)
+        self.assertEqual(response.getheader("Content-Range"), f"bytes 0-{video_stream.OPEN_RANGE_CHUNK - 1}/{size}")
+        self.assertEqual(body, payload[:video_stream.OPEN_RANGE_CHUNK])
+        self.assertEqual(response.getheader("Content-Type"), "video/mp4", "QuickTime uploads must be playable outside Safari")
+        etag = response.getheader("ETag")
+        # The same socket serves the next requests (keep-alive), including ranges past EOF and suffixes.
+        sock = connection.sock
+        response, body = get(f"bytes={size - 10}-{size + 5000}")
+        self.assertEqual((response.status, body), (206, payload[-10:]))
+        self.assertIs(connection.sock, sock)
+        response, body = get("bytes=-5")
+        self.assertEqual((response.status, body, response.getheader("Content-Range")), (206, payload[-5:], f"bytes {size - 5}-{size - 1}/{size}"))
+        response, body = get(f"bytes={size}-")
+        self.assertEqual((response.status, response.getheader("Content-Range")), (416, f"bytes */{size}"))
+        response, body = get("bytes=10-19", {"If-Range": '"stale"'})
+        self.assertEqual((response.status, len(body)), (200, size), "A stale If-Range must return the whole current file")
+        response, body = get("bytes=10-19", {"If-Range": etag})
+        self.assertEqual((response.status, body), (206, payload[10:20]))
+        response, body = get()
+        self.assertEqual((response.status, body, response.getheader("Cache-Control")), (200, payload, "private, no-store"))
+        self.assertIs(connection.sock, sock)
+        # Write requests still close the socket, so unread request bodies cannot leak into the next request.
+        connection.request("POST", "/api/logout", body=b"{}", headers={"Origin": self.base, "Content-Type": "application/json"})
+        response = connection.getresponse(); response.read()
+        self.assertEqual(response.getheader("Connection"), "close")
+        connection.close()
+        self.assertEqual(video_stream.parse_range("bytes=5-1", 10), "invalid")
+        self.assertEqual(video_stream.parse_range("bytes=0-1,4-5", 10), None)
+        self.assertEqual(video_stream.parse_range("bytes=-50", 10), (0, 9))
+
     def test_public_posts_keep_private_clips_private(self):
         self.assertEqual(self.call("/api/register", "POST", {"name": "Alex", "email": "alex@example.test", "password": "tripPass123"})[0], 200)
         feed_ids = list(self.call("/api/feeds")[1]["feeds"])

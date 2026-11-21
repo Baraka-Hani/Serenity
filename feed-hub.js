@@ -23,17 +23,35 @@
   const button = (text, className = '') => {
     const node = el('button', className, text); node.type = 'button'; return node;
   };
+  // Browsers allow only ~6 connections per host. Fully buffering every card starves
+  // the one on screen, which then freezes a few seconds in. Only the visible video
+  // buffers fully; its neighbours fetch just enough to show a first frame.
+  function preloadFor(viewer, video) {
+    if (video !== viewer.video) return 'none';
+    if (viewer === active) return 'auto';
+    const cards = [...list.children];
+    const distance = active ? Math.abs(cards.indexOf(viewer.card) - cards.indexOf(active.card)) : cards.indexOf(viewer.card);
+    return distance <= 1 ? 'metadata' : 'none';
+  }
   function updatePlayback() {
     for (const viewer of viewers.values()) {
       const play = viewer === active && viewer.panel === 1 && !viewer.commentsOpen && !viewer.paused &&
         !document.hidden && document.body.dataset.appView === 'home';
       viewer.videos.forEach(video => {
         video.muted = !soundOn;
-        if (play && video === viewer.video) video.play().catch(() => {
-          viewer.paused = true;
-          viewer.play.textContent = 'Play';
-        });
-        else video.pause();
+        const preload = preloadFor(viewer, video);
+        if (video.preload !== preload) video.preload = preload;
+        if (play && video === viewer.video) {
+          if (!video.paused) return;
+          const attempt = video.play();
+          attempt?.catch?.(error => {
+            // AbortError only means a newer pause/load superseded this call; it is not a user pause.
+            if (error?.name !== 'NotAllowedError' || viewer.video !== video) return;
+            if (!video.muted) { soundOn = false; updatePlayback(); return; }
+            viewer.paused = true;
+            viewer.play.textContent = 'Play';
+          });
+        } else if (!video.paused) video.pause();
       });
       viewer.sound.textContent = soundOn ? 'Sound on' : 'Sound off';
       viewer.sound.setAttribute('aria-label', soundOn ? 'Mute video' : 'Enable video sound');
@@ -148,18 +166,68 @@
     const playCenter = button('▶', 'hub-play-center');
     playCenter.setAttribute('aria-label', 'Play trip video');
     const progress = el('input', 'hub-progress');
-    progress.type = 'range'; progress.min = '0'; progress.max = '100'; progress.step = '.1'; progress.value = '0';
+    progress.type = 'range'; progress.min = '0'; progress.max = '100'; progress.step = 'any'; progress.value = '0';
     progress.setAttribute('aria-label', 'Video progress');
-    progress.oninput = () => { if (Number.isFinite(video.duration)) video.currentTime = video.duration * Number(progress.value) / 100; };
+    const buffering = el('span', 'hub-buffering');
+    buffering.setAttribute('aria-hidden', 'true');
+    // The bar follows the frame actually on screen (requestVideoFrameCallback), so it
+    // stops whenever the picture stops instead of running ahead of a frozen video.
+    const frameClock = typeof performance !== 'undefined' ? () => performance.now() : () => Date.now();
+    let scrubbing = false, seekTarget = null, lastFrame = { at: 0, media: 0 }, stallRecoveries = 0;
+    function showProgress(time = video.currentTime) {
+      if (scrubbing) return;
+      const duration = video.duration;
+      progress.value = Number.isFinite(duration) && duration > 0 ? String(Math.min(100, Math.max(0, time / duration * 100))) : '0';
+      progress.setAttribute('aria-valuetext', Number.isFinite(duration) ? `${Math.floor(time)} of ${Math.floor(duration)} seconds` : 'Loading');
+    }
+    function setBuffering(item, value) { if (item === video) media.classList.toggle('is-buffering', value); }
+    function watchFrames(item) {
+      if (item._serenityFrameLoop) return;
+      item._serenityFrameLoop = true;
+      const tick = (now, metadata) => {
+        if (item.paused || item.ended) { item._serenityFrameLoop = false; return; }
+        if (metadata) lastFrame = { at: frameClock(), media: metadata.mediaTime, item };
+        if (item === video) showProgress(metadata ? metadata.mediaTime : item.currentTime);
+        if (item.requestVideoFrameCallback) item.requestVideoFrameCallback(tick);
+        else requestAnimationFrame(tick);
+      };
+      if (item.requestVideoFrameCallback) item.requestVideoFrameCallback(tick);
+      else requestAnimationFrame(tick);
+    }
+    function seekTo(fraction, precise) {
+      if (!Number.isFinite(video.duration) || !video.duration) return;
+      const target = video.duration * fraction;
+      // Dragging fires many inputs; queue the latest instead of stacking seeks, which stutters.
+      if (video.seeking && !precise) { seekTarget = target; return; }
+      seekTarget = null;
+      if (!precise && typeof video.fastSeek === 'function') video.fastSeek(target);
+      else video.currentTime = target;
+    }
+    progress.addEventListener('pointerdown', () => { scrubbing = true; });
+    progress.oninput = () => { scrubbing = true; seekTo(Number(progress.value) / 100, false); };
+    progress.onchange = () => { seekTo(Number(progress.value) / 100, true); scrubbing = false; };
+    progress.addEventListener('pointerup', () => { scrubbing = false; });
     function bindVideoEvents(item) {
       item.addEventListener('timeupdate', () => {
-        if (item === video) progress.value = Number.isFinite(item.duration) && item.duration ? String(item.currentTime / item.duration * 100) : '0';
+        // Fallback for paused/seeking states; while frames render, watchFrames drives the bar.
+        if (item === video && (item.paused || !item._serenityFrameLoop)) showProgress();
       });
+      for (const type of ['loadedmetadata', 'durationchange', 'emptied']) item.addEventListener(type, () => { if (item === video) showProgress(); });
+      item.addEventListener('seeked', () => {
+        if (item !== video) return;
+        if (seekTarget !== null) { const target = seekTarget; seekTarget = null; item.currentTime = target; return; }
+        lastFrame = { at: frameClock(), media: item.currentTime, item };
+        showProgress();
+      });
+      item.addEventListener('waiting', () => setBuffering(item, true));
+      item.addEventListener('stalled', () => setBuffering(item, !item.paused && item.readyState < 3));
+      for (const type of ['playing', 'canplay', 'pause', 'seeked', 'error']) item.addEventListener(type, () => setBuffering(item, false));
+      item.addEventListener('playing', () => { lastFrame = { at: frameClock(), media: item.currentTime, item }; watchFrames(item); });
       item.addEventListener('play', () => {
         if (item === video) { play.textContent = 'Pause'; playCenter.textContent = 'Ⅱ'; playCenter.setAttribute('aria-label', 'Pause trip video'); media.classList.add('is-playing'); }
       });
       item.addEventListener('pause', () => {
-        if (item === video) { play.textContent = 'Play'; playCenter.textContent = '▶'; playCenter.setAttribute('aria-label', 'Play trip video'); media.classList.remove('is-playing'); }
+        if (item === video) { play.textContent = 'Play'; playCenter.textContent = '▶'; playCenter.setAttribute('aria-label', 'Play trip video'); media.classList.remove('is-playing'); showProgress(); }
       });
       item.addEventListener('error', () => {
         if (item !== video || media.querySelector('.hub-video-error')) return;
@@ -167,6 +235,18 @@
       });
       item.onclick = () => play.click();
     }
+    // If the clock keeps running but no new frame has been drawn for a while, the
+    // decoder is stuck (the "bar moves, picture frozen" symptom). Re-seeking to the
+    // current time flushes it; repeated failures usually mean an unsupported codec.
+    const stallWatch = setInterval(() => {
+      const item = video;
+      if (viewer !== active || !item?.requestVideoFrameCallback || item.paused || item.seeking || item.readyState < 3 || lastFrame.item !== item) return;
+      if (frameClock() - lastFrame.at < 2500 || item.currentTime - lastFrame.media < 1.5) return;
+      stallRecoveries += 1;
+      lastFrame = { at: frameClock(), media: item.currentTime, item };
+      if (stallRecoveries <= 2) { item.currentTime = item.currentTime; return; }
+      if (!media.querySelector('.hub-video-error')) media.append(el('p', 'hub-video-error', 'This video is not playing smoothly in this browser. Its format may not be supported here.'));
+    }, 1000);
     videos.forEach(bindVideoEvents);
     const closeComments = button('Close comments ×', 'hub-comments-close');
     closeComments.onclick = () => { body.querySelector('[aria-expanded]')?.click(); };
@@ -175,21 +255,27 @@
     const viewer = { card, video, videos, play, sound, panel: 1, index, paused: !autoplayEnabled(), commentsOpen: false };
     function selectVideo(nextIndex, behavior = reducedMotion.matches ? 'auto' : 'smooth') {
       if (!videos.length) return;
+      const previousVideo = video;
       index = (nextIndex + videos.length) % videos.length;
       video = videos[index];
       viewer.index = index;
       viewer.video = video;
+      const changed = previousVideo !== video;
       slideTrack.style.transition = behavior === 'auto' ? 'none' : '';
       slideTrack.style.transform = `translateX(-${index * 100}%)`;
       counter.textContent = `${String(index + 1).padStart(2, '0')} / ${String(videos.length).padStart(2, '0')}`;
       previous.disabled = videos.length < 2;
       next.disabled = videos.length < 2;
-      progress.value = '0';
-      media.querySelector('.hub-video-error')?.remove();
-      videos.forEach((item, itemIndex) => {
-        item.preload = itemIndex === index ? 'auto' : 'none';
-        if (itemIndex === index) item.load();
-      });
+      if (changed) {
+        // Never reload the clip that is already selected (a tap, a cancelled swipe or
+        // a vertical scroll used to restart it). A new clip starts from the beginning.
+        if (previousVideo && !previousVideo.paused) previousVideo.pause();
+        if (video.currentTime) video.currentTime = 0;
+        stallRecoveries = 0; seekTarget = null;
+        media.classList.remove('is-buffering');
+        media.querySelector('.hub-video-error')?.remove();
+      }
+      showProgress();
       onSlideChange(tripPosts[index]);
       requestAnimationFrame(() => { slideTrack.style.transition = ''; });
       media.classList.toggle('is-playing', !video.paused);
@@ -200,7 +286,7 @@
     play.onclick = () => { viewer.paused = !video.paused; active = viewer; updatePlayback(); };
     playCenter.onclick = play.onclick;
     sound.onclick = () => { soundOn = !soundOn; sound.setAttribute('aria-label', soundOn ? 'Mute video' : 'Enable video sound'); updatePlayback(); };
-    media.append(header, body, controls, carouselControls, playCenter, progress, comments);
+    media.append(header, body, controls, carouselControls, playCenter, buffering, progress, comments);
     // The media box clips its slides. Focusing a button inside it (Like, Save…) must
     // never scroll it: that would leave the clip strip half a slide out of place.
     media.addEventListener('scroll', () => { if (media.scrollLeft || media.scrollTop) media.scrollTo(0, 0); });
@@ -377,9 +463,12 @@
     resize.observe(viewport);
     viewers.set(card, viewer); observer.observe(card);
     requestAnimationFrame(() => { select(1, 'auto'); selectVideo(index, 'auto'); });
-    viewer.destroy = () => { clearTimeout(settle); resize.disconnect(); observer.unobserve(card); videos.forEach(item => item.pause()); if (active === viewer) active = null; viewers.delete(card); updateToolbarMode(); };
+    // Detached <video> elements keep downloading until garbage-collected; release them.
+    const release = item => { item.pause(); item.removeAttribute?.('src'); item.load?.(); };
+    viewer.destroy = () => { clearTimeout(settle); clearInterval(stallWatch); resize.disconnect(); observer.unobserve(card); videos.forEach(release); if (active === viewer) active = null; viewers.delete(card); updateToolbarMode(); };
     return { root, updatePosts(posts, nextIndex) {
       tripPosts = posts;
+      videos.forEach(release);
       slideTrack.replaceChildren(...posts.map((item, itemIndex) => {
         const slide = el('div', 'social-post__slide');
         slide.dataset.postId = item.id;

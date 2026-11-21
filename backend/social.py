@@ -4,6 +4,7 @@ import secrets
 import time
 from urllib.parse import parse_qs, urlparse
 import trip_locations
+import video_stream
 
 
 POST_ID = re.compile(r"/api/posts/([0-9a-f]{32})(?:/(video|like|save|comments|context))?")
@@ -219,31 +220,7 @@ def get(handler, db, uploads):
         video = uploads / clip["id"]
         if not video.is_file():
             return handler.respond(404, {"error": "Video is unavailable."})
-        size = video.stat().st_size
-        range_header = handler.headers.get("Range", "")
-        byte_range = re.fullmatch(r"bytes=(\d+)-(\d*)", range_header)
-        start, end = (int(byte_range.group(1)), int(byte_range.group(2)) if byte_range.group(2) else size - 1) if byte_range else (0, size - 1)
-        if start >= size or end < start or end >= size:
-            return handler.respond(416, {"error": "Invalid video range."})
-        handler.send_response(206 if byte_range else 200)
-        handler.send_header("Content-Type", clip["mime"])
-        handler.send_header("Content-Length", str(end - start + 1))
-        handler.send_header("Accept-Ranges", "bytes")
-        handler.send_header("Cache-Control", "no-store")
-        handler.send_header("X-Content-Type-Options", "nosniff")
-        if byte_range:
-            handler.send_header("Content-Range", f"bytes {start}-{end}/{size}")
-        handler.end_headers()
-        with video.open("rb") as source:
-            source.seek(start)
-            remaining = end - start + 1
-            while remaining:
-                chunk = source.read(min(65536, remaining))
-                if not chunk:
-                    break
-                handler.wfile.write(chunk)
-                remaining -= len(chunk)
-        return True
+        return video_stream.send(handler, video, clip["mime"], "private, no-cache")
     return False
 
 
