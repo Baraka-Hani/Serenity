@@ -55,7 +55,7 @@ STATIC.update({"/manifest.webmanifest": "manifest.webmanifest", "/service-worker
 VIDEO_TYPES = {"video/mp4": ".mp4", "video/webm": ".webm", "video/quicktime": ".mov", "video/x-m4v": ".m4v"}
 STATIC.update({"/feed-hub.js": "feed-hub.js", "/feed-hub.css": "feed-hub.css"})
 STATIC.update({f'/{name}': name for name in ('studio-import.js', 'studio-import.css', 'studio-grouping.js', 'studio-video-analysis.js', 'studio-vision-worker.js')})
-STATIC.update({f'/{name}': name for name in ('studio-publication.js', 'studio-publication.css')})
+STATIC.update({f'/{name}': name for name in ('studio-publication.js', 'studio-publication.css', 'profile-studio.js', 'profile-studio.css')})
 STATIC.update({f'/{name}': name for name in ('map.html', 'map-core.js', 'travel-map.js', 'travel-map.css', 'destination-picker.js', 'destination-picker.css')})
 STATIC.update({f'/{name}': name for name in ('map-world.js',)})
 STATIC.update({f'/{name}': name for name in ('messages-client.js', 'messages.js', 'messages.css')})

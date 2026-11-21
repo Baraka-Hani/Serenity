@@ -1,4 +1,4 @@
-const CACHE_NAME = 'serenity-shell-v17-live-polish';
+const CACHE_NAME = 'serenity-shell-v18-profile-studio';
 const APP_PAGES = new Set([
   '/home.html',
   '/engage.html',
@@ -62,6 +62,8 @@ const SHELL_ASSETS = [
   '/studio-vision-worker.js',
   '/studio-publication.js',
   '/studio-publication.css',
+  '/profile-studio.js',
+  '/profile-studio.css',
   '/social-feed.js',
   '/social-feed.css',
   '/feed-hub.js',

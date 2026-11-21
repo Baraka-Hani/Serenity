@@ -1,0 +1,31 @@
+/* Clip Studio tiles on the Profile. Builds on account.css tokens and studio-publication.css. */
+.profile-studio__filters{display:inline-flex;flex-wrap:wrap;gap:6px;margin:0 0 14px;padding:4px;border:1px solid color-mix(in srgb,var(--ink),transparent 86%);border-radius:999px;background:color-mix(in srgb,var(--paper),white 30%)}
+.profile-studio__filter{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:8px 15px;border:0;border-radius:999px;background:transparent;color:var(--ink);font:700 12px Manrope,system-ui,sans-serif;cursor:pointer}
+.profile-studio__filter strong{min-width:22px;padding:2px 7px;border-radius:99px;background:color-mix(in srgb,var(--ink),transparent 90%);font:10px 'DM Mono',monospace;text-align:center}
+.profile-studio__filter[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.profile-studio__filter[aria-selected="true"] strong{background:color-mix(in srgb,var(--paper),transparent 78%)}
+.profile-studio__filter:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.profile-studio__status{margin:0 0 12px}
+.profile-studio__status:empty{display:none}
+.profile-studio__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:start;gap:18px}
+.profile-studio__tile{min-width:0;overflow:hidden;border:1px solid color-mix(in srgb,var(--ink),transparent 90%);border-radius:20px;background:color-mix(in srgb,var(--paper),var(--ink) 3%);box-shadow:0 12px 30px #0000000c}
+.profile-studio__media{position:relative;display:grid;place-items:center;aspect-ratio:4/4.5;overflow:hidden;background:linear-gradient(145deg,#4e514b,#b7b6ad 52%,#ede9df);color:#fff}
+.profile-studio__media video{display:block;width:100%;height:100%;object-fit:cover;background:#111}
+.profile-studio__empty-media{max-width:190px;padding:20px;text-align:center;font-size:13px;line-height:1.5;text-shadow:0 1px 8px #0005}
+.profile-studio__clip-state,.profile-studio__counter{position:absolute;z-index:3;top:13px;border:1px solid #ffffff70;border-radius:99px;background:#17171399;padding:6px 9px;color:#fff;font:700 10px Manrope,system-ui,sans-serif;pointer-events:none;backdrop-filter:blur(10px)}
+.profile-studio__clip-state{top:52px;left:13px}
+.profile-studio__clip-state.is-live{background:#164d3bd9}
+.profile-studio__counter{right:13px;font-family:'DM Mono',monospace;font-weight:400}
+.profile-studio__arrow{position:absolute;z-index:3;top:50%;display:grid;width:34px;height:34px;place-items:center;transform:translateY(-50%);border:1px solid #ffffff80;border-radius:50%;background:#0008;color:#fff;font-size:25px;line-height:1;cursor:pointer}
+.profile-studio__arrow--previous{left:10px}.profile-studio__arrow--next{right:10px}
+.profile-studio__arrow[hidden]{display:none}
+.profile-studio__head{display:grid;gap:8px;padding:15px 16px 10px}
+.profile-studio__head h3{margin:0;font-size:16px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.profile-studio__destination{margin:4px 0 0;color:color-mix(in srgb,var(--ink),transparent 43%);font-size:11px}
+.profile-studio__links{display:flex;flex-wrap:wrap;gap:6px 14px}
+.profile-studio__links a{color:var(--accent);font-size:11px;font-weight:700;text-decoration:none}
+.profile-studio__links a:hover,.profile-studio__links a:focus-visible{text-decoration:underline}
+.profile-studio__tile .studio-publication{padding:0 16px 16px}
+.profile-studio__tile--waiting{border-style:dashed}
+@media(max-width:760px){.profile-studio__grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:540px){.profile-studio__grid{grid-template-columns:1fr;gap:15px}.profile-studio__media{aspect-ratio:1/1}.profile-studio__filters{display:flex}.profile-studio__filter{flex:1;justify-content:center;padding:8px 10px}}
