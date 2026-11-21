@@ -180,3 +180,9 @@ body[data-app-view="home"].home-toolbar-icons .liquid-toolbar__icon { font-size:
   .social-home .social-post__body { padding-right:0; }
   .social-home .social-post__actions .social-ask-creator { width:auto; min-height:32px; padding:8px 10px; border-radius:99px; }
 }
+/* Buffering: a quiet ring in place of the play button while the next frames load. */
+.hub-buffering { position:absolute; z-index:4; top:50%; left:50%; width:44px; height:44px; margin:-22px 0 0 -22px; border:3px solid #ffffff40; border-top-color:#fff; border-radius:50%; opacity:0; pointer-events:none; transition:opacity .2s; }
+.social-post__media.is-buffering .hub-buffering { opacity:1; animation:hub-buffering-spin .9s linear infinite; transition-delay:.25s; }
+.social-post__media.is-buffering .hub-play-center { opacity:0; }
+@keyframes hub-buffering-spin { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .social-post__media.is-buffering .hub-buffering { animation-duration:2.4s; } }

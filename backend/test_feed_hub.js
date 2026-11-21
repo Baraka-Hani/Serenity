@@ -57,9 +57,10 @@ async function runFeedHubTests(source) {
     setPointerCapture() {}
     focus() { doc.activeElement = this; }
     click() { this.dispatch('click'); }
-    play() { this.paused = false; this.dispatch('play'); return Promise.resolve(); }
+    play() { this.plays = (this.plays || 0) + 1; this.paused = false; this.dispatch('play'); return Promise.resolve(); }
     pause() { this.paused = true; this.dispatch('pause'); }
-    load() {}
+    load() { this.loads = (this.loads || 0) + 1; }
+    removeAttribute(key) { delete this.attributes[key]; if (key === 'src') this.src = ''; }
   }
   const doc = { body: new Node('body'), hidden: false, listeners: {}, createElement: tag => new Node(tag), addEventListener(type, listener) { this.listeners[type] = listener; } };
   doc.body.dataset = { appView: 'home' };
@@ -95,6 +96,26 @@ async function runFeedHubTests(source) {
   io.callback([{ target: first.card, isIntersecting: true, intersectionRatio: 1 }]);
   assert(!first.video.paused && second.video.paused, 'Only the visible post may play');
   assert(!doc.body.classList.contains('home-toolbar-icons'), 'The first post must retain the full toolbar');
+  assert(first.video.preload === 'auto' && second.video.preload === 'metadata', 'Only the visible video may buffer fully; its neighbour fetches metadata');
+  const playsBefore = first.video.plays;
+  io.callback([{ target: first.card, isIntersecting: true, intersectionRatio: 1 }]);
+  assert(first.video.plays === playsBefore, 'A playing video must not be asked to play again');
+  first.video.currentTime = 4; first.video.duration = 10;
+  first.media.dispatch('pointercancel');
+  first.media.dispatch('pointerdown', { clientX: 10, clientY: 10, target: first.media });
+  first.media.dispatch('pointerup', { clientX: 10, clientY: 10 });
+  assert(!first.video.loads && first.video.currentTime === 4 && !first.video.paused, 'Taps and cancelled gestures must not reload or restart the playing video');
+  let frameCallback;
+  first.video.requestVideoFrameCallback = callback => { frameCallback = callback; return 1; };
+  first.video.dispatch('playing');
+  first.video.currentTime = 9;
+  frameCallback(0, { mediaTime: 5 });
+  const bar = first.media.querySelector('.hub-progress');
+  assert(bar.value === '50', 'The progress bar must follow the frame on screen, not a clock that runs ahead of it');
+  first.video.dispatch('waiting');
+  assert(first.media.classList.contains('is-buffering'), 'Waiting for data must show buffering');
+  first.video.dispatch('playing');
+  assert(!first.media.classList.contains('is-buffering'), 'Resumed playback must hide buffering');
   function swipe(fixture, x, y = 0, target) {
     const viewport = fixture.viewport;
     viewport.dispatch('pointerdown', { clientX: 200, clientY: 100, target: target || viewport });
@@ -133,8 +154,9 @@ async function runFeedHubTests(source) {
   assert(first.video.paused && second.video.paused, 'Background tabs must pause all videos');
   window.SerenityFeedHub.reset();
   assert(first.video.paused && second.video.paused, 'Refreshing the timeline must stop old players');
+  assert(!first.video.src && first.video.loads, 'Removed players must release their network connection');
   assert(!doc.body.classList.contains('home-toolbar-icons'), 'Resetting the feed must restore the full toolbar');
-  return 'Feed interaction tests passed: swipe direction, public context, keyboard, focus, and single-video playback.';
+  return 'Feed interaction tests passed: swipe direction, public context, keyboard, focus, single-video playback, preloading, and frame-accurate progress.';
 }
 if (typeof module !== 'undefined' && require.main === module) {
   runFeedHubTests(require('fs').readFileSync(require('path').join(__dirname, '../feed-hub.js'), 'utf8'))

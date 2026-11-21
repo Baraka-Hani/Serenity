@@ -23,6 +23,7 @@ import trip_locations
 import visited_locations
 import messaging
 import account_discovery
+import video_stream
 import google_auth
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -238,6 +239,23 @@ def session_cookie(token, max_age):
 
 class Handler(BaseHTTPRequestHandler):
     server_version = "Serenity/1.0"
+    # Keep-alive lets a video's many small range requests reuse one connection.
+    protocol_version = "HTTP/1.1"
+    timeout = 30  # drop idle keep-alive sockets so threads are not held forever
+
+    def parse_request(self):
+        if not super().parse_request():
+            return False
+        # Write handlers may reply before reading the whole request body; closing
+        # afterwards keeps unread bytes from corrupting the next request.
+        if self.command not in ("GET", "HEAD"):
+            self.close_connection = True
+        return True
+
+    def end_headers(self):
+        if self.close_connection and self.request_version == "HTTP/1.1":
+            self.send_header("Connection", "close")
+        super().end_headers()
 
     def valid_host(self):
         allowed = {f"127.0.0.1:{PORT}", f"localhost:{PORT}"}
@@ -464,27 +482,7 @@ class Handler(BaseHTTPRequestHandler):
             if not clip: return self.respond(404, {"error": "Clip not found."})
             video = UPLOADS / clip_id
             if not video.is_file(): return self.respond(404, {"error": "Clip file is missing."})
-            size = video.stat().st_size
-            range_header = self.headers.get("Range", "")
-            match = re.fullmatch(r"bytes=(\d+)-(\d*)", range_header)
-            start, end = (int(match.group(1)), int(match.group(2)) if match.group(2) else size - 1) if match else (0, size - 1)
-            if start >= size or end < start or end >= size: return self.respond(416, {"error": "Invalid video range."})
-            self.send_response(206 if match else 200)
-            self.send_header("Content-Type", clip["mime"])
-            self.send_header("Content-Length", str(end - start + 1))
-            self.send_header("Accept-Ranges", "bytes")
-            self.send_header("Cache-Control", "private, no-store")
-            self.send_header("X-Content-Type-Options", "nosniff")
-            if match: self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
-            self.end_headers()
-            with video.open("rb") as source:
-                source.seek(start)
-                remaining = end - start + 1
-                while remaining:
-                    chunk = source.read(min(65536, remaining))
-                    if not chunk: break
-                    self.wfile.write(chunk)
-                    remaining -= len(chunk)
+            video_stream.send(self, video, clip["mime"], "private, no-store")
             return
         filename = STATIC.get(path)
         if not filename: return self.respond(404, {"error": "Not found."})
