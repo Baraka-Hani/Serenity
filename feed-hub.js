@@ -369,7 +369,7 @@
     function renderTravel(context) {
       const info = context.travel;
       const location = el('div', 'hub-location');
-      location.append(el('span', 'hub-panel-eyebrow', 'Go where this was filmed'), el('h2', '', info.location?.label || info.destination), el('p', 'hub-location-source', info.location ? 'Pin chosen by the creator · Check the exact place before travelling' : 'This trip has no destination pin yet'));
+      location.append(el('span', 'hub-panel-eyebrow', 'Go where this was filmed'), el('h2', '', info.location?.label || info.destination), el('p', 'hub-location-source', !info.location ? 'This trip has no destination pin yet' : info.location.source === 'video' ? 'Approximate spot from the videos’ location data · Check the exact place before travelling' : 'Pin chosen by the creator · Check the exact place before travelling'));
       const summary = section('Their story', info.summary);
       const visit = section('Experience this place', info.location ? 'Start from the creator’s destination pin. Check access, opening hours, and local conditions before you go.' : 'Ask the creator to pin the destination, or explore other published places on the map.');
       const mapLink = el('a', 'hub-profile-link', info.location ? 'Find this trip on Map ↗' : 'Explore the travel map ↗'); mapLink.href = info.location ? `map.html?trip=${info.feed_id}` : 'map.html'; visit.append(mapLink);

@@ -49,7 +49,7 @@
       detail.append(node('small', '', 'Saved in your private travel journal. Only you can see this place.'));
     } else {
       const creator = node('a', '', `By ${place.creator_name} · @${place.creator_username}`); creator.href = `profile.html?id=${encodeURIComponent(place.creator_public_id)}`;
-      detail.append(creator, node('p', '', place.label), node('p', '', place.summary), node('small', '', 'Creator-chosen destination. Check access and conditions before travelling.'));
+      detail.append(creator, node('p', '', place.label), node('p', '', place.summary), node('small', '', place.source === 'video' ? 'Approximate filming area from the videos’ location data (about 1 km). Check access and conditions before travelling.' : 'Creator-chosen destination. Check access and conditions before travelling.'));
     }
     const actions = node('div', 'map-detail-actions');
     const directions = node('a', '', 'Get directions ↗'); directions.href = window.SerenityMaps.directions(place); directions.target = '_blank'; directions.rel = 'noopener';
